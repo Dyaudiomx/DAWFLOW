@@ -57,6 +57,7 @@ libardour_sources = [
         'dawflow_plugin_host_extended.cc',
         'dawflow_commands_editing.cc',
         'dawflow_commands_automation.cc',
+        'dawflow_commands_final.cc',
         'default_click.cc',
         'debug.cc',
         'delayline.cc',

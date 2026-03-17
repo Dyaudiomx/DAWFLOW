@@ -11,6 +11,7 @@
 #include "ardour/dawflow_plugin_host_extended.h"
 #include "ardour/dawflow_commands_editing.h"
 #include "ardour/dawflow_commands_automation.h"
+#include "ardour/dawflow_commands_final.h"
 #include "ardour/session.h"
 #include "ardour/route.h"
 #include "ardour/audio_track.h"
@@ -753,6 +754,9 @@ DawflowPluginHost::_register_commands ()
 
 	/* Register automation, selection, metering, export, and utility commands */
 	dawflow_register_automation_commands (_session, _command_handlers);
+
+	/* Register final batch: import, export, presets, search, VCA, snapshots, time, analysis */
+	dawflow_register_final_commands (_session, _command_handlers);
 }
 
 /* ---- Session Signal Connections ---- */
