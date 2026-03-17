@@ -52,6 +52,13 @@ public:
 	/** Broadcast a notification event to all connected plugin clients. */
 	void broadcast_event (const std::string& method, const DawflowIPC::json& params);
 
+	/** Access the command handler map (for extended command registration). */
+	using CommandHandler = std::function<DawflowIPC::json(const DawflowIPC::json&)>;
+	std::unordered_map<std::string, CommandHandler>& command_handlers () { return _command_handlers; }
+
+	/** Access the session reference (for extended command registration). */
+	Session& session () { return _session; }
+
 private:
 	Session& _session;
 	DawflowIPC::SocketServer _server;
@@ -63,7 +70,6 @@ private:
 	/** Maps client_id -> plugin_id (reverse lookup). */
 	std::unordered_map<std::string, std::string> _client_to_plugin;
 
-	using CommandHandler = std::function<DawflowIPC::json(const DawflowIPC::json&)>;
 	std::unordered_map<std::string, CommandHandler> _command_handlers;
 
 	void _handle_message (const std::string& client_id, const DawflowIPC::Message& msg);

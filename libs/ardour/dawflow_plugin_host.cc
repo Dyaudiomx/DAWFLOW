@@ -1,25 +1,43 @@
 /*
  * DawflowPluginHost - DAW-side Plugin Host for the DAWFLOW Plugin System
  *
- * Implements IPC command dispatch (10 DAW commands) and session signal
+ * Implements IPC command dispatch (26 DAW commands) and session signal
  * forwarding for the DAWFLOW plugin architecture.
  *
  * Part of the DAWFLOW plugin system (Task 4).
  */
 
 #include "ardour/dawflow_plugin_host.h"
+#include "ardour/dawflow_plugin_host_extended.h"
+#include "ardour/dawflow_commands_editing.h"
+#include "ardour/dawflow_commands_automation.h"
 #include "ardour/session.h"
 #include "ardour/route.h"
+#include "ardour/audio_track.h"
+#include "ardour/midi_track.h"
+#include "ardour/track.h"
 #include "ardour/dB.h"
 #include "ardour/gain_control.h"
 #include "ardour/mute_control.h"
 #include "ardour/solo_control.h"
+#include "ardour/plugin_insert.h"
+#include "ardour/plugin_manager.h"
+#include "ardour/plugin.h"
+#include "ardour/processor.h"
+#include "ardour/route_group.h"
+#include "ardour/presentation_info.h"
+#include "ardour/types.h"
+#include "ardour/chan_count.h"
+#include "ardour/parameter_descriptor.h"
+#include "ardour/automation_control.h"
+#include "evoral/Parameter.h"
 #include "pbd/id.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 
 using namespace ARDOUR;
 using namespace DawflowIPC;
@@ -378,8 +396,363 @@ DawflowPluginHost::_register_commands ()
 		return result;
 	};
 
-	/* 10. daw.plugin.register is handled specially in _handle_message()
+	/* ---- Track Management Commands ---- */
+
+	/* 10. daw.add_audio_track */
+	_command_handlers["daw.add_audio_track"] = [this](const json& params) -> json {
+		std::string name = params.value ("name", "Audio");
+		int channels = params.value ("channels", 2);
+		auto tracks = _session.new_audio_track (channels, channels, nullptr, 1, name, PresentationInfo::max_order, Normal, true, false);
+		if (tracks.empty ()) {
+			return {{"error", "failed to create track"}};
+		}
+		auto& t = tracks.front ();
+		return {{"success", true}, {"track_id", t->id ().to_s ()}, {"name", t->name ()}};
+	};
+
+	/* 11. daw.add_midi_track */
+	_command_handlers["daw.add_midi_track"] = [this](const json& params) -> json {
+		std::string name = params.value ("name", "MIDI");
+		ChanCount in (DataType::MIDI, 1);
+		ChanCount out (DataType::AUDIO, 2);
+		auto tracks = _session.new_midi_track (in, out, false, nullptr, nullptr, nullptr, 1, name, PresentationInfo::max_order, Normal, true, false);
+		if (tracks.empty ()) {
+			return {{"error", "failed to create MIDI track"}};
+		}
+		auto& t = tracks.front ();
+		return {{"success", true}, {"track_id", t->id ().to_s ()}, {"name", t->name ()}};
+	};
+
+	/* 12. daw.add_bus */
+	_command_handlers["daw.add_bus"] = [this](const json& params) -> json {
+		std::string name = params.value ("name", "Bus");
+		int channels = params.value ("channels", 2);
+		auto routes = _session.new_audio_route (channels, channels, nullptr, 1, name, PresentationInfo::Flag (PresentationInfo::AudioBus), PresentationInfo::max_order);
+		if (routes.empty ()) {
+			return {{"error", "failed to create bus"}};
+		}
+		return {{"success", true}, {"bus_id", routes.front ()->id ().to_s ()}, {"name", routes.front ()->name ()}};
+	};
+
+	/* 13. daw.remove_track */
+	_command_handlers["daw.remove_track"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		auto rl = std::make_shared<RouteList> ();
+		rl->push_back (route);
+		_session.remove_routes (rl);
+		return {{"success", true}};
+	};
+
+	/* 14. daw.rename_track */
+	_command_handlers["daw.rename_track"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		route->set_name (params["name"].get<std::string> ());
+		return {{"success", true}, {"name", route->name ()}};
+	};
+
+	/* 15. daw.set_track_color */
+	_command_handlers["daw.set_track_color"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		uint32_t color = std::stoul (params["color"].get<std::string> (), nullptr, 16);
+		route->presentation_info ().set_color (color);
+		return {{"success", true}};
+	};
+
+	/* 16. daw.set_track_comment */
+	_command_handlers["daw.set_track_comment"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		route->set_comment (params["comment"].get<std::string> (), nullptr);
+		return {{"success", true}};
+	};
+
+	/* 17. daw.get_track_details */
+	_command_handlers["daw.get_track_details"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		json result;
+		result["id"]      = route->id ().to_s ();
+		result["name"]    = route->name ();
+		result["gain_db"] = accurate_coefficient_to_dB (route->gain_control ()->get_value ());
+		result["muted"]   = route->muted ();
+		result["soloed"]  = route->soloed ();
+		result["active"]  = route->active ();
+		result["comment"] = route->comment ();
+		std::stringstream ss;
+		ss << std::hex << route->presentation_info ().color ();
+		result["color"] = ss.str ();
+		/* List plugins on this track */
+		json plugins = json::array ();
+		route->foreach_processor ([&plugins](std::weak_ptr<ARDOUR::Processor> wp) {
+			auto p = wp.lock ();
+			if (p) {
+				auto pi = std::dynamic_pointer_cast<ARDOUR::PluginInsert> (p);
+				if (pi) {
+					plugins.push_back ({
+						{"id", p->id ().to_s ()},
+						{"name", p->name ()},
+						{"enabled", pi->enabled ()},
+						{"index", (int)pi->get_count ()}
+					});
+				}
+			}
+		});
+		result["plugins"] = plugins;
+		return result;
+	};
+
+	/* 18. daw.set_track_record */
+	_command_handlers["daw.set_track_record"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		auto track = std::dynamic_pointer_cast<ARDOUR::Track> (route);
+		if (!track) {
+			return {{"error", "not a track"}};
+		}
+		auto rec = track->rec_enable_control ();
+		if (rec) {
+			rec->set_value (params["enabled"].get<bool> () ? 1.0 : 0.0, PBD::Controllable::NoGroup);
+		}
+		return {{"success", true}};
+	};
+
+	/* 19. daw.duplicate_track */
+	_command_handlers["daw.duplicate_track"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		XMLNode& state = route->get_state ();
+		std::string name = params.value ("name", route->name () + " (copy)");
+		auto routes = _session.new_route_from_template (1, PresentationInfo::max_order, state, name);
+		if (routes.empty ()) {
+			return {{"error", "failed to duplicate"}};
+		}
+		return {{"success", true}, {"track_id", routes.front ()->id ().to_s ()}};
+	};
+
+	/* ---- Plugin Management Commands ---- */
+
+	/* 20. daw.get_available_plugins */
+	_command_handlers["daw.get_available_plugins"] = [this](const json& /* params */) -> json {
+		auto& pm = ARDOUR::PluginManager::instance ();
+		json plugins = json::array ();
+		auto add_list = [&plugins](const ARDOUR::PluginInfoList& list, const std::string& type) {
+			for (auto& pi : list) {
+				plugins.push_back ({
+					{"name", pi->name},
+					{"type", type},
+					{"category", pi->category},
+					{"creator", pi->creator},
+					{"unique_id", pi->unique_id}
+				});
+			}
+		};
+		add_list (pm.lv2_plugin_info (), "LV2");
+		add_list (pm.au_plugin_info (), "AudioUnit");
+		add_list (pm.vst3_plugin_info (), "VST3");
+		add_list (pm.mac_vst_plugin_info (), "VST");
+		add_list (pm.ladspa_plugin_info (), "LADSPA");
+		add_list (pm.lua_plugin_info (), "Lua");
+		return {{"plugins", plugins}, {"count", (int)plugins.size ()}};
+	};
+
+	/* 21. daw.load_plugin */
+	_command_handlers["daw.load_plugin"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		std::string plugin_name = params["plugin_name"].get<std::string> ();
+		auto& pm = ARDOUR::PluginManager::instance ();
+		ARDOUR::PluginInfoPtr found;
+		auto search = [&](const ARDOUR::PluginInfoList& list) {
+			for (auto& pi : list) {
+				if (pi->name == plugin_name) {
+					found = pi;
+					return;
+				}
+			}
+		};
+		search (pm.lv2_plugin_info ());
+		if (!found) search (pm.au_plugin_info ());
+		if (!found) search (pm.vst3_plugin_info ());
+		if (!found) search (pm.mac_vst_plugin_info ());
+		if (!found) search (pm.ladspa_plugin_info ());
+		if (!found) search (pm.lua_plugin_info ());
+		if (!found) {
+			return {{"error", "plugin not found: " + plugin_name}};
+		}
+		auto plugin = found->load (_session);
+		if (!plugin) {
+			return {{"error", "failed to load plugin"}};
+		}
+		auto insert = std::shared_ptr<ARDOUR::PluginInsert> (new ARDOUR::PluginInsert (_session, *route, plugin));
+		route->add_processor (insert, PreFader);
+		return {{"success", true}, {"processor_id", insert->id ().to_s ()}};
+	};
+
+	/* 22. daw.remove_plugin */
+	_command_handlers["daw.remove_plugin"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		std::string proc_id = params["processor_id"].get<std::string> ();
+		std::shared_ptr<ARDOUR::Processor> target;
+		route->foreach_processor ([&](std::weak_ptr<ARDOUR::Processor> wp) {
+			auto p = wp.lock ();
+			if (p && p->id ().to_s () == proc_id) {
+				target = p;
+			}
+		});
+		if (!target) {
+			return {{"error", "processor not found"}};
+		}
+		route->remove_processor (target);
+		return {{"success", true}};
+	};
+
+	/* 23. daw.get_plugin_parameters */
+	_command_handlers["daw.get_plugin_parameters"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		std::string proc_id = params["processor_id"].get<std::string> ();
+		std::shared_ptr<ARDOUR::PluginInsert> pi;
+		route->foreach_processor ([&](std::weak_ptr<ARDOUR::Processor> wp) {
+			auto p = wp.lock ();
+			if (p && p->id ().to_s () == proc_id) {
+				pi = std::dynamic_pointer_cast<ARDOUR::PluginInsert> (p);
+			}
+		});
+		if (!pi) {
+			return {{"error", "plugin not found"}};
+		}
+		auto plugin = pi->plugin ();
+		json parameters = json::array ();
+		for (uint32_t i = 0; i < plugin->parameter_count (); i++) {
+			bool ok;
+			uint32_t port = plugin->nth_parameter (i, ok);
+			if (!ok) {
+				continue;
+			}
+			ARDOUR::ParameterDescriptor desc;
+			plugin->get_parameter_descriptor (port, desc);
+			parameters.push_back ({
+				{"index", (int)port},
+				{"name", desc.label},
+				{"value", plugin->get_parameter (port)},
+				{"min", desc.lower},
+				{"max", desc.upper},
+				{"default", desc.normal}
+			});
+		}
+		return {{"parameters", parameters}};
+	};
+
+	/* 24. daw.set_plugin_parameter */
+	_command_handlers["daw.set_plugin_parameter"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		std::string proc_id = params["processor_id"].get<std::string> ();
+		std::shared_ptr<ARDOUR::PluginInsert> pi;
+		route->foreach_processor ([&](std::weak_ptr<ARDOUR::Processor> wp) {
+			auto p = wp.lock ();
+			if (p && p->id ().to_s () == proc_id) {
+				pi = std::dynamic_pointer_cast<ARDOUR::PluginInsert> (p);
+			}
+		});
+		if (!pi) {
+			return {{"error", "plugin not found"}};
+		}
+		uint32_t index = params["index"].get<uint32_t> ();
+		float value = params["value"].get<float> ();
+		auto c = pi->automation_control (Evoral::Parameter (ARDOUR::PluginAutomation, 0, index));
+		if (!c) {
+			return {{"error", "parameter not found"}};
+		}
+		c->set_value (value, PBD::Controllable::NoGroup);
+		return {{"success", true}};
+	};
+
+	/* 25. daw.set_plugin_enabled */
+	_command_handlers["daw.set_plugin_enabled"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		std::string proc_id = params["processor_id"].get<std::string> ();
+		std::shared_ptr<ARDOUR::PluginInsert> pi;
+		route->foreach_processor ([&](std::weak_ptr<ARDOUR::Processor> wp) {
+			auto p = wp.lock ();
+			if (p && p->id ().to_s () == proc_id) {
+				pi = std::dynamic_pointer_cast<ARDOUR::PluginInsert> (p);
+			}
+		});
+		if (!pi) {
+			return {{"error", "plugin not found"}};
+		}
+		pi->enable (params["enabled"].get<bool> ());
+		return {{"success", true}};
+	};
+
+	/* 26. daw.get_track_plugins */
+	_command_handlers["daw.get_track_plugins"] = [this](const json& params) -> json {
+		auto route = _session.route_by_id (PBD::ID (params["track_id"].get<std::string> ()));
+		if (!route) {
+			return {{"error", "track not found"}};
+		}
+		json plugins = json::array ();
+		int idx = 0;
+		route->foreach_processor ([&](std::weak_ptr<ARDOUR::Processor> wp) {
+			auto p = wp.lock ();
+			if (!p) {
+				return;
+			}
+			auto pi = std::dynamic_pointer_cast<ARDOUR::PluginInsert> (p);
+			if (pi) {
+				plugins.push_back ({
+					{"processor_id", p->id ().to_s ()},
+					{"name", p->name ()},
+					{"enabled", pi->enabled ()},
+					{"index", idx}
+				});
+			}
+			idx++;
+		});
+		return {{"plugins", plugins}};
+	};
+
+	/* daw.plugin.register is handled specially in _handle_message()
 	 * because it needs access to the client_id. */
+
+	/* Register extended commands (transport, markers, undo, session, routing, groups) */
+	dawflow_register_extended_commands (*this, _session, _command_handlers);
+
+	/* Register editing commands (regions, audio analysis, MIDI notes) */
+	dawflow_register_editing_commands (_session, _command_handlers);
+
+	/* Register automation, selection, metering, export, and utility commands */
+	dawflow_register_automation_commands (_session, _command_handlers);
 }
 
 /* ---- Session Signal Connections ---- */
