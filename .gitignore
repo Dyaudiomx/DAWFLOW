@@ -149,5 +149,8 @@ tags
 # local dev scripts
 /share/scripts/_-*.lua
 
+# node_modules
+node_modules/
+
 # misc custom files git should ignore
 /local
