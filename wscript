@@ -1093,6 +1093,7 @@ def configure(conf):
         conf.env.append_value('LINKFLAGS_OSX', ['-framework', 'CoreAudioKit'])
         conf.env.append_value('LINKFLAGS_OSX', ['-framework', 'CoreFoundation'])
         conf.env.append_value('LINKFLAGS_OSX', ['-framework', 'CoreServices'])
+        conf.env.append_value('LINKFLAGS_OSX', ['-framework', 'WebKit'])
 
         conf.env.append_value('LINKFLAGS_OSX', ['-undefined', 'dynamic_lookup' ])
         conf.env.append_value('LINKFLAGS_OSX', ['-flat_namespace'])

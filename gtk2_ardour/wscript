@@ -363,7 +363,9 @@ gtk2_ardour_sources = [
         'velocity_ghost_region.cc',
         'video_server_dialog.cc',
         'utils_videotl.cc',
-        'export_video_dialog.cc'
+        'export_video_dialog.cc',
+        # DAWFLOW plugin system
+        'dawflow_panel_manager.cc'
 ]
 
 def enoify (major, minor):
@@ -674,7 +676,7 @@ def build(bld):
     if sys.platform == 'darwin':
         obj.uselib += ' AUDIOUNITS OSX '
         obj.use    += ' libappleutility'
-        obj.source += [ 'cocoacarbon.mm', 'bundle_env_cocoa.cc' ]
+        obj.source += [ 'cocoacarbon.mm', 'bundle_env_cocoa.cc', 'dawflow_webview_panel.mm' ]
     elif bld.env['build_target'] == 'mingw' or bld.env['build_target'] == 'msvc':
         obj.source += [ 'bundle_env_mingw.cc' ]
         obj.source += [ 'windows_icon.rc' ]
@@ -958,7 +960,7 @@ def build(bld):
     #
     # If you add or delete some ,bindings files, be sure to edit fmt_bindings too, or better yet,
     # hack fmt-bindings and this wscript file so that the list is defined here and passed in.
-    a_rule = 'perl %s/tools/fmt-bindings --platform="%s" --winkey="%s" --accelmap 1 ${SRC[0].abspath()} >${TGT}' % (bld.top_dir, sys.platform, bld.env['WINDOWS_KEY'] )
+    a_rule = 'perl "%s/tools/fmt-bindings" --platform="%s" --winkey="%s" --accelmap 1 "${SRC[0].abspath()}" >"${TGT}"' % (bld.top_dir, sys.platform, bld.env['WINDOWS_KEY'] )
     for b in [ 'ardour' ] :
         obj = bld(
             target = b + '.keys',
