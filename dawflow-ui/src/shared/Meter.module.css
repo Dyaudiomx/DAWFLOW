@@ -1,0 +1,61 @@
+/* ==========================================================================
+   Meter — Cubase 15 Pro vertical level meter
+   ========================================================================== */
+
+.meter {
+  display: inline-flex;
+  gap: 1px;
+  align-items: flex-end;
+  user-select: none;
+}
+
+.bar {
+  position: relative;
+  background: var(--meter-background);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* ---- Clip indicator (top) ---- */
+
+.clip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #3A1A1A;
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.clipActive {
+  background: var(--meter-clip);
+  box-shadow: 0 0 3px var(--meter-clip);
+}
+
+/* ---- Fill bar ---- */
+
+.fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+  transition: height 60ms linear;
+}
+
+/* ---- Peak hold line ---- */
+
+.peakHold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--meter-peak-hold);
+  z-index: 1;
+}

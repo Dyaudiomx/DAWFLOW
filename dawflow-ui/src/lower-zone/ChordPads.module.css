@@ -1,0 +1,130 @@
+/* ==========================================================================
+   ChordPads — Cubase 15 Pro Chord Pads grid
+   ========================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-zone);
+  overflow: hidden;
+}
+
+/* ---- Simplified keyboard strip at top ---- */
+
+.keyboard {
+  display: flex;
+  height: 24px;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 8px;
+  gap: 1px;
+  align-items: stretch;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.whiteKey {
+  flex: 1;
+  background: #B8B8B8;
+  border-radius: 0 0 2px 2px;
+  min-width: 0;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.whiteKey:hover {
+  background: #D0D0D0;
+}
+
+.blackKey {
+  width: 10px;
+  background: #2A2A2A;
+  border-radius: 0 0 2px 2px;
+  margin: 0 -5px;
+  z-index: 1;
+  border: none;
+  height: 16px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.blackKey:hover {
+  background: #444;
+}
+
+.assignedKey {
+  background: var(--accent-blue-dim);
+}
+
+.assignedKey.whiteKey {
+  background: #7BAED4;
+}
+
+/* ---- Pad grid ---- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.pad {
+  aspect-ratio: 1.4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  transition: all var(--transition-fast);
+  user-select: none;
+  gap: 2px;
+  padding: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pad:hover {
+  background: var(--bg-hover);
+  transform: scale(1.02);
+}
+
+.pad:active {
+  transform: scale(0.97);
+}
+
+.padActive {
+  background: var(--accent-blue-dim);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 8px rgba(74, 144, 217, 0.3);
+}
+
+.padChord {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+}
+
+.padRoot {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+/* ---- Per-pad color indicator ---- */
+
+.padColor {
+  width: 16px;
+  height: 3px;
+  border-radius: 1px;
+  margin-bottom: 2px;
+}

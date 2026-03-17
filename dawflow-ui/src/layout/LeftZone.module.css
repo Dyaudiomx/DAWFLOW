@@ -1,0 +1,103 @@
+/* ==========================================================================
+   LeftZone — Cubase 15 Pro left zone container
+   Top tabs (Channel/Inspector/Visibility), content, bottom tabs (Track/Editor)
+   ========================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-zone);
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* ---- Top tab bar (Channel | Inspector | Visibility) ---- */
+
+.topTabBar {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-toolbar);
+  user-select: none;
+}
+
+.settingsIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  padding: 0;
+  letter-spacing: -1px;
+}
+
+.settingsIcon:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+/* ---- Bottom tab bar (Track | Editor) ---- */
+
+.bottomTabBar {
+  display: flex;
+  flex-shrink: 0;
+  height: 22px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-toolbar);
+  user-select: none;
+}
+
+/* ---- Shared tab styles ---- */
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family);
+  font-size: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  outline: none;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tabActive {
+  color: var(--text-bright);
+  background: var(--bg-zone);
+}
+
+/* Active indicator — top bar uses bottom border, bottom bar uses top border */
+.topTabBar .tabActive {
+  border-bottom: 2px solid var(--accent-blue);
+}
+
+.bottomTabBar .tabActive {
+  border-top: 2px solid var(--accent-blue);
+}

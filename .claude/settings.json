@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "dawflow": {
-      "command": "node",
-      "args": ["/Users/davidyousefi/dev/DAW FLOW/mcp/index.js"]
-    }
-  }
-}

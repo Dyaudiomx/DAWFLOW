@@ -1,0 +1,44 @@
+.divider {
+  background: #1A1A1A;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Invisible hit area extends beyond the visual divider for easier grabbing */
+.divider::after {
+  content: '';
+  position: absolute;
+}
+
+.vertical {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.vertical::after {
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  right: -4px;
+}
+
+.horizontal {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.horizontal::after {
+  left: 0;
+  right: 0;
+  top: -4px;
+  bottom: -4px;
+}
+
+.divider:hover {
+  background: #4A90D9;
+}
+
+.divider:active {
+  background: #5BA0E9;
+}

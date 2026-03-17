@@ -1,0 +1,273 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-event-display);
+  overflow: hidden;
+}
+
+/* Ruler */
+.ruler {
+  display: flex;
+  height: 26px;
+  flex-shrink: 0;
+  background: #2C2C2C;
+  border-bottom: 1px solid var(--border-medium);
+}
+
+.rulerTrackHeader {
+  width: 250px;
+  min-width: 250px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-track-list);
+}
+
+.rulerLabel {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.rulerTimeline {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.rulerMark {
+  flex: 0 0 30px;
+  position: relative;
+  border-left: 1px solid #3A3A3A;
+}
+
+.rulerMarkBar {
+  border-left: 1px solid #505050;
+}
+
+.barNumber {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Track area */
+.trackArea {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.trackArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.trackArea::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.trackArea::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.trackList {
+  min-height: 100%;
+}
+
+/* Track row */
+.trackRow {
+  display: flex;
+  border-bottom: 1px solid #2A2A2A;
+  cursor: default;
+}
+
+.trackRow:hover .trackHeader {
+  background: #363636;
+}
+
+.trackSelected .trackHeader {
+  background: #3A3A3A;
+}
+
+/* Track header - left panel with controls */
+.trackHeader {
+  width: 250px;
+  min-width: 250px;
+  display: flex;
+  align-items: center;
+  background: #313131;
+  border-right: 1px solid #2A2A2A;
+  overflow: hidden;
+  transition: background 80ms;
+}
+
+.trackColorBar {
+  width: 3px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.trackInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+}
+
+.trackIcon {
+  font-size: 11px;
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.trackName {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.trackControls {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  padding-right: 4px;
+}
+
+.trackBtn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #505050;
+  border-radius: 1px;
+  color: #808080;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-family);
+  transition: all 80ms;
+}
+
+.trackBtn:hover {
+  border-color: #707070;
+  color: #aaa;
+}
+
+.trackBtnR {
+  color: #808080;
+}
+
+.muteActive {
+  background: var(--color-mute) !important;
+  border-color: var(--color-mute) !important;
+  color: #fff !important;
+}
+
+.soloActive {
+  background: var(--color-solo) !important;
+  border-color: var(--color-solo) !important;
+  color: #1a1a1a !important;
+}
+
+.recordActive {
+  background: var(--color-record) !important;
+  border-color: var(--color-record) !important;
+  color: #fff !important;
+}
+
+.monitorActive {
+  background: var(--color-monitor) !important;
+  border-color: var(--color-monitor) !important;
+  color: #fff !important;
+}
+
+/* Event display - timeline area */
+.eventDisplay {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #2E2E2E;
+}
+
+/* Audio events */
+.audioEvent, .midiEvent {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.eventTop {
+  height: 14px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  opacity: 0.95;
+}
+
+.eventLabel {
+  font-size: 9px;
+  color: rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.eventBody {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.75;
+}
+
+.waveform {
+  width: 100%;
+  height: 100%;
+}
+
+.midiNotesContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.miniNote {
+  position: absolute;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 0.5px;
+}
+
+/* Grid lines */
+.gridLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.gridLineBar {
+  background: rgba(255, 255, 255, 0.08);
+}

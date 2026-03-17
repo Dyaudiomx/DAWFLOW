@@ -1,0 +1,91 @@
+/* ==========================================================================
+   MidiRemote — Cubase 15 Pro MIDI Remote placeholder
+   ========================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-event-display);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.status {
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ---- Controller mapping grid hint ---- */
+
+.mappingGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 4px;
+  padding: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.mappingSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--border-radius);
+  padding: 8px 4px;
+  gap: 4px;
+}
+
+.slotKnobHint {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--border-medium);
+  border-radius: 50%;
+}
+
+.slotFaderHint {
+  width: 8px;
+  height: 28px;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1px;
+}
+
+.slotLabel {
+  font-size: 7px;
+  color: var(--text-dim);
+  text-align: center;
+  white-space: nowrap;
+}

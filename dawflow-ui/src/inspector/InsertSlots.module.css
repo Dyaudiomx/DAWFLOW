@@ -1,0 +1,109 @@
+/* ==========================================================================
+   InsertSlots — Cubase 15 Pro 8 insert slots (6 pre + 2 post)
+   ========================================================================== */
+
+.insertSlots {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.insertSlots::-webkit-scrollbar { width: 5px; }
+.insertSlots::-webkit-scrollbar-track { background: #1a1a1a; }
+.insertSlots::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+.sectionLabel {
+  font-size: 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 4px 1px;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 4px;
+  gap: 4px;
+  border-bottom: 1px solid var(--divider);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.slot:hover {
+  background: var(--bg-hover);
+}
+
+/* ---- Bypass dot ---- */
+
+.bypassDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-medium);
+  flex-shrink: 0;
+}
+
+.bypassDotActive {
+  background: var(--color-bypass);
+}
+
+/* ---- Slot index ---- */
+
+.slotIndex {
+  font-size: 8px;
+  color: var(--text-dim);
+  width: 10px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+/* ---- Plugin name ---- */
+
+.pluginName {
+  flex: 1;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pluginNameLoaded {
+  color: var(--text-primary);
+}
+
+/* ---- Edit button ---- */
+
+.editBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 9px;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.editBtn:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+/* ---- Pre/Post separator ---- */
+
+.separator {
+  height: 1px;
+  background: var(--border-medium);
+  margin: 1px 0;
+}

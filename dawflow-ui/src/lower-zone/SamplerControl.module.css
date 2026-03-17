@@ -1,0 +1,51 @@
+/* ==========================================================================
+   SamplerControl — Cubase 15 Pro Sampler Control placeholder
+   ========================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-event-display);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+
+.headerMessage {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4px;
+  padding: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.placeholderBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  text-align: center;
+  padding: 8px;
+}
+
+/* Waveform display spans full width */
+.waveform {
+  grid-column: 1 / -1;
+}

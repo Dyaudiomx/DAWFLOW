@@ -1,0 +1,456 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-zone);
+}
+
+.tabBar {
+  display: flex;
+  height: var(--tab-bar-height);
+  background: var(--bg-toolbar);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: none;
+  background: var(--bg-tab-inactive);
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tabActive {
+  color: var(--text-bright);
+  background: var(--bg-tab-active);
+  border-bottom: 2px solid var(--accent-blue);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.content::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+
+.tabContent {
+  padding: 0;
+}
+
+/* VSTi Tab */
+.rackHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.addBtn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background: var(--bg-button-hover);
+}
+
+.instrumentList {
+  display: flex;
+  flex-direction: column;
+}
+
+.instrumentSlot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  height: 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.instrumentSlot:hover {
+  background: var(--bg-hover);
+}
+
+.slotNumber {
+  font-size: 9px;
+  color: var(--text-dim);
+  width: 12px;
+  text-align: center;
+}
+
+.slotEmpty {
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* Media Tab */
+.searchBar {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.searchInput {
+  width: 100%;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--accent-blue);
+}
+
+.searchInput::placeholder {
+  color: var(--text-dim);
+}
+
+.mediaTiles {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  gap: 2px;
+}
+
+.mediaTile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+  text-align: left;
+  width: 100%;
+}
+
+.mediaTile:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+}
+
+.tileIcon {
+  font-size: 16px;
+}
+
+.tileLabel {
+  flex: 1;
+}
+
+/* Previewer */
+.previewer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px 8px;
+}
+
+.previewerLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.previewerControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.previewBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.previewVolume {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+}
+
+.previewVolumeFill {
+  width: 60%;
+  height: 100%;
+  background: var(--accent-blue-dim);
+  border-radius: 2px;
+}
+
+.autoPlayLabel {
+  font-size: 9px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.autoPlayCheck {
+  width: 10px;
+  height: 10px;
+}
+
+/* CR Tab */
+.placeholder {
+  padding: 8px;
+}
+
+.placeholderTitle {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 8px;
+}
+
+.crSection {
+  margin-bottom: 12px;
+}
+
+.crSectionHeader {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 4px;
+}
+
+.crRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 4px;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.crBtn {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.crBtnActive {
+  background: var(--accent-blue);
+  color: var(--text-bright);
+}
+
+.crControls {
+  display: flex;
+  gap: 3px;
+  margin: 4px 0;
+}
+
+.crToggle {
+  flex: 1;
+  height: 22px;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  font-family: var(--font-family);
+}
+
+.crToggle:hover {
+  background: var(--bg-button-hover);
+}
+
+.crFader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+}
+
+.crFaderTrack {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 2px;
+  position: relative;
+}
+
+.crFaderThumb {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--text-secondary);
+  border-radius: 2px;
+  left: 75%;
+  top: -3px;
+  cursor: pointer;
+}
+
+.crFaderValue {
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Meter Tab */
+.meterPanel {
+  padding: 8px;
+}
+
+.meterTitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 8px;
+}
+
+.masterMeter {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.meterChannel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.meterBar {
+  width: 12px;
+  height: 200px;
+  background: var(--meter-background);
+  border-radius: 1px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.meterFillGreen {
+  background: linear-gradient(to top, var(--meter-green) 0%, var(--meter-green) 70%, var(--meter-yellow) 70%, var(--meter-yellow) 85%, var(--meter-orange) 85%, var(--meter-orange) 95%, var(--meter-red) 95%);
+  border-radius: 1px;
+  transition: height 100ms;
+}
+
+.meterLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.meterScale {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 8px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  height: 200px;
+  justify-content: space-between;
+  padding: 0 4px;
+  margin-left: 40px;
+  margin-top: -208px;
+}
+
+.loudnessSection {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.loudnessTitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.loudnessRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.loudnessLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-bold);
+  min-width: 28px;
+}
+
+.loudnessValue {
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}

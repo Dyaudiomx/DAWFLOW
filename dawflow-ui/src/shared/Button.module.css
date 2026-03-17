@@ -1,0 +1,154 @@
+/* ==========================================================================
+   Button — Cubase 15 Pro style
+   ========================================================================== */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  background: var(--bg-button);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast);
+  outline: none;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+.button:hover:not(.disabled) {
+  background: var(--bg-button-hover);
+}
+
+.button:active:not(.disabled) {
+  background: var(--bg-button-active);
+}
+
+/* ---- Sizes ---- */
+
+.sm {
+  height: var(--button-sm);
+  font-size: var(--font-size-xs);
+  padding: 0 4px;
+  min-width: var(--button-sm);
+}
+
+.md {
+  height: var(--button-height);
+  font-size: var(--font-size-sm);
+  padding: 0 8px;
+}
+
+/* ---- Variant: default ---- */
+
+.default {
+  /* base styles already cover this */
+}
+
+.default.active {
+  background: var(--bg-button-active);
+  color: var(--text-bright);
+}
+
+/* ---- Variant: state (M / S / R / W / e) ---- */
+
+.state {
+  height: var(--button-sm);
+  min-width: var(--button-sm);
+  padding: 0 3px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-color: transparent;
+  background: var(--bg-button);
+  color: var(--text-secondary);
+}
+
+.state:hover:not(.disabled) {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.state.active {
+  /* activeColor is applied via inline style; fallback here */
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ---- Variant: tool (toolbar) ---- */
+
+.tool {
+  height: 26px;
+  min-width: 26px;
+  padding: 0 5px;
+  font-size: var(--font-size-md);
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.tool:hover:not(.disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.tool.active {
+  background: var(--bg-selected);
+  color: var(--text-bright);
+  border-color: var(--border-medium);
+}
+
+/* ---- Variant: transport ---- */
+
+.transport {
+  height: 28px;
+  min-width: 28px;
+  padding: 0 6px;
+  font-size: var(--font-size-lg);
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.transport:hover:not(.disabled) {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+
+.transport.active {
+  color: var(--text-bright);
+}
+
+/* ---- Variant: icon ---- */
+
+.icon {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+  padding: 0 4px;
+}
+
+.icon:hover:not(.disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.icon.active {
+  color: var(--text-bright);
+}
+
+/* ---- Disabled state ---- */
+
+.disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}

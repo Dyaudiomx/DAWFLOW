@@ -1,0 +1,230 @@
+/* ==========================================================================
+   CUBASE 15 PRO — DARK THEME DESIGN TOKENS
+   Pixel-perfect clone of the Steinberg Cubase 15 Pro dark UI.
+   All values are exposed as CSS custom properties on :root.
+   ========================================================================== */
+
+:root {
+
+  /* ------------------------------------------------------------------------
+     BACKGROUND COLORS
+     Dark charcoal palette — ordered from deepest to lightest.
+     ------------------------------------------------------------------------ */
+  --bg-app:              #1E1E1E;
+  --bg-toolbar:          #2A2A2A;
+  --bg-zone:             #2D2D2D;
+  --bg-inspector:        #303030;
+  --bg-section-header:   #383838;
+  --bg-track-list:       #333333;
+  --bg-event-display:    #353535;
+  --bg-mixer:            #252525;
+  --bg-input:            #1A1A1A;
+  --bg-hover:            #404040;
+  --bg-selected:         #4A4A4A;
+  --bg-button:           #3A3A3A;
+  --bg-button-hover:     #454545;
+  --bg-button-active:    #505050;
+  --bg-tab-active:       #2D2D2D;
+  --bg-tab-inactive:     #222222;
+
+  /* ------------------------------------------------------------------------
+     BORDERS & DIVIDERS
+     ------------------------------------------------------------------------ */
+  --border-subtle:       #3A3A3A;
+  --border-medium:       #454545;
+  --border-strong:       #555555;
+  --grid-line:           #3C3C3C;
+  --divider:             #1A1A1A;
+
+  /* ------------------------------------------------------------------------
+     TEXT
+     ------------------------------------------------------------------------ */
+  --text-primary:        #CCCCCC;
+  --text-secondary:      #888888;
+  --text-bright:         #FFFFFF;
+  --text-dim:            #555555;
+  --text-accent:         #4A90D9;
+
+  /* ------------------------------------------------------------------------
+     ACCENT / SELECTION
+     ------------------------------------------------------------------------ */
+  --accent-blue:         #4A90D9;
+  --accent-blue-dim:     #2C5A8C;
+  --accent-blue-hover:   #5BA0E9;
+
+  /* ------------------------------------------------------------------------
+     STATE COLORS — Cubase channel-strip button states
+     ------------------------------------------------------------------------ */
+  --color-solo:          #C8B830;
+  --color-mute:          #D47B2E;
+  --color-record:        #C43030;
+  --color-monitor:       #D47B2E;
+  --color-read:          #4CAF50;
+  --color-write:         #C43030;
+  --color-listen:        #4CAF50;
+  --color-cycle:         #6A5ACD;
+  --color-bypass:        #C8B830;
+
+  /* ------------------------------------------------------------------------
+     TRACK TYPE COLORS
+     Each track type gets a unique tint for headers, icons, and events.
+     ------------------------------------------------------------------------ */
+  --track-audio:         #5B7FA5;
+  --track-instrument:    #B8963A;
+  --track-midi:          #3A8C8C;
+  --track-group:         #6A9FD4;
+  --track-fx:            #8A6AAE;
+  --track-folder:        #777777;
+  --track-marker:        #7AAE4C;
+  --track-chord:         #C8A830;
+  --track-vca:           #4CAF50;
+  --track-tempo:         #888888;
+  --track-signature:     #888888;
+  --track-sampler:       #9B6AAE;
+  --track-arranger:      #D47B6E;
+  --track-transpose:     #6AAED4;
+  --track-ruler:         #777777;
+  --track-video:         #8C7A5A;
+
+  /* ------------------------------------------------------------------------
+     METER COLORS — bottom-to-top gradient
+     ------------------------------------------------------------------------ */
+  --meter-green:         #4CAF50;
+  --meter-yellow:        #C8B830;
+  --meter-orange:        #D47B2E;
+  --meter-red:           #C43030;
+  --meter-clip:          #FF0000;
+  --meter-background:    #1A1A1A;
+  --meter-peak-hold:     #FFFFFF;
+
+  /* ------------------------------------------------------------------------
+     TYPOGRAPHY
+     ------------------------------------------------------------------------ */
+  --font-family:         'Segoe UI', 'SF Pro Text', -apple-system, sans-serif;
+  --font-mono:           'SF Mono', 'Consolas', 'Menlo', monospace;
+
+  --font-size-xs:        10px;
+  --font-size-sm:        11px;
+  --font-size-md:        12px;
+  --font-size-lg:        13px;
+  --font-size-xl:        18px;
+  --font-size-xxl:       24px;
+
+  --font-weight-normal:  400;
+  --font-weight-medium:  500;
+  --font-weight-bold:    600;
+
+  /* ------------------------------------------------------------------------
+     DIMENSIONS
+     Fixed sizes that mirror the real Cubase 15 Pro layout.
+     ------------------------------------------------------------------------ */
+  --toolbar-height:        38px;
+  --transport-height:      44px;
+  --tab-bar-height:        26px;
+  --status-line-height:    20px;
+  --info-line-height:      20px;
+
+  --inspector-width:       220px;
+  --right-zone-width:      300px;
+  --lower-zone-height:     250px;
+
+  --track-height-min:      24px;
+  --track-height-default:  65px;
+
+  --mixer-strip-narrow:    56px;
+  --mixer-strip-wide:      90px;
+  --fader-width:           24px;
+  --fader-height:          140px;
+
+  --button-height:         22px;
+  --button-sm:             18px;
+  --knob-size:             32px;
+  --meter-width:           6px;
+  --section-header-height: 22px;
+
+  --border-radius:         2px;
+  --border-radius-sm:      1px;
+
+  --icon-size:             18px;
+  --icon-size-sm:          12px;
+  --icon-size-lg:          20px;
+
+  --scrollbar-width:       8px;
+  --divider-width:         4px;
+  --zone-min-width:        200px;
+  --zone-min-height:       150px;
+
+  /* ------------------------------------------------------------------------
+     SHADOWS
+     ------------------------------------------------------------------------ */
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:    0 2px 4px rgba(0, 0, 0, 0.4);
+  --shadow-lg:    0 4px 8px rgba(0, 0, 0, 0.5);
+  --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  /* ------------------------------------------------------------------------
+     TRANSITIONS
+     ------------------------------------------------------------------------ */
+  --transition-fast:   100ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow:   300ms ease;
+}
+
+
+/* ==========================================================================
+   GLOBAL RESET & BASE STYLES
+   DAW-style viewport lock — no scroll, no select, thin dark scrollbars.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-app);
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* --- Scrollbar — thin, dark, unobtrusive --------------------------------- */
+
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--border-radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg-app);
+}
+
+/* Firefox thin scrollbar fallback */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-medium) var(--bg-app);
+}

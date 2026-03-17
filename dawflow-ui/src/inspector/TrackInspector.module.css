@@ -1,0 +1,590 @@
+/* ==========================================================================
+   TrackInspector — Cubase 15 Pro Inspector Panel
+   Pixel-perfect clone: colored header, large M/S/R/W buttons, horizontal
+   blue volume bar with white circle thumb, pan slider, accordion sections.
+   ========================================================================== */
+
+.trackInspector {
+  display: flex;
+  flex-direction: column;
+  background: #2D2D2D;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ---- Track Name Header — full-width colored bar ---- */
+
+.trackHeader {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 6px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.trackName {
+  flex: 1;
+  height: 24px;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  min-width: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  cursor: default;
+}
+
+.trackName:focus {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  cursor: text;
+}
+
+.editChannelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: #AAAAAA;
+  font-size: 11px;
+  font-weight: 600;
+  font-style: italic;
+  font-family: var(--font-family);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.editChannelBtn:hover {
+  background: rgba(0, 0, 0, 0.5);
+  color: #FFFFFF;
+}
+
+/* ---- State Buttons — Row 1: M S R W L B (large, 24x24) ---- */
+
+.stateRow {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px 4px;
+  gap: 4px;
+}
+
+.stateButtonsRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.stateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #555555;
+  border-radius: 2px;
+  background: transparent;
+  color: #888888;
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.stateBtn:hover {
+  background: #404040;
+  color: #BBBBBB;
+}
+
+.stateBtnMute {
+  background: #D47B2E;
+  color: #FFFFFF;
+  border-color: #D47B2E;
+}
+
+.stateBtnMute:hover {
+  background: #E08B3E;
+  color: #FFFFFF;
+}
+
+.stateBtnSolo {
+  background: #C8B830;
+  color: #1A1A1A;
+  border-color: #C8B830;
+}
+
+.stateBtnSolo:hover {
+  background: #D8C840;
+  color: #1A1A1A;
+}
+
+.stateBtnRead {
+  background: #4CAF50;
+  color: #FFFFFF;
+  border-color: #4CAF50;
+}
+
+.stateBtnRead:hover {
+  background: #5CBF60;
+  color: #FFFFFF;
+}
+
+.stateBtnWrite {
+  background: #C43030;
+  color: #FFFFFF;
+  border-color: #C43030;
+}
+
+.stateBtnWrite:hover {
+  background: #D44040;
+  color: #FFFFFF;
+}
+
+.stateBtnListen {
+  background: #4CAF50;
+  color: #FFFFFF;
+  border-color: #4CAF50;
+}
+
+.stateBtnBypass {
+  background: #C8B830;
+  color: #1A1A1A;
+  border-color: #C8B830;
+}
+
+/* ---- State Buttons — Row 2: Record dot, Monitor, Musical note, etc ---- */
+
+.iconButtonsRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #555555;
+  border-radius: 2px;
+  background: transparent;
+  color: #888888;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.iconBtn:hover {
+  background: #404040;
+  color: #BBBBBB;
+}
+
+.iconBtnRecord {
+  color: #C43030;
+  border-color: #C43030;
+}
+
+.iconBtnRecord:hover {
+  background: rgba(196, 48, 48, 0.15);
+}
+
+.iconBtnRecordActive {
+  background: #C43030;
+  color: #FFFFFF;
+  border-color: #C43030;
+}
+
+.iconBtnMonitor {
+  color: #D47B2E;
+  border-color: #D47B2E;
+}
+
+.iconBtnMonitor:hover {
+  background: rgba(212, 123, 46, 0.15);
+}
+
+.iconBtnMonitorActive {
+  background: #D47B2E;
+  color: #FFFFFF;
+  border-color: #D47B2E;
+}
+
+/* ---- Volume Slider — horizontal blue bar with white circle thumb ---- */
+
+.volumeRow {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 6px;
+  height: 24px;
+}
+
+.sliderIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #888888;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.volumeBarWrap {
+  flex: 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.volumeTrack {
+  width: 100%;
+  height: 8px;
+  background: #1A1A1A;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.volumeFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #4A90D9;
+  border-radius: 4px 0 0 4px;
+  pointer-events: none;
+}
+
+.volumeThumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: #DDDDDD;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.volumeValue {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #CCCCCC;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 46px;
+  text-align: right;
+}
+
+/* ---- Pan Slider — horizontal grey bar with white circle thumb ---- */
+
+.panRow {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px 4px;
+  gap: 6px;
+  height: 20px;
+}
+
+.panBarWrap {
+  flex: 1;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.panTrack {
+  width: 100%;
+  height: 6px;
+  background: #1A1A1A;
+  border-radius: 3px;
+  position: relative;
+}
+
+.panFill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: #666666;
+  pointer-events: none;
+}
+
+.panFillLeft {
+  border-radius: 3px 0 0 3px;
+}
+
+.panFillRight {
+  border-radius: 0 3px 3px 0;
+}
+
+.panFillCenter {
+  border-radius: 3px;
+}
+
+.panThumb {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: #DDDDDD;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.panValue {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #CCCCCC;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: right;
+}
+
+/* ---- Delay Display ---- */
+
+.delayRow {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px 6px;
+  gap: 6px;
+  height: 18px;
+}
+
+.delayValue {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #888888;
+  white-space: nowrap;
+}
+
+/* ---- Routing Section ---- */
+
+.routingSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.routingRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.routingDropdown {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  background: #1A1A1A;
+  border: 1px solid #3A3A3A;
+  border-radius: 2px;
+  padding: 0 6px;
+  cursor: pointer;
+  transition: border-color 100ms ease;
+}
+
+.routingDropdown:hover {
+  border-color: #505050;
+}
+
+.routingIcon {
+  font-size: 10px;
+  color: #888888;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.routingLabel {
+  flex: 1;
+  font-size: 11px;
+  color: #CCCCCC;
+  font-family: var(--font-family);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routingIcons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.routingIconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #3A3A3A;
+  border-radius: 2px;
+  background: transparent;
+  color: #888888;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  font-family: var(--font-family);
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.routingIconBtn:hover {
+  background: #404040;
+  color: #CCCCCC;
+}
+
+/* ---- Placeholder rows for simple sections ---- */
+
+.placeholderRow {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 4px;
+}
+
+.presetDropdown {
+  width: 100%;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  background: #1A1A1A;
+  border: 1px solid #3A3A3A;
+  border-radius: 2px;
+  padding: 0 6px;
+  cursor: pointer;
+  transition: border-color 100ms ease;
+}
+
+.presetDropdown:hover {
+  border-color: #505050;
+}
+
+.presetIcon {
+  font-size: 10px;
+  color: #888888;
+  margin-right: 4px;
+}
+
+.presetText {
+  font-size: 11px;
+  color: #888888;
+  font-family: var(--font-family);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholderText {
+  font-size: 11px;
+  color: #555555;
+}
+
+/* ---- Notepad ---- */
+
+.notepad {
+  width: 100%;
+  height: 56px;
+  padding: 4px 6px;
+  background: #1A1A1A;
+  border: 1px solid #3A3A3A;
+  border-radius: 2px;
+  color: #CCCCCC;
+  font-family: var(--font-family);
+  font-size: 11px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 100ms ease;
+}
+
+.notepad:focus {
+  border-color: #4A90D9;
+}
+
+/* ---- Quick Controls — compact horizontal bars ---- */
+
+.quickControls {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.qcSlot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+}
+
+.qcLabel {
+  font-size: 10px;
+  color: #888888;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.qcBar {
+  flex: 1;
+  height: 6px;
+  background: #1A1A1A;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.qcFill {
+  height: 100%;
+  background: #2C5A8C;
+  border-radius: 3px;
+}
+
+/* ---- MIDI-specific sections ---- */
+
+.midiRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+}
+
+.midiLabel {
+  font-size: 11px;
+  color: #888888;
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.midiValue {
+  font-size: 11px;
+  color: #CCCCCC;
+  font-family: var(--font-mono);
+}

@@ -1,0 +1,52 @@
+/* ==========================================================================
+   LowerZone — Cubase 15 Pro lower zone container with tab switching
+   ========================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-zone);
+}
+
+.tabBar {
+  display: flex;
+  height: var(--tab-bar-height);
+  background: var(--bg-toolbar);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 4px;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: none;
+  background: var(--bg-tab-inactive);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  white-space: nowrap;
+  outline: none;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tabActive {
+  color: var(--text-bright);
+  background: var(--bg-tab-active);
+  border-bottom: 2px solid var(--accent-blue);
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+}

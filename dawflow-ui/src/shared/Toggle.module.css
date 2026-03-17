@@ -1,0 +1,36 @@
+/* ==========================================================================
+   Toggle — Cubase 15 Pro on/off toggle button
+   ========================================================================== */
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--button-sm);
+  min-width: var(--button-sm);
+  padding: 0 5px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.toggle:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.active {
+  /* Fallback when no activeColor is set via inline style */
+  background: var(--accent-blue);
+  color: var(--text-bright);
+  border-color: var(--accent-blue);
+}

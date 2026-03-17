@@ -1,0 +1,4 @@
+[submodule "engine"]
+	path = engine
+	url = https://github.com/Dyaudiomx/dawflow-engine.git
+	branch = main

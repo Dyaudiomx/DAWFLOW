@@ -1,0 +1,451 @@
+/* ==========================================================================
+   Transport Bar — Cubase 15 Pro bottom transport
+   Taller, bigger buttons, prominent time display, Tap tempo
+   ========================================================================== */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 8px;
+  background: linear-gradient(to bottom, #3A3A3A 0%, #333 40%, #2E2E2E 100%);
+  border-top: 1px solid #4A4A4A;
+  flex-shrink: 0;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.bar::-webkit-scrollbar { height: 0; }
+
+/* Left zone pushes content toward center */
+.leftZone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 0;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Right zone pushes content away from center */
+.rightZone {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 0;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+/* ---- Separators ---- */
+.sep {
+  width: 1px;
+  height: 24px;
+  background: #4A4A4A;
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* ---- Small Utility Icons (left edge) ---- */
+.utilIcons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.utilBtn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #383838;
+  border: 1px solid #4A4A4A;
+  color: #999;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 80ms;
+}
+
+.utilBtn:hover {
+  background: #4A4A4A;
+  color: #ccc;
+}
+
+/* ---- ASIO / Disk Performance ---- */
+.perfGroup {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.perfLabel {
+  font-size: 8px;
+  color: #777;
+  width: 24px;
+  text-align: right;
+  letter-spacing: 0.3px;
+}
+
+.perfBar {
+  width: 40px;
+  height: 5px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.perfFill {
+  height: 100%;
+  background: var(--meter-green);
+  border-radius: 2px;
+  transition: width 200ms;
+}
+
+/* ---- Record Mode Select ---- */
+.select {
+  height: 22px;
+  padding: 0 6px;
+  background: #2A2A2A;
+  border: 1px solid #4A4A4A;
+  border-radius: 3px;
+  color: #bbb;
+  font-size: 10px;
+  font-family: var(--font-family);
+  cursor: pointer;
+  outline: none;
+}
+
+.select option { background: #2A2A2A; }
+
+/* ---- Locator Fields ---- */
+.locatorField {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  height: 24px;
+  background: #1E1E1E;
+  border: 1px solid #3A3A3A;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.locIcon {
+  font-size: 9px;
+  font-weight: 700;
+  color: #666;
+}
+
+.locValue {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #CCC;
+  min-width: 76px;
+}
+
+/* ===========================================================================
+   TRANSPORT BUTTON CLUSTER (centered)
+   =========================================================================== */
+
+.transportCluster {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  background: #2A2A2A;
+  border-radius: 4px;
+  padding: 2px 3px;
+  border: 1px solid #3A3A3A;
+}
+
+/* Small transport buttons */
+.tBtn {
+  width: 30px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms;
+  color: #999;
+  padding: 0;
+}
+
+.tBtn:hover {
+  background: #444;
+}
+
+/* Big transport buttons (Stop, Play, Record) */
+.tBtnBig {
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms;
+  padding: 0;
+}
+
+.tBtnBig:hover {
+  background: #444;
+}
+
+/* ---- CSS Transport Icons (bigger) ---- */
+
+.iconTriLeft {
+  display: inline-block;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 8px solid #BBB;
+}
+
+.iconTriRight {
+  display: inline-block;
+  width: 0; height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #BBB;
+}
+
+.iconLine {
+  display: inline-block;
+  width: 2px;
+  height: 12px;
+  background: #BBB;
+}
+
+.iconSkipBack, .iconSkipFwd, .iconReturnZero {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.iconRewind, .iconForward {
+  display: flex;
+  align-items: center;
+}
+
+.iconRewind .iconTriLeft:last-child { margin-left: -2px; }
+.iconForward .iconTriRight:last-child { margin-left: -2px; }
+
+.iconStop {
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: #BBB;
+  border-radius: 1px;
+}
+
+.iconPlay {
+  display: block;
+  width: 0; height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 12px solid #BBB;
+  margin-left: 2px;
+}
+
+.iconRecord {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #777;
+}
+
+.iconLoop {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #BBB;
+  border-radius: 50%;
+  border-right-color: transparent;
+  position: relative;
+}
+
+.iconLoop::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  border-left: 4px solid #BBB;
+}
+
+/* Active states */
+.playActive .iconPlay { border-left-color: #4CAF50; }
+.stopActive .iconStop { background: #DDD; }
+.recordActive .iconRecord { background: #C43030; box-shadow: 0 0 6px rgba(196, 48, 48, 0.6); }
+.loopActive .iconLoop { border-color: #6A5ACD; border-right-color: transparent; }
+.loopActive .iconLoop::after { border-left-color: #6A5ACD; }
+
+/* Time display — matches the locator field style but slightly larger font */
+.timeDisplay {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: #DDD;
+  background: #1E1E1E;
+  border: 1px solid #3A3A3A;
+  border-radius: 3px;
+  padding: 0 8px;
+  min-width: 90px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---- Tempo Field ---- */
+.tempoField {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  height: 24px;
+  background: #1E1E1E;
+  border: 1px solid #3A3A3A;
+  border-radius: 3px;
+}
+
+.tempoVal {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: #DDD;
+  font-weight: 600;
+}
+
+.tempoUpDown {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tempoArrow {
+  width: 12px;
+  height: 10px;
+  background: transparent;
+  border: none;
+  color: #777;
+  font-size: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.tempoArrow:hover { color: #ccc; }
+
+/* Tap button */
+.tapBtn {
+  height: 24px;
+  padding: 0 8px;
+  background: #3A3A3A;
+  border: 1px solid #4A4A4A;
+  border-radius: 3px;
+  color: #AAA;
+  font-size: 10px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 80ms;
+}
+
+.tapBtn:hover { background: #4A4A4A; color: #ddd; }
+
+/* Time Sig */
+.timeSigField {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: #CCC;
+  padding: 0 6px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  background: #1E1E1E;
+  border: 1px solid #3A3A3A;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Metronome Click */
+.clickBtn {
+  width: 28px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3A3A3A;
+  border: 1px solid #4A4A4A;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 80ms;
+}
+
+.clickBtn:hover { background: #4A4A4A; }
+
+.iconMetronome {
+  display: block;
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 12px solid #888;
+  position: relative;
+}
+
+.iconMetronome::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: -1px;
+  width: 2px;
+  height: 7px;
+  background: #ccc;
+  transform: rotate(-20deg);
+  transform-origin: bottom center;
+}
+
+.clickActive { background: #2C5A8C !important; border-color: #4A90D9 !important; }
+.clickActive .iconMetronome { border-bottom-color: #6AB0F9; }
+.clickActive .iconMetronome::after { background: #8CC8FF; }
+
+/* ---- Activity Indicators ---- */
+.activityGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.actText {
+  font-size: 8px;
+  color: #555;
+  letter-spacing: 0.3px;
+}
