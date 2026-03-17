@@ -94,6 +94,22 @@ Splash::Splash ()
 	layout = create_pango_layout ("");
 	current_message = string_compose (_("%1 loading ..."), PROGRAM_NAME);
 
+	/* Load logo image */
+	std::string logo_file;
+	Searchpath logo_rc (ARDOUR::ardour_data_search_path());
+	logo_rc.add_subdirectory_to_paths ("resources");
+	if (find_file (logo_rc, PROGRAM_NAME "-splash.png", logo_file)) {
+		try {
+			logo_pixbuf = Gdk::Pixbuf::create_from_file (logo_file);
+			/* Scale logo to fit splash width with padding */
+			int target_w = splash_width / 2;
+			int target_h = (logo_pixbuf->get_height() * target_w) / logo_pixbuf->get_width();
+			logo_pixbuf = logo_pixbuf->scale_simple (target_w, target_h, Gdk::INTERP_BILINEAR);
+		} catch (...) {
+			/* logo loading failed, will draw text only */
+		}
+	}
+
 	darea.show ();
 	darea.signal_expose_event().connect (sigc::mem_fun (*this, &Splash::expose));
 
@@ -242,16 +258,28 @@ Splash::expose (GdkEventExpose* ev)
 	cr->rectangle (0, 0, splash_width, 3);
 	cr->fill ();
 
-	/* Title: "DAWFLOW" centered */
+	/* Logo image centered */
+	int logo_bottom = splash_height / 2 - 40;
+	if (logo_pixbuf) {
+		int lw = logo_pixbuf->get_width ();
+		int lh = logo_pixbuf->get_height ();
+		double lx = (splash_width - lw) / 2.0;
+		double ly = logo_bottom - lh;
+		gdk_cairo_set_source_pixbuf (cr->cobj(), logo_pixbuf->gobj(), lx, ly);
+		cr->paint ();
+		logo_bottom = ly + lh + 8;
+	}
+
+	/* Title: "DAWFLOW" centered below logo */
 	{
 		Glib::RefPtr<Pango::Layout> title_layout = darea.create_pango_layout ("");
-		Pango::FontDescription title_font ("Sans Bold 48");
+		Pango::FontDescription title_font ("Sans Bold 36");
 		title_layout->set_font_description (title_font);
 		title_layout->set_text ("DAWFLOW");
 		int tw, th;
 		title_layout->get_pixel_size (tw, th);
 		cr->set_source_rgb (1.0, 1.0, 1.0);
-		cr->move_to ((splash_width - tw) / 2.0, (splash_height / 2.0) - th - 8);
+		cr->move_to ((splash_width - tw) / 2.0, logo_bottom);
 		title_layout->show_in_cairo_context (cr);
 	}
 

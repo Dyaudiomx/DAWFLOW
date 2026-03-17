@@ -22,6 +22,7 @@
 
 #include <set>
 
+#include <ydkmm/pixbuf.h>
 #include <ytkmm/window.h>
 #include <ytkmm/drawingarea.h>
 #include <ytkmm/box.h>
@@ -57,6 +58,7 @@ private:
 
 	Gtk::DrawingArea darea;
 	Glib::RefPtr<Pango::Layout> layout;
+	Glib::RefPtr<Gdk::Pixbuf> logo_pixbuf;
 
 	std::string current_message;
 
