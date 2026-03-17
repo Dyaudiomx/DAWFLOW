@@ -20,6 +20,8 @@ fi
 if [ ! -f "$ENGINE/build/c4che/_cache.py" ]; then
     echo "[2/4] Configuring engine..."
     cd "$ENGINE"
+
+
     export PKG_CONFIG_PATH="/opt/homebrew/opt/libarchive/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig"
     export CXXFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/libarchive/include -I/opt/homebrew/include/raptor2"
     export CFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/libarchive/include -I/opt/homebrew/include/raptor2"
