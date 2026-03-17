@@ -9,7 +9,7 @@ def configure(conf):
 
 def build(bld):
     obj = bld.shlib(features='cxx cxxshlib')
-    obj.source = ['message.cc']
+    obj.source = ['message.cc', 'socket_server.cc', 'socket_client.cc']
     obj.target = 'dawflow_ipc'
     obj.name = 'libdawflow_ipc'
     obj.includes = ['.']
