@@ -41,6 +41,9 @@
 #include <ytkmm/liststore.h>
 #include <ytkmm/combobox.h>
 #include <ytkmm/comboboxtext.h>
+#include <ytkmm/eventbox.h>
+#include <ytkmm/entry.h>
+#include <ytkmm/separator.h>
 
 #include "temporal/domain_provider.h"
 
@@ -87,44 +90,87 @@ public:
 private:
 	bool on_delete_event (GdkEventAny*);
 
-	Gtk::Button* cancel_button;
-	Gtk::Button* open_button;
-	Gtk::Button* quit_button;
+	/* ---- Hub layout containers ---- */
 
-	ArdourWidgets::ArdourButton new_button;
-	ArdourWidgets::ArdourButton recent_button;
-	ArdourWidgets::ArdourButton existing_button;
-	ArdourWidgets::ArdourButton prefs_button;
+	/* Header bar */
+	Gtk::EventBox  header_bar_bg;
+	Gtk::HBox      header_bar;
+	Gtk::Label     brand_label;
+	Gtk::Label     audio_driver_label;
+	Gtk::ComboBoxText device_combo;
 
-	Gtk::ComboBoxText  timebase_chooser;
+	/* Content area: sidebar + main */
+	Gtk::HBox      content_area;
 
-	bool prefs_button_pressed (GdkEventButton*);
+	/* Left sidebar */
+	Gtk::EventBox  sidebar_bg;
+	Gtk::VBox      sidebar;
 
-	void new_button_choice_action ();
-	void recent_button_choice_action ();
-	void existing_button_choice_action ();
+	/* Sidebar navigation items */
+	enum SidebarPage { PageProjects = 0, PageTutorials, PageSettings };
+	SidebarPage    current_sidebar_page;
+	Gtk::EventBox  sidebar_item_projects;
+	Gtk::EventBox  sidebar_item_tutorials;
+	Gtk::EventBox  sidebar_item_settings;
+	Gtk::Label     sidebar_label_projects;
+	Gtk::Label     sidebar_label_tutorials;
+	Gtk::Label     sidebar_label_settings;
+	void           sidebar_select (SidebarPage page);
+	bool           sidebar_projects_clicked (GdkEventButton*);
+	bool           sidebar_tutorials_clicked (GdkEventButton*);
+	bool           sidebar_settings_clicked (GdkEventButton*);
+
+	/* Main content area (right of sidebar) */
+	Gtk::EventBox  main_content_bg;
+	Gtk::VBox      main_content;
+
+	/* Top bar: Create Empty + Search */
+	Gtk::HBox      top_bar;
+	Gtk::Button    create_empty_button;
+	Gtk::Entry     search_entry;
+	void           create_empty_clicked ();
+	void           search_changed ();
+
+	/* Scrollable area with Recent + Templates */
+	Gtk::ScrolledWindow content_scroller;
+	Gtk::VBox           content_list;
+
+	/* Recent section */
+	Gtk::EventBox  recent_header_bg;
+	Gtk::Label     recent_header_label;
+	bool           recent_header_clicked (GdkEventButton*);
+	bool           recent_section_visible;
+
+	/* Templates section */
+	Gtk::EventBox  templates_header_bg;
+	Gtk::Label     templates_header_label;
+	bool           templates_header_clicked (GdkEventButton*);
+	bool           templates_section_visible;
+
+	/* Bottom bar */
+	Gtk::EventBox  bottom_bar_bg;
+	Gtk::HBox      bottom_bar;
+	Gtk::Button    choose_file_button;
+	Gtk::Button*   open_button;
+	Gtk::Button*   cancel_button;
+	Gtk::Button*   quit_button;
+
+	void           choose_file_clicked ();
 
 	bool open_button_pressed (GdkEventButton*);
 
-	Gtk::Table _open_table;
-
-	/* initial choice page */
-
-	void setup_existing_box ();
-	void setup_recent_sessions ();
-	Gtk::VBox recent_vbox;
+	Gtk::ComboBoxText  timebase_chooser;
 
 	DialogTab _initial_tab;
 
-#ifdef MIXBUS
-	Gtk::Button _license_button;
-	Gtk::Label  _license_label;
-	void license_button_clicked ();
-#endif
+	/* ---- Existing session chooser (hidden, used by Choose File) ---- */
+	Gtk::FileChooserWidget       existing_session_chooser;
+	void setup_existing_box ();
+	void existing_file_selected();
+	void existing_file_activated ();
 
-	/* recent sessions */
-
-	void setup_existing_session_page ();
+	/* ---- Recent sessions ---- */
+	void setup_recent_sessions ();
 
 	struct RecentSessionsSorter
 	{
@@ -159,8 +205,6 @@ private:
 	Gtk::TreeView                recent_session_display;
 	Glib::RefPtr<Gtk::TreeStore> recent_session_model;
 	Gtk::ScrolledWindow          recent_scroller;
-	Gtk::Label                   recent_label;
-	Gtk::FileChooserWidget       existing_session_chooser;
 	int redisplay_recent_sessions ();
 	void recent_session_row_selected ();
 	void recent_session_sort_changed ();
@@ -171,10 +215,7 @@ private:
 
 	void session_selected ();
 
-	void existing_file_selected();
-	void existing_file_activated ();
-
-	/* new sessions */
+	/* ---- New sessions ---- */
 
 	void setup_new_session_page ();
 	Gtk::Entry new_name_entry;
@@ -207,21 +248,17 @@ private:
 
 	Glib::RefPtr<Gtk::TreeStore>  template_model;
 	Gtk::TreeView                 template_chooser;
-	Gtk::ScrolledWindow           template_scroller;
 
 	void template_row_selected ();
 
 	Gtk::TextView template_desc;
 	Gtk::Frame    template_desc_frame;
 
-	Gtk::VBox session_new_vbox;
 	std::string load_template_override;
 
 	void new_name_changed ();
 	void new_name_activated ();
 	void populate_session_templates ();
-
-	void tab_page_switched(GtkNotebookPage*, guint page_number);
 
 	/* --disable plugins UI */
 	Gtk::CheckButton _disable_plugins;
@@ -240,7 +277,9 @@ private:
 	sigc::connection info_scroller_connection;
 	void updates_button_clicked ();
 
-	Gtk::Notebook _tabs;
+	/* Audio driver */
+	void populate_device_combo ();
+	void device_combo_changed ();
 
 	Glib::RefPtr<Gtk::ActionGroup> action_group;
 	Glib::RefPtr<Gtk::Action> new_session_action;

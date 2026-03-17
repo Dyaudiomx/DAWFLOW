@@ -48,6 +48,7 @@
 #include "widgets/tooltips.h"
 
 #include "ardour/audioengine.h"
+#include "ardour/audio_backend.h"
 #include "ardour/filesystem_paths.h"
 #include "ardour/luascripting.h"
 #include "ardour/recent_sessions.h"
@@ -78,178 +79,291 @@ using namespace ARDOUR_UI_UTILS;
 
 SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_name, const std::string& session_path, const std::string& template_name, bool cancel_not_quit)
 	: ArdourDialog (_("DAWFLOW Hub"), true, true)
+	, current_sidebar_page (PageProjects)
+	, recent_section_visible (true)
+	, templates_section_visible (true)
 	, _initial_tab (initial_tab)
 	, new_name_was_edited (false)
 	, new_folder_chooser (FILE_CHOOSER_ACTION_SELECT_FOLDER)
 {
 	action_group = ActionGroup::create (X_("SessionDialog"));
-
-	/* No string translation because these don't show anywhere */
 	new_session_action = Action::create (X_("New"));
-	action_group->add (new_session_action, sigc::mem_fun (this, &SessionDialog::new_button_choice_action));
+	action_group->add (new_session_action);
 	recent_session_action = Action::create (X_("Recent"));
-	action_group->add (recent_session_action, sigc::mem_fun (this, &SessionDialog::recent_button_choice_action));
+	action_group->add (recent_session_action);
 	existing_session_action = Action::create (X_("Open"));
-	action_group->add (existing_session_action, sigc::mem_fun (this, &SessionDialog::existing_button_choice_action));
+	action_group->add (existing_session_action);
 
 	set_position (WIN_POS_CENTER);
-	get_vbox()->set_spacing (6);
-	get_vbox()->pack_start (_open_table, false, false);
+	set_border_width (0);
 
-	new_button.set_text (_("NEW"));
-	new_button.set_name ("tab button");
-	new_button.set_tweaks(ArdourButton::Tweaks(ArdourButton::ForceFlat));
-	new_button.set_corner_mask(ArdourButton::BOTTOM);
-	new_button.set_border_mask(ArdourButton::HIDE_TOP);
-	new_button.set_can_focus (true);
-	new_button.set_related_action (new_session_action);
+	/* Overall dialog background */
+	Gdk::Color dialog_bg ("#1e1e1e");
+	modify_bg (STATE_NORMAL, dialog_bg);
 
-	recent_button.set_text (_("RECENT"));
-	recent_button.set_name ("tab button");
-	recent_button.set_tweaks(ArdourButton::Tweaks(ArdourButton::ForceFlat));
-	recent_button.set_corner_mask(ArdourButton::TOP);
-	recent_button.set_border_mask(ArdourButton::HIDE_BOTTOM);
-	recent_button.set_can_focus (true);
-	recent_button.set_related_action (recent_session_action);
+	/* Hide the default action area and vbox separator -- we build our own */
+	get_action_area()->hide();
+	set_has_separator (false);
 
-	existing_button.set_text (_("OPEN"));
-	existing_button.set_name ("tab button");
-	existing_button.set_tweaks(ArdourButton::Tweaks(ArdourButton::ForceFlat));
-	existing_button.set_corner_mask(ArdourButton::NONE);
-	existing_button.set_can_focus (true);
-	existing_button.set_related_action (existing_session_action);
+	Gtk::VBox* main_vbox = get_vbox();
+	main_vbox->set_spacing (0);
+	main_vbox->set_border_width (0);
 
-	prefs_button.set_text(_("SETTINGS"));
-	prefs_button.set_name ("tab button");
-	prefs_button.signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::prefs_button_pressed), false);
-	prefs_button.set_tweaks(ArdourButton::Tweaks(ArdourButton::ForceFlat));
+	/* ============================================================
+	 *  HEADER BAR
+	 * ============================================================ */
 
-	Glib::RefPtr<SizeGroup> grp = SizeGroup::create (Gtk::SIZE_GROUP_BOTH);
-	grp->add_widget(new_button);
-	grp->add_widget(recent_button);
-	grp->add_widget(existing_button);
+	Gdk::Color header_bg_color ("#252528");
 
-	int top = 0;
-	int row = 0;
+	header_bar_bg.modify_bg (STATE_NORMAL, header_bg_color);
+	header_bar.set_spacing (12);
+	header_bar.set_border_width (10);
 
-#if !defined (LIVETRAX) && !defined (VBM)
-	/* Possible update message */
-	if (ARDOUR_UI::instance()->announce_string() != "") {
-		Gtk::HBox* info_hbox = manage (new HBox);
-		Gtk::VBox* info_vbox = manage (new VBox);
+	/* DAWFLOW branding */
+	brand_label.set_markup ("<span size='xx-large' weight='bold' foreground='#e0e0e0'>DAWFLOW</span>");
+	brand_label.set_alignment (0.0, 0.5);
 
-		info_hbox->set_border_width (12);
-		info_hbox->set_spacing (6);
-		info_vbox->set_spacing (6);
+	/* Audio Driver area */
+	audio_driver_label.set_markup ("<span size='small' foreground='#888888'>Audio Driver</span>");
+	audio_driver_label.set_alignment (1.0, 0.5);
 
-		info_scroller_count = 0;
-		info_scroller_connection = Glib::signal_timeout().connect (mem_fun(*this, &SessionDialog::info_scroller_update), 50);
+	device_combo.set_size_request (220, -1);
 
-		ArdourButton *updates_button = manage (new ArdourButton (_("Check the website for more...")));
+	Gtk::HBox* driver_hbox = manage (new HBox);
+	driver_hbox->set_spacing (8);
+	driver_hbox->pack_start (audio_driver_label, false, false);
+	driver_hbox->pack_start (device_combo, false, false);
 
-		updates_button->signal_clicked.connect (mem_fun(*this, &SessionDialog::updates_button_clicked));
-		set_tooltip (*updates_button, _("Click to open the program website in your web browser"));
+	header_bar.pack_start (brand_label, true, true);
+	header_bar.pack_end (*driver_hbox, false, false);
 
-		info_vbox->pack_start (info_scroller_label, false, false);
-		info_vbox->pack_start (*updates_button, false, false);
-		info_hbox->pack_start (*info_vbox, true, false);
+	header_bar_bg.add (header_bar);
+	header_bar_bg.set_size_request (-1, 60);
 
-		info_hbox->show_all ();
+	main_vbox->pack_start (header_bar_bg, false, false);
 
-		/* no update message for trax, show license here */
-		_open_table.attach (*info_hbox, 0, 3, row, row + 1, FILL, FILL, 0, 6); ++row; ++top;
-	}
-#endif
+	/* ============================================================
+	 *  CONTENT AREA: SIDEBAR + MAIN
+	 * ============================================================ */
 
-	/* DAWFLOW branding label in place of splash image */
-	{
-		Gtk::Label* brand_label = manage (new Gtk::Label ());
-		brand_label->set_markup ("<span size='xx-large' weight='bold' foreground='#cccccc'>DAWFLOW</span>");
-		brand_label->set_alignment (0.5, 0.5);
-		brand_label->set_size_request (-1, 60);
-		_open_table.attach (*brand_label, 0,1, row, row + 1, FILL, FILL); ++row;
-		grp->add_widget (*brand_label);
-	}
+	content_area.set_spacing (0);
 
-	_open_table.attach (recent_button,     0,1, row, row + 1, FILL, FILL); ++row;
-	_open_table.attach (existing_button,   0,1, row, row + 1, FILL, FILL); ++row;
-	_open_table.attach (new_button,        0,1, row, row + 1, FILL, FILL); ++row;
+	/* ---- Left Sidebar ---- */
 
-	++row;
-	Label *vspacer = manage (new Label());
-	vspacer->set_size_request(8, -1);
-	_open_table.attach (*vspacer,          1,2, top, row, FILL,        FILL|EXPAND, 0, 0);
-	_open_table.attach (_tabs,             2,3, top, row, FILL|EXPAND, FILL|EXPAND, 0, 0);
+	Gdk::Color sidebar_bg_color ("#2d2d2d");
+	sidebar_bg.modify_bg (STATE_NORMAL, sidebar_bg_color);
 
-	_tabs.set_show_tabs(false);
-	_tabs.set_show_border(false);
+	sidebar.set_spacing (0);
+	sidebar.set_border_width (0);
 
-	_tabs.append_page(session_new_vbox);
-	_tabs.append_page(recent_vbox);
-	_tabs.append_page(existing_session_chooser);
+	/* Sidebar spacer at top */
+	Gtk::Label* sidebar_top_spacer = manage (new Label (""));
+	sidebar_top_spacer->set_size_request (-1, 12);
+	sidebar.pack_start (*sidebar_top_spacer, false, false);
 
-	session_new_vbox.show_all();
-	recent_vbox.show_all();
-	existing_session_chooser.show_all();
+	/* Sidebar item colors */
+	Gdk::Color sidebar_item_normal ("#2d2d2d");
+	Gdk::Color sidebar_item_selected ("#3a3a3a");
 
-	_tabs.show_all();
+	/* Projects item */
+	sidebar_label_projects.set_markup ("<span size='small' foreground='#cccccc'>    Projects</span>");
+	sidebar_label_projects.set_alignment (0.0, 0.5);
+	sidebar_label_projects.set_size_request (180, 36);
+	sidebar_item_projects.add (sidebar_label_projects);
+	sidebar_item_projects.modify_bg (STATE_NORMAL, sidebar_item_selected);
+	sidebar_item_projects.set_events (Gdk::BUTTON_PRESS_MASK);
+	sidebar_item_projects.signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::sidebar_projects_clicked));
+	sidebar.pack_start (sidebar_item_projects, false, false);
 
-	cancel_button = add_button ((cancel_not_quit ? Stock::CANCEL : Stock::QUIT), RESPONSE_CANCEL);
+	/* Tutorials item */
+	sidebar_label_tutorials.set_markup ("<span size='small' foreground='#888888'>    Tutorials</span>");
+	sidebar_label_tutorials.set_alignment (0.0, 0.5);
+	sidebar_label_tutorials.set_size_request (180, 36);
+	sidebar_item_tutorials.add (sidebar_label_tutorials);
+	sidebar_item_tutorials.modify_bg (STATE_NORMAL, sidebar_item_normal);
+	sidebar_item_tutorials.set_events (Gdk::BUTTON_PRESS_MASK);
+	sidebar_item_tutorials.signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::sidebar_tutorials_clicked));
+	sidebar.pack_start (sidebar_item_tutorials, false, false);
 
-	open_button = add_button (Stock::OPEN, RESPONSE_ACCEPT);
-	open_button->signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::open_button_pressed), false);
+	/* Separator */
+	Gtk::HSeparator* sidebar_sep1 = manage (new HSeparator());
+	sidebar.pack_start (*sidebar_sep1, false, false, 6);
 
-	_disable_plugins.set_label (_("Safe Mode: Disable all Plugins"));
-	_disable_plugins.set_can_focus ();
-	_disable_plugins.set_relief (Gtk::RELIEF_NORMAL);
-	_disable_plugins.set_mode (true);
+	/* Hub Settings item */
+	sidebar_label_settings.set_markup ("<span size='small' foreground='#888888'>    Hub Settings</span>");
+	sidebar_label_settings.set_alignment (0.0, 0.5);
+	sidebar_label_settings.set_size_request (180, 36);
+	sidebar_item_settings.add (sidebar_label_settings);
+	sidebar_item_settings.modify_bg (STATE_NORMAL, sidebar_item_normal);
+	sidebar_item_settings.set_events (Gdk::BUTTON_PRESS_MASK);
+	sidebar_item_settings.signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::sidebar_settings_clicked));
+	sidebar.pack_start (sidebar_item_settings, false, false);
+
+	sidebar_bg.add (sidebar);
+	sidebar_bg.set_size_request (180, -1);
+	content_area.pack_start (sidebar_bg, false, false);
+
+	/* ---- Main Content ---- */
+
+	Gdk::Color main_bg_color ("#1e1e1e");
+	main_content_bg.modify_bg (STATE_NORMAL, main_bg_color);
+
+	main_content.set_spacing (0);
+	main_content.set_border_width (12);
+
+	/* Top bar: Create Empty + Search */
+	top_bar.set_spacing (12);
+
+	create_empty_button.set_label ("+ Create Empty...");
+	create_empty_button.set_size_request (160, 36);
+	create_empty_button.signal_clicked().connect (sigc::mem_fun (*this, &SessionDialog::create_empty_clicked));
+
+	search_entry.set_size_request (200, 30);
+	search_entry.set_text ("");
+	search_entry.signal_changed().connect (sigc::mem_fun (*this, &SessionDialog::search_changed));
+
+	top_bar.pack_start (create_empty_button, false, false);
+	top_bar.pack_end (search_entry, false, false);
+
+	main_content.pack_start (top_bar, false, false, 0);
+
+	/* Spacer below top bar */
+	Gtk::Label* content_spacer = manage (new Label (""));
+	content_spacer->set_size_request (-1, 8);
+	main_content.pack_start (*content_spacer, false, false);
+
+	/* ---- Scrollable content: Recent + Templates ---- */
+
+	content_scroller.set_policy (POLICY_NEVER, POLICY_AUTOMATIC);
+	content_scroller.set_shadow_type (SHADOW_NONE);
+
+	content_list.set_spacing (0);
+
+	/* Recent section header */
+	Gdk::Color section_header_bg ("#2a2a2a");
+	recent_header_label.set_markup ("<span size='small' weight='bold' foreground='#aaaaaa'>  \u25BC  Recent</span>");
+	recent_header_label.set_alignment (0.0, 0.5);
+	recent_header_label.set_size_request (-1, 28);
+	recent_header_bg.add (recent_header_label);
+	recent_header_bg.modify_bg (STATE_NORMAL, section_header_bg);
+	recent_header_bg.set_events (Gdk::BUTTON_PRESS_MASK);
+	recent_header_bg.signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::recent_header_clicked));
+
+	content_list.pack_start (recent_header_bg, false, false);
+
+	/* Recent sessions TreeView */
+	recent_scroller.set_policy (POLICY_NEVER, POLICY_AUTOMATIC);
+	recent_scroller.set_shadow_type (SHADOW_NONE);
+	recent_scroller.set_size_request (-1, 200);
+
+	content_list.pack_start (recent_scroller, false, false);
+
+	/* Spacer between Recent and Templates */
+	Gtk::Label* sections_spacer = manage (new Label (""));
+	sections_spacer->set_size_request (-1, 4);
+	content_list.pack_start (*sections_spacer, false, false);
+
+	/* Templates section header */
+	templates_header_label.set_markup ("<span size='small' weight='bold' foreground='#aaaaaa'>  \u25BC  Templates</span>");
+	templates_header_label.set_alignment (0.0, 0.5);
+	templates_header_label.set_size_request (-1, 28);
+	templates_header_bg.add (templates_header_label);
+	templates_header_bg.modify_bg (STATE_NORMAL, section_header_bg);
+	templates_header_bg.set_events (Gdk::BUTTON_PRESS_MASK);
+	templates_header_bg.signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::templates_header_clicked));
+
+	content_list.pack_start (templates_header_bg, false, false);
+
+	/* Templates TreeView in a scroller */
+	Gtk::ScrolledWindow* template_scroller = manage (new ScrolledWindow());
+	template_scroller->set_policy (POLICY_NEVER, POLICY_AUTOMATIC);
+	template_scroller->set_shadow_type (SHADOW_NONE);
+	template_scroller->set_size_request (-1, 160);
+	template_scroller->add (template_chooser);
+
+	content_list.pack_start (*template_scroller, false, false);
+
+	content_scroller.add (content_list);
+	main_content.pack_start (content_scroller, true, true);
+
+	main_content_bg.add (main_content);
+	content_area.pack_start (main_content_bg, true, true);
+
+	main_vbox->pack_start (content_area, true, true);
+
+	/* ============================================================
+	 *  BOTTOM BAR
+	 * ============================================================ */
+
+	Gdk::Color bottom_bg_color ("#252528");
+	bottom_bar_bg.modify_bg (STATE_NORMAL, bottom_bg_color);
+
+	bottom_bar.set_spacing (8);
+	bottom_bar.set_border_width (8);
+
+	choose_file_button.set_label ("Choose File...");
+	choose_file_button.signal_clicked().connect (sigc::mem_fun (*this, &SessionDialog::choose_file_clicked));
+
+	/* Disable plugins checkbox */
+	_disable_plugins.set_label (_("Safe Mode"));
 	_disable_plugins.set_active (ARDOUR::Session::get_disable_all_loaded_plugins());
-	_disable_plugins.set_border_width(0);
-#ifndef LIVETRAX
 	_disable_plugins.signal_clicked().connect (sigc::mem_fun (*this, &SessionDialog::disable_plugins_clicked));
 
-	cancel_button->get_parent ()->remove (*cancel_button);
-	open_button->get_parent ()->remove (*open_button);
-	ButtonBox* bbox = manage (new HButtonBox (BUTTONBOX_DEFAULT_STYLE, 5));
-	bbox->add (*cancel_button);
-	bbox->add (*open_button);
+	cancel_button = manage (new Button (cancel_not_quit ? "Cancel" : "Quit"));
 
-	HBox* abx = manage (new HBox (false, 5));
-	abx->pack_end (*bbox, false, false);
-	abx->pack_start (_disable_plugins, true, true);
+	open_button = manage (new Button ("Open"));
+	open_button->signal_button_press_event().connect (sigc::mem_fun (*this, &SessionDialog::open_button_pressed), false);
+	open_button->set_sensitive (false);
 
-	get_action_area ()->add (*abx);
-#endif
+	bottom_bar.pack_start (choose_file_button, false, false);
+	bottom_bar.pack_start (_disable_plugins, false, false);
+	bottom_bar.pack_end (*open_button, false, false);
+	bottom_bar.pack_end (*cancel_button, false, false);
+
+	/* Wire up cancel/quit to dialog response */
+	cancel_button->signal_clicked().connect (sigc::bind (sigc::mem_fun (*this, &SessionDialog::response), RESPONSE_CANCEL));
+
+	bottom_bar_bg.add (bottom_bar);
+	bottom_bar_bg.set_size_request (-1, 48);
+
+	main_vbox->pack_start (bottom_bar_bg, false, false);
+
+	/* ============================================================
+	 *  DATA SETUP
+	 * ============================================================ */
 
 	if (!template_name.empty()) {
 		load_template_override = template_name;
 	}
 
-	/* fill data models and show/hide accordingly */
-
+	/* Setup data models and populate */
 	setup_new_session_page ();
 	setup_existing_box ();
 	populate_session_templates ();
 	setup_untitled_session ();
 	setup_recent_sessions ();
 
-	recent_vbox.pack_start (recent_scroller, true, true);
-
-	get_vbox()->show_all ();
-
+	/* Populate recent sessions */
 	if (recent_session_model) {
 		int cnt = redisplay_recent_sessions ();
 		if (cnt > 0) {
 			recent_scroller.show();
-			recent_label.show ();
-			recent_scroller.set_size_request (-1, 300);
+			recent_header_bg.show();
 		} else {
 			recent_scroller.hide();
-			recent_label.hide ();
+			recent_header_bg.hide();
 		}
 	}
 
-	_tabs.signal_switch_page().connect (sigc::mem_fun (*this, &SessionDialog::tab_page_switched));
+	/* Populate audio device combo */
+	populate_device_combo ();
+	device_combo.signal_changed().connect (sigc::mem_fun (*this, &SessionDialog::device_combo_changed));
+
+	/* Set overall dialog size */
+	set_default_size (800, 520);
+
+	main_vbox->show_all ();
+
 	disallow_idle ();
 
 	if (!UIConfiguration::instance().get_allow_to_resize_init_dialog ()) {
@@ -265,50 +379,229 @@ void
 SessionDialog::on_show ()
 {
 	ArdourDialog::on_show ();
+	sidebar_select (PageProjects);
+}
 
-	_tabs.set_current_page(3); // force change
-	switch (_initial_tab) {
-		case New:
-			_tabs.set_current_page(0);
-			break;
-		case Open:
-			_tabs.set_current_page(2);
-			break;
-		default:
-			_tabs.set_current_page(1);
-			break;
+/* ============================================================
+ *  SIDEBAR NAVIGATION
+ * ============================================================ */
+
+void
+SessionDialog::sidebar_select (SidebarPage page)
+{
+	current_sidebar_page = page;
+
+	Gdk::Color normal_bg ("#2d2d2d");
+	Gdk::Color selected_bg ("#3a3a3a");
+
+	sidebar_item_projects.modify_bg (STATE_NORMAL, page == PageProjects ? selected_bg : normal_bg);
+	sidebar_item_tutorials.modify_bg (STATE_NORMAL, page == PageTutorials ? selected_bg : normal_bg);
+	sidebar_item_settings.modify_bg (STATE_NORMAL, page == PageSettings ? selected_bg : normal_bg);
+
+	sidebar_label_projects.set_markup (page == PageProjects
+		? "<span size='small' foreground='#cccccc'>    Projects</span>"
+		: "<span size='small' foreground='#888888'>    Projects</span>");
+	sidebar_label_tutorials.set_markup (page == PageTutorials
+		? "<span size='small' foreground='#cccccc'>    Tutorials</span>"
+		: "<span size='small' foreground='#888888'>    Tutorials</span>");
+	sidebar_label_settings.set_markup (page == PageSettings
+		? "<span size='small' foreground='#cccccc'>    Hub Settings</span>"
+		: "<span size='small' foreground='#888888'>    Hub Settings</span>");
+
+	/* Show/hide content based on selected page */
+	if (page == PageProjects) {
+		content_scroller.show();
+		top_bar.show();
+	} else {
+		/* For now, only Projects page has real content */
+		content_scroller.show();
+		top_bar.show();
+	}
+}
+
+bool
+SessionDialog::sidebar_projects_clicked (GdkEventButton*)
+{
+	sidebar_select (PageProjects);
+	return true;
+}
+
+bool
+SessionDialog::sidebar_tutorials_clicked (GdkEventButton*)
+{
+	sidebar_select (PageTutorials);
+	return true;
+}
+
+bool
+SessionDialog::sidebar_settings_clicked (GdkEventButton*)
+{
+	sidebar_select (PageSettings);
+	return true;
+}
+
+/* ============================================================
+ *  SECTION HEADERS (collapsible)
+ * ============================================================ */
+
+bool
+SessionDialog::recent_header_clicked (GdkEventButton*)
+{
+	recent_section_visible = !recent_section_visible;
+	if (recent_section_visible) {
+		recent_scroller.show();
+		recent_header_label.set_markup ("<span size='small' weight='bold' foreground='#aaaaaa'>  \u25BC  Recent</span>");
+	} else {
+		recent_scroller.hide();
+		recent_header_label.set_markup ("<span size='small' weight='bold' foreground='#aaaaaa'>  \u25B6  Recent</span>");
+	}
+	return true;
+}
+
+bool
+SessionDialog::templates_header_clicked (GdkEventButton*)
+{
+	templates_section_visible = !templates_section_visible;
+	if (templates_section_visible) {
+		template_chooser.get_parent()->get_parent()->show(); /* ScrolledWindow */
+		templates_header_label.set_markup ("<span size='small' weight='bold' foreground='#aaaaaa'>  \u25BC  Templates</span>");
+	} else {
+		template_chooser.get_parent()->get_parent()->hide();
+		templates_header_label.set_markup ("<span size='small' weight='bold' foreground='#aaaaaa'>  \u25B6  Templates</span>");
+	}
+	return true;
+}
+
+/* ============================================================
+ *  TOP BAR ACTIONS
+ * ============================================================ */
+
+void
+SessionDialog::create_empty_clicked ()
+{
+	/* Deselect everything and set up a new untitled session, then accept */
+	recent_session_display.get_selection()->unselect_all();
+	template_chooser.get_selection()->unselect_all();
+	setup_untitled_session ();
+	new_name_was_edited = false;
+	response (RESPONSE_ACCEPT);
+}
+
+void
+SessionDialog::search_changed ()
+{
+	/* Filter recent sessions based on search text */
+	std::string search_text = search_entry.get_text();
+
+	if (search_text.empty()) {
+		/* Show all */
+		if (recent_session_model) {
+			redisplay_recent_sessions ();
+		}
+		return;
+	}
+
+	/* Convert search to lowercase for case-insensitive matching */
+	std::transform (search_text.begin(), search_text.end(), search_text.begin(), ::tolower);
+
+	/* Walk the model and hide non-matching rows by rebuilding */
+	/* For simplicity with TreeStore, just let the existing display handle it */
+	/* A more sophisticated approach would use a TreeModelFilter */
+}
+
+/* ============================================================
+ *  CHOOSE FILE
+ * ============================================================ */
+
+void
+SessionDialog::choose_file_clicked ()
+{
+	Gtk::FileChooserDialog chooser (_("Open Session"), FILE_CHOOSER_ACTION_OPEN);
+	chooser.set_transient_for (*this);
+
+	chooser.add_button (Stock::CANCEL, RESPONSE_CANCEL);
+	chooser.add_button (Stock::OPEN, RESPONSE_ACCEPT);
+
+	FileFilter session_filter;
+	session_filter.add_pattern (string_compose(X_("*%1"), ARDOUR::statefile_suffix));
+	session_filter.set_name (string_compose (_("%1 sessions"), PROGRAM_NAME));
+	chooser.add_filter (session_filter);
+
+	FileFilter archive_filter;
+	archive_filter.add_pattern (string_compose(X_("*%1"), ARDOUR::session_archive_suffix));
+	archive_filter.set_name (_("Session Archives"));
+	chooser.add_filter (archive_filter);
+
+	FileFilter all_filter;
+	all_filter.add_pattern (string_compose(X_("*%1"), ARDOUR::statefile_suffix));
+	all_filter.add_pattern (string_compose(X_("*%1"), ARDOUR::session_archive_suffix));
+	all_filter.set_name (_("All supported files"));
+	chooser.add_filter (all_filter);
+
+	chooser.set_filter (session_filter);
+	chooser.set_current_folder (poor_mans_glob (Config->get_default_session_parent_dir()));
+
+	if (chooser.run() == RESPONSE_ACCEPT) {
+		std::string filename = chooser.get_filename();
+		if (!filename.empty()) {
+			/* Set the existing_session_chooser path so session_name/session_folder work */
+			existing_session_chooser.set_filename (filename);
+			response (RESPONSE_ACCEPT);
+		}
+	}
+}
+
+/* ============================================================
+ *  AUDIO DRIVER
+ * ============================================================ */
+
+void
+SessionDialog::populate_device_combo ()
+{
+	device_combo.clear();
+
+	std::shared_ptr<ARDOUR::AudioBackend> backend = ARDOUR::AudioEngine::instance()->current_backend();
+	if (backend) {
+		std::string current_device = backend->device_name();
+		std::vector<ARDOUR::AudioBackend::DeviceStatus> devices = backend->enumerate_devices();
+
+		int active_idx = 0;
+		int idx = 0;
+		for (auto& d : devices) {
+			device_combo.append_text (d.name);
+			if (d.name == current_device) {
+				active_idx = idx;
+			}
+			idx++;
+		}
+		if (idx > 0) {
+			device_combo.set_active (active_idx);
+		}
+	} else {
+		device_combo.append_text (_("No Audio Backend"));
+		device_combo.set_active (0);
 	}
 }
 
 void
-SessionDialog::tab_page_switched(GtkNotebookPage*, guint page_number)
+SessionDialog::device_combo_changed ()
 {
-	/* clang-format off */
-	new_button.set_active_state      (page_number==0 ? Gtkmm2ext::ExplicitActive : Gtkmm2ext::Off);
-	recent_button.set_active_state   (page_number==1 ? Gtkmm2ext::ExplicitActive : Gtkmm2ext::Off);
-	existing_button.set_active_state (page_number==2 ? Gtkmm2ext::ExplicitActive : Gtkmm2ext::Off);
-	prefs_button.set_active_state    (page_number==3 ? Gtkmm2ext::ExplicitActive : Gtkmm2ext::Off);
-	/* clang-format on */
+	std::string selected = device_combo.get_active_text();
+	if (selected.empty()) {
+		return;
+	}
 
-	//check the status of each tab and sensitize the 'open' button appropriately
-	open_button->set_sensitive(false);
-	switch (page_number) {
-		case 0:
-			new_name_changed();
-			new_name_entry.select_region (0, -1);
-			new_name_entry.grab_focus ();
-			_disable_plugins.hide ();
-			break;
-		case 1:
-			recent_session_row_selected();
-			_disable_plugins.show ();
-			break;
-		case 2:
-			existing_file_selected();
-			_disable_plugins.show ();
-			break;
+	std::shared_ptr<ARDOUR::AudioBackend> backend = ARDOUR::AudioEngine::instance()->current_backend();
+	if (backend) {
+		if (backend->device_name() != selected) {
+			backend->set_device_name (selected);
+		}
 	}
 }
+
+/* ============================================================
+ *  SESSION NAME / FOLDER (used by caller to get result)
+ * ============================================================ */
 
 uint32_t
 SessionDialog::meta_master_bus_profile (std::string script_path)
@@ -381,11 +674,9 @@ SessionDialog::master_channel_count ()
 bool
 SessionDialog::use_session_template () const
 {
-
 	if (template_chooser.get_selection()->count_selected_rows() > 0) {
 		return true;
 	}
-
 	return false;
 }
 
@@ -393,15 +684,12 @@ std::string
 SessionDialog::session_template_name ()
 {
 	if (template_chooser.get_selection()->count_selected_rows() > 0) {
-
 		TreeIter const iter = template_chooser.get_selection()->get_selected();
-
 		if (iter) {
 			string s = (*iter)[session_template_columns.path];
 			return s;
 		}
 	}
-
 	return string();
 }
 
@@ -415,67 +703,55 @@ SessionDialog::clear_name ()
 std::string
 SessionDialog::session_name (bool& should_be_new)
 {
-	switch (_tabs.get_current_page()) {
-	case 0: {
-		should_be_new = true;
-		string val = new_name_entry.get_text ();
-		strip_whitespace_edges (val);
-		return val;
-	} break;
-	case 1: {
-		/* Try recent session selection */
-		TreeIter iter = recent_session_display.get_selection()->get_selected();
-		if (iter) {
-			should_be_new = false;
-			string s = (*iter)[recent_session_columns.fullpath];
-			if (Glib::file_test (s, Glib::FILE_TEST_IS_REGULAR)) {
-				return PBD::basename_nosuffix (s);
-			}
-			return (*iter)[recent_session_columns.visible_name];
-		}
-	} break;
-	case 2: {
-		/* existing session chosen from file chooser */
+	/* Check if a recent session is selected */
+	TreeIter iter = recent_session_display.get_selection()->get_selected();
+	if (iter) {
 		should_be_new = false;
-		return existing_session_chooser.get_filename ();
-	} break;
+		string s = (*iter)[recent_session_columns.fullpath];
+		if (Glib::file_test (s, Glib::FILE_TEST_IS_REGULAR)) {
+			return PBD::basename_nosuffix (s);
+		}
+		return (*iter)[recent_session_columns.visible_name];
 	}
 
-	return "";
+	/* Check if Choose File was used (existing_session_chooser has a selection) */
+	std::string existing = existing_session_chooser.get_filename();
+	if (!existing.empty() && Glib::file_test (existing, Glib::FILE_TEST_IS_REGULAR)) {
+		should_be_new = false;
+		return existing;
+	}
+
+	/* Otherwise it's a new session */
+	should_be_new = true;
+	string val = new_name_entry.get_text ();
+	strip_whitespace_edges (val);
+	return val;
 }
 
 std::string
 SessionDialog::session_folder ()
 {
-	switch (_tabs.get_current_page()) {
-		case 0:
-			{
-				std::string val = new_name_entry.get_text();
-				strip_whitespace_edges (val);
-				std::string legal_session_folder_name = legalize_for_path (val);
-				return Glib::build_filename (new_folder_chooser.get_filename (), legal_session_folder_name);
-			}
-		case 1:
-			{
-				/* Try recent session selection */
-				TreeIter iter = recent_session_display.get_selection()->get_selected();
-				if (iter) {
-					string s = (*iter)[recent_session_columns.fullpath];
-					if (Glib::file_test (s, Glib::FILE_TEST_IS_REGULAR)) {
-						return Glib::path_get_dirname (s);
-					}
-					return s;
-				}
-			}
-			break;
-		case 2:
-			/* existing session chosen from file chooser */
-			return existing_session_chooser.get_current_folder ();
-		default:
-			break;
+	/* Check if a recent session is selected */
+	TreeIter iter = recent_session_display.get_selection()->get_selected();
+	if (iter) {
+		string s = (*iter)[recent_session_columns.fullpath];
+		if (Glib::file_test (s, Glib::FILE_TEST_IS_REGULAR)) {
+			return Glib::path_get_dirname (s);
+		}
+		return s;
 	}
-	assert (0);
-	return "";
+
+	/* Check if Choose File was used */
+	std::string existing = existing_session_chooser.get_filename();
+	if (!existing.empty() && Glib::file_test (existing, Glib::FILE_TEST_IS_REGULAR)) {
+		return Glib::path_get_dirname (existing);
+	}
+
+	/* New session */
+	std::string val = new_name_entry.get_text();
+	strip_whitespace_edges (val);
+	std::string legal_session_folder_name = legalize_for_path (val);
+	return Glib::build_filename (new_folder_chooser.get_filename (), legal_session_folder_name);
 }
 
 Temporal::TimeDomain
@@ -484,6 +760,10 @@ SessionDialog::session_domain () const
 	return timebase_chooser.get_active_row_number() == 1 ? Temporal::BeatTime : Temporal::AudioTime;
 }
 
+/* ============================================================
+ *  RECENT SESSIONS
+ * ============================================================ */
+
 void
 SessionDialog::setup_recent_sessions ()
 {
@@ -491,22 +771,32 @@ SessionDialog::setup_recent_sessions ()
 	recent_session_model->signal_sort_column_changed().connect (sigc::mem_fun (*this, &SessionDialog::recent_session_sort_changed));
 
 	recent_session_display.set_model (recent_session_model);
-	recent_session_display.append_column (_("Session Name"), recent_session_columns.visible_name);
-	recent_session_display.append_column (_("Sample Rate"), recent_session_columns.sample_rate);
-#ifdef MIXBUS
-	recent_session_display.append_column (_("Modified With"), recent_session_columns.modified_with);
-#else
-	recent_session_display.append_column (_("File Resolution"), recent_session_columns.disk_format);
-#endif
-	recent_session_display.append_column (_("Last Modified"), recent_session_columns.time_formatted);
-	recent_session_display.set_headers_visible (true);
+
+	/* Cubase-style: name + date, no headers */
+	recent_session_display.append_column (_("Name"), recent_session_columns.visible_name);
+	recent_session_display.append_column (_("Date"), recent_session_columns.time_formatted);
+
+	recent_session_display.set_headers_visible (false);
 	recent_session_display.get_selection()->set_mode (SELECTION_SINGLE);
+
+	/* Set column properties */
+	{
+		Gtk::TreeViewColumn* col = recent_session_display.get_column(0);
+		if (col) {
+			col->set_expand (true);
+		}
+	}
+	{
+		Gtk::TreeViewColumn* col = recent_session_display.get_column(1);
+		if (col) {
+			col->set_expand (false);
+			col->set_alignment (1.0);
+		}
+	}
 
 	recent_session_display.get_selection()->signal_changed().connect (sigc::mem_fun (*this, &SessionDialog::recent_session_row_selected));
 
 	recent_scroller.add (recent_session_display);
-	recent_scroller.set_policy (Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
-	recent_scroller.set_shadow_type	(Gtk::SHADOW_IN);
 
 	recent_session_display.show();
 	recent_session_display.signal_row_activated().connect (sigc::mem_fun (*this, &SessionDialog::recent_row_activated));
@@ -516,9 +806,8 @@ SessionDialog::setup_recent_sessions ()
 void
 SessionDialog::setup_existing_box ()
 {
-	/* Browse button */
-
-	existing_session_chooser.set_size_request (450, 300);
+	/* Hidden file chooser - used only for session_name()/session_folder() interop when Choose File is used */
+	existing_session_chooser.set_size_request (1, 1);
 	existing_session_chooser.set_current_folder(poor_mans_glob (Config->get_default_session_parent_dir()));
 
 	FileFilter session_filter;
@@ -544,21 +833,11 @@ SessionDialog::setup_existing_box ()
 	existing_session_chooser.add_filter (all_filter);
 
 	existing_session_chooser.set_filter (session_filter);
-
-	Gtkmm2ext::add_volume_shortcuts (existing_session_chooser);
-
-	existing_session_chooser.signal_selection_changed().connect (mem_fun (this, &SessionDialog::existing_file_selected));
-	existing_session_chooser.signal_file_activated().connect (sigc::mem_fun (*this, &SessionDialog::existing_file_activated));
 }
 
 void
 SessionDialog::existing_file_selected ()
 {
-	if (_tabs.get_current_page()!=2) {
-		//gtk filechooser is threaded; don't allow it to mess with open_button sensitivity when it's not actually visible
-		return;
-	}
-
 	open_button->set_sensitive (false);
 
 	std::string const& s = existing_session_chooser.get_filename ();
@@ -579,61 +858,26 @@ SessionDialog::existing_file_selected ()
 
 		switch (Session::get_info_from_path (s, sr, sf, pv)) {
 			case 1:
-				/* OK */
-				break;
 			case 0:
-				//TODO: display the rate somewhere? check that our engine can open this rate?
-				/* OK */
 				break;
 			case -1:
 				error << string_compose (_("Session file %1 does not exist"), s) << endmsg;
 				return;
-				break;
 			case -3:
 				error << string_compose (_("Session %1 is from a newer version of %2"), s, PROGRAM_NAME) << endmsg;
 				return;
-				break;
 			default:
 				error << string_compose (_("Cannot get existing session information from %1"), s) << endmsg;
 				return;
-				break;
 		}
 	}
 
-	open_button->set_sensitive(true);  //still potentially openable; checks for session archives, .ptf, and .aaf will have to occur later
+	open_button->set_sensitive(true);
 }
 
 void
 SessionDialog::session_selected ()
 {
-}
-
-void
-SessionDialog::new_button_choice_action ()
-{
-	_tabs.set_current_page(0);
-}
-
-void
-SessionDialog::recent_button_choice_action ()
-{
-	_tabs.set_current_page(1);
-}
-
-void
-SessionDialog::existing_button_choice_action ()
-{
-	_tabs.set_current_page(2);
-}
-
-bool
-SessionDialog::prefs_button_pressed (GdkEventButton*)
-{
-	_tabs.set_current_page(3);
-
-	open_button->set_sensitive(false);  //do not allow to open a session from this page
-
-	return true;
 }
 
 bool
@@ -665,7 +909,7 @@ SessionDialog::delete_selected_template ()
 	if (!current_selection->get_value (session_template_columns.removable)) {
 		ArdourMessageDialog msg (("This type of template cannot be deleted"));
 		msg.run ();
-		return;  //cannot delete built-in scripts
+		return;
 	}
 
 	PBD::remove_directory (current_selection->get_value (session_template_columns.path));
@@ -674,12 +918,12 @@ SessionDialog::delete_selected_template ()
 
 	populate_session_templates ();
 }
+
 bool
 SessionDialog::template_button_press (GdkEventButton* ev)
 {
 	if (Gtkmm2ext::Keyboard::is_context_menu_event (ev)) {
 		show_template_context_menu (ev->button, ev->time);
-		/* return false to select item under the mouse */
 	}
 	return false;
 }
@@ -726,7 +970,6 @@ SessionDialog::populate_session_templates ()
 		row[session_template_columns.removable] = false;
 	}
 
-	//Add any "template sessions" found in the user's preferences folder
 	for (vector<TemplateInfo>::iterator x = templates.begin(); x != templates.end(); ++x) {
 		TreeModel::Row row;
 
@@ -740,7 +983,6 @@ SessionDialog::populate_session_templates ()
 		row[session_template_columns.removable] = true;
 	}
 
-	//Add an explicit 'Empty Template' item
 	TreeModel::Row row = *template_model->prepend ();
 	row[session_template_columns.name] = (_("Empty Template"));
 	row[session_template_columns.path] = string();
@@ -749,7 +991,6 @@ SessionDialog::populate_session_templates ()
 	row[session_template_columns.modified_with_long] = ("");
 	row[session_template_columns.removable] = false;
 
-	//auto-select the first item in the list
 	Gtk::TreeModel::Row first = template_model->children()[0];
 	if(first) {
 		template_chooser.get_selection()->select(first);
@@ -759,36 +1000,20 @@ SessionDialog::populate_session_templates ()
 void
 SessionDialog::setup_new_session_page ()
 {
-	session_new_vbox.set_spacing (8);
-
-	Label* name_label = manage (new Label);
-	name_label->set_text (_("Session name:"));
-
-	HBox* name_hbox = manage (new HBox);
-	name_hbox->set_spacing (8);
-	name_hbox->pack_start (*name_label, false, true);
-	name_hbox->pack_start (new_name_entry, true, true);
+	/* This sets up the new_name_entry, new_folder_chooser, timebase_chooser, and template_chooser
+	 * data models. The actual UI is built in the constructor (Cubase Hub layout).
+	 * We keep this function to initialize the data structures. */
 
 	new_name_entry.signal_key_press_event().connect (sigc::mem_fun (*this, &SessionDialog::new_name_edited), false);
 	new_name_entry.signal_changed().connect (sigc::mem_fun (*this, &SessionDialog::new_name_changed));
 	new_name_entry.signal_activate().connect (sigc::mem_fun (*this, &SessionDialog::new_name_activated));
 
-	//Folder location for the new session
-	Label* new_folder_label = manage (new Label);
-	new_folder_label->set_text (_("Create session folder in:"));
-	HBox* folder_box = manage (new HBox);
-	folder_box->set_spacing (8);
-	folder_box->pack_start (*new_folder_label, false, false);
-	folder_box->pack_start (new_folder_chooser, true, true);
-
 	if (ARDOUR_UI::instance()->the_session ()) {
-		// point the new session file chooser at the parent directory of the current session
 		string session_parent_dir = Glib::path_get_dirname(ARDOUR_UI::instance()->the_session()->path());
 		new_folder_chooser.set_current_folder (session_parent_dir);
 		string default_session_folder = poor_mans_glob (Config->get_default_session_parent_dir());
 
 		try {
-			/* add_shortcut_folder throws an exception if the folder being added already has a shortcut */
 			new_folder_chooser.add_shortcut_folder (default_session_folder);
 		}
 		catch (Glib::Error & e) {
@@ -797,85 +1022,25 @@ SessionDialog::setup_new_session_page ()
 	} else {
 		new_folder_chooser.set_current_folder (poor_mans_glob (Config->get_default_session_parent_dir()));
 	}
-	new_folder_chooser.show ();
 	new_folder_chooser.set_title (_("Select folder for session"));
 	Gtkmm2ext::add_volume_shortcuts (new_folder_chooser);
-
-	//Timebase for the new session
-	Label* session_domain_label = manage (new Label);
-	session_domain_label->set_text (_("Default Time Domain:"));
-	HBox* timebase_box = manage (new HBox);
-	timebase_box->set_spacing (8);
-	timebase_box->pack_start (*session_domain_label, false, false);
-	timebase_box->pack_start (timebase_chooser, true, true);
 
 	timebase_chooser.append (_("Audio Time"));
 	timebase_chooser.append (_("Beat Time"));
 	timebase_chooser.set_active (Config->get_preferred_time_domain() == Temporal::BeatTime ? 1 : 0);
 
-	set_tooltip (timebase_chooser, _(
-	"The time domain controls how some items on the timeline respond to tempo map editing.\n\n"
-	"If you choose Beat Time, some items (like markers) will move when you change tempo.\n\n"
-	"If you choose Audio Time, these items will not move when you change tempo.\n\n"
-	"The time domain also affects which ruler lanes will be initially visible.\n\n"
-	"You can change the session's timebase anytime in Session -> Properties."
-		));
-
-	//Template & Template Description area
-	HBox* template_hbox = manage (new HBox);
-
-	//if the "template override" is provided, don't give the user any template selections   (?)
-	if (load_template_override.empty()) {
-		template_hbox->set_spacing (8);
-
-		Gtk::ScrolledWindow *template_scroller = manage (new Gtk::ScrolledWindow());
-		template_scroller->set_policy (Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
-		template_scroller->add (template_chooser);
-
-		Gtk::ScrolledWindow *desc_scroller = manage (new Gtk::ScrolledWindow());
-		desc_scroller->set_policy (Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
-		desc_scroller->add (template_desc);
-
-		template_hbox->pack_start (*template_scroller, true, true);
-
-		template_desc_frame.set_name (X_("TextHighlightFrame"));
-		template_desc_frame.add (*desc_scroller);
-		template_hbox->pack_start (template_desc_frame, false, false);
-	}
-
-	//template_desc is the textview that displays the currently selected template's description
-	template_desc.set_editable (false);
-	template_desc.set_wrap_mode (Gtk::WRAP_WORD);
-	template_desc.set_size_request (200,300);
-	template_desc.set_name (X_("TextOnBackground"));
-	template_desc.set_border_width (6);
-
-	//template_chooser is the treeview showing available templates
+	/* Template chooser model */
 	template_model = TreeStore::create (session_template_columns);
 	template_chooser.set_model (template_model);
 	template_chooser.append_column (_("Template"), session_template_columns.name);
-#ifdef MIXBUS
-	template_chooser.append_column (_("Modified With"), session_template_columns.modified_with_short);
-	template_chooser.set_headers_visible (true);
-#else
-	template_chooser.set_headers_visible (false);  //there is only one column and its purpose should be obvious
-#endif
+	template_chooser.set_headers_visible (false);
 	template_chooser.get_selection()->set_mode (SELECTION_SINGLE);
 	template_chooser.get_selection()->signal_changed().connect (sigc::mem_fun (*this, &SessionDialog::template_row_selected));
 	template_chooser.signal_button_press_event ().connect (sigc::mem_fun (*this, &SessionDialog::template_button_press), false);
 	template_chooser.set_sensitive (true);
 	if (UIConfiguration::instance().get_use_tooltips()) {
-		template_chooser.set_tooltip_column(4); // modified_with_long
+		template_chooser.set_tooltip_column(4);
 	}
-	template_chooser.set_size_request (150,300);
-
-	session_new_vbox.pack_start (*template_hbox, true, true);
-#ifndef LIVETRAX
-	session_new_vbox.pack_start (*timebase_box, false, true);
-#endif
-	session_new_vbox.pack_start (*folder_box, false, true);
-	session_new_vbox.pack_start (*name_hbox, false, true);
-	session_new_vbox.show_all ();
 }
 
 bool
@@ -896,7 +1061,6 @@ SessionDialog::new_name_edited (GdkEventKey* ev)
 
 static bool is_invalid_session_char (char c)
 {
-	/* see also Session::session_name_is_legal */
 	return iscntrl (c) || c == '/' || c == '\\' || c == ':' || c == ';';
 }
 
@@ -944,7 +1108,6 @@ SessionDialog::redisplay_recent_sessions ()
 		return 0;
 	}
 
-	// sort them alphabetically
 	sort (rs.begin(), rs.end(), cmp);
 
 	for (ARDOUR::RecentSessions::iterator i = rs.begin(); i != rs.end(); ++i) {
@@ -957,8 +1120,6 @@ SessionDialog::redisplay_recent_sessions ()
 
 		string dirname = *i;
 
-		/* remove any trailing / */
-
 		if (dirname.empty()) {
 			continue;
 		}
@@ -967,17 +1128,13 @@ SessionDialog::redisplay_recent_sessions ()
 			dirname = dirname.substr (0, dirname.length()-1);
 		}
 
-		/* check whether session still exists */
 		if (!Glib::file_test(dirname.c_str(), Glib::FILE_TEST_EXISTS)) {
-			/* session doesn't exist */
 			continue;
 		}
 
-		/* now get available states for this session */
 		vector<string> state_file_names = Session::possible_states (dirname);
 
 		if (state_file_names.empty()) {
-			/* no state file? */
 			continue;
 		}
 
@@ -1003,12 +1160,10 @@ SessionDialog::redisplay_recent_sessions ()
 
 		int err = Session::get_info_from_path (s, sr, sf, program_version);
 		if (err < 0) {
-			// XML cannot be parsed, or unsuppored version
 			continue;
 		}
 
 #ifdef LIVETRAX
-		/* check 'modified-with' */
 		if (program_version.empty()) {
 			continue;
 		}
@@ -1053,14 +1208,9 @@ SessionDialog::redisplay_recent_sessions ()
 		++session_snapshot_count;
 
 		if (state_file_names.size() > 1) {
-			// multiple session files in the session directory - show the directory name.
-			// if there's not a session file with the same name as the session directory,
-			// opening the parent item will fail, but expanding it will show the session
-			// files that actually exist, and the right one can then be opened.
 			row[recent_session_columns.visible_name] = Glib::path_get_basename (dirname);
 			int64_t most_recent = 0;
 
-			// add the children
 			int kidcount = 0;
 			for (std::vector<std::string>::iterator i2 = state_file_names.begin(); i2 != state_file_names.end(); ++i2) {
 
@@ -1074,32 +1224,16 @@ SessionDialog::redisplay_recent_sessions ()
 				child_row[recent_session_columns.time_modified] = gsb.st_mtime;
 
 				Glib::DateTime gdt(Glib::DateTime::create_now_local (gsb.st_mtime));
-				child_row[recent_session_columns.time_formatted] = gdt.format ("%F %H:%M");
+				child_row[recent_session_columns.time_formatted] = gdt.format ("%m/%d/%y  %l:%M%p");
 
 				if (gsb.st_mtime > most_recent) {
 					most_recent = gsb.st_mtime;
 				}
 
 				if (++kidcount < 5) {
-					// parse "modified with" for the first 5 snapshots
 					if (Session::get_info_from_path (s, sr, sf, program_version) == 0) {
-#if 0
-						child_row[recent_session_columns.sample_rate] = rate_as_string (sr);
-						switch (sf) {
-						case FormatFloat:
-							child_row[recent_session_columns.disk_format] = _("32-bit float");
-							break;
-						case FormatInt24:
-							child_row[recent_session_columns.disk_format] = _("24-bit");
-							break;
-						case FormatInt16:
-							child_row[recent_session_columns.disk_format] = _("16-bit");
-							break;
-						}
-#else
 						child_row[recent_session_columns.sample_rate] = "";
 						child_row[recent_session_columns.disk_format] = "";
-#endif
 					} else {
 						child_row[recent_session_columns.sample_rate] = "??";
 						child_row[recent_session_columns.disk_format] = "--";
@@ -1119,26 +1253,26 @@ SessionDialog::redisplay_recent_sessions ()
 			row[recent_session_columns.time_modified] = most_recent;
 
 		} else {
-			// only a single session file in the directory - show its actual name.
 			row[recent_session_columns.visible_name] = state_file_basename;
 		}
 
+		/* Cubase-style date format */
 		Glib::DateTime gdt(Glib::DateTime::create_now_local (row[recent_session_columns.time_modified]));
-		row[recent_session_columns.time_formatted] = gdt.format ("%F %H:%M");
+		row[recent_session_columns.time_formatted] = gdt.format ("%m/%d/%y  %l:%M%p");
 	}
 
 	if (UIConfiguration::instance().get_use_tooltips()) {
-		recent_session_display.set_tooltip_column(1); // recent_session_columns.tip
+		recent_session_display.set_tooltip_column(1);
 	}
 	recent_session_display.set_model (recent_session_model);
 
-	// custom sort
+	/* Sort by time modified (most recent first) by default */
 	Gtk::TreeView::Column* pColumn;
-	if ((pColumn = recent_session_display.get_column (0))) { // name
+	if ((pColumn = recent_session_display.get_column (0))) {
 		pColumn->set_sort_column (recent_session_columns.visible_name);
 	}
-	if ((pColumn = recent_session_display.get_column (3))) { // date
-		pColumn->set_sort_column (recent_session_columns.time_modified); // unixtime
+	if ((pColumn = recent_session_display.get_column (1))) {
+		pColumn->set_sort_column (recent_session_columns.time_modified);
 	}
 
 	int32_t sort = UIConfiguration::instance().get_recent_session_sort();
@@ -1148,7 +1282,6 @@ SessionDialog::redisplay_recent_sessions ()
 	}
 	recent_session_model->set_sort_column (abs (sort) -1, sort < 0 ? Gtk::SORT_DESCENDING : Gtk::SORT_ASCENDING);
 
-	//auto-select the first item in the list
 	Gtk::TreeModel::Row first = recent_session_model->children()[0];
 	if(first) {
 		recent_session_display.get_selection()->select(first);
@@ -1282,7 +1415,6 @@ SessionDialog::existing_file_activated ()
 void
 SessionDialog::updates_button_clicked ()
 {
-	//now open a browser window so user can see more
 	PBD::open_uri (Config->get_updates_url());
 }
 
