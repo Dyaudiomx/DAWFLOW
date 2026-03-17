@@ -12,6 +12,9 @@
 #include "ardour/dawflow_commands_editing.h"
 #include "ardour/dawflow_commands_automation.h"
 #include "ardour/dawflow_commands_final.h"
+#include "ardour/dawflow_commands_critical.h"
+#include "ardour/dawflow_commands_medium.h"
+#include "ardour/dawflow_commands_high.h"
 #include "ardour/session.h"
 #include "ardour/route.h"
 #include "ardour/audio_track.h"
@@ -757,6 +760,15 @@ DawflowPluginHost::_register_commands ()
 
 	/* Register final batch: import, export, presets, search, VCA, snapshots, time, analysis */
 	dawflow_register_final_commands (_session, _command_handlers);
+
+	/* Register critical gap-fill: sections, regions, tempo, mix state, time conversion */
+	dawflow_register_critical_commands (_session, _command_handlers);
+
+	/* Register medium & low priority: editing, MIDI, arrangement, plugins, project, advanced, events */
+	dawflow_register_medium_commands (*this, _session, _command_handlers);
+
+	/* Register HIGH priority gap-fill: recording, editing, mixing, MIDI, plugins, project, query */
+	dawflow_register_high_commands (_session, _command_handlers);
 }
 
 /* ---- Session Signal Connections ---- */
