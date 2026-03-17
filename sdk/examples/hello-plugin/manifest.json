@@ -1,0 +1,21 @@
+{
+    "id": "com.dawflow.hello-plugin",
+    "name": "Hello Plugin",
+    "version": "0.1.0",
+    "api_version": "1",
+    "author": "DAWFLOW",
+    "description": "Example plugin demonstrating the DAWFLOW plugin SDK",
+    "entry_point": "bin/{platform}/hello-plugin",
+    "capabilities": ["ui_panel", "session_events"],
+    "ui": {
+        "panels": [
+            {
+                "id": "hello-panel",
+                "title": "Hello Plugin",
+                "location": "bottom",
+                "url": "http://localhost:19100/"
+            }
+        ]
+    },
+    "actions": []
+}

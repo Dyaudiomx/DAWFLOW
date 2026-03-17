@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAWFLOW Hello Plugin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 16px;
+            font-size: 13px;
+        }
+        h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 12px;
+            letter-spacing: -0.3px;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        button {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        button:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+        button.primary {
+            background: #238636;
+            border-color: #2ea043;
+            color: #fff;
+        }
+        button.primary:hover {
+            background: #2ea043;
+        }
+        button.danger {
+            background: #da3633;
+            border-color: #f85149;
+            color: #fff;
+        }
+        button.danger:hover {
+            background: #f85149;
+        }
+        .session-info {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+        }
+        .track-list { margin-top: 8px; }
+        .track {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #161b22;
+            border: 1px solid #21262d;
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+        }
+        .track-name { flex: 1; font-weight: 500; }
+        .track-gain { color: #8b949e; font-family: 'SF Mono', monospace; font-size: 11px; }
+        .track-status { font-size: 11px; }
+        .muted { color: #f85149; }
+        .soloed { color: #d29922; }
+        #status {
+            margin-top: 12px;
+            padding: 6px 10px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <h1>DAWFLOW Hello Plugin</h1>
+
+    <div class="controls">
+        <button class="primary" onclick="cmd('daw.transport_play',{})">&#9654; Play</button>
+        <button class="danger" onclick="cmd('daw.transport_stop',{})">&#9209; Stop</button>
+        <button onclick="refreshTracks()">&#8635; Refresh</button>
+        <button onclick="refreshSession()">&#8505; Info</button>
+    </div>
+
+    <div class="session-info" id="session-info">Loading session info...</div>
+
+    <div class="track-list" id="tracks"></div>
+
+    <div id="status">Ready</div>
+
+    <script>
+        async function cmd(method, params) {
+            try {
+                const r = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({method, params})
+                });
+                const data = await r.json();
+                document.getElementById('status').textContent = method + ' -> ' + JSON.stringify(data).substring(0, 80);
+                return data;
+            } catch(e) {
+                document.getElementById('status').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function refreshSession() {
+            const info = await cmd('daw.get_session_info', {});
+            if (info) {
+                document.getElementById('session-info').innerHTML =
+                    '<b>' + (info.name || 'Unknown') + '</b> &middot; ' + (info.sample_rate || '?') + ' Hz &middot; ' +
+                    (info.playing ? '&#9654; Playing' : '&#9209; Stopped');
+            }
+        }
+
+        async function refreshTracks() {
+            const data = await cmd('daw.get_tracks', {});
+            const el = document.getElementById('tracks');
+            if (data && data.tracks) {
+                el.innerHTML = data.tracks.map(function(t) {
+                    return '<div class="track">' +
+                        '<span class="track-name">' + t.name + '</span>' +
+                        '<span class="track-gain">' + (t.gain_db || 0).toFixed(1) + ' dB</span>' +
+                        '<span class="track-status ' + (t.muted ? 'muted' : '') + '">' + (t.muted ? 'M' : '') + '</span>' +
+                        '<span class="track-status ' + (t.soloed ? 'soloed' : '') + '">' + (t.soloed ? 'S' : '') + '</span>' +
+                    '</div>';
+                }).join('');
+            } else {
+                el.innerHTML = '<div class="track">No tracks found</div>';
+            }
+        }
+
+        refreshSession();
+        refreshTracks();
+    </script>
+</body>
+</html>
