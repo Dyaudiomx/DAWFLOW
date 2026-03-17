@@ -783,13 +783,18 @@ def build(bld):
 
     # Set up font sizes
     if sys.platform == 'darwin':
+        # Cubase-compatible font sizing for macOS
+        # Cubase uses San Francisco (system font) at these approximate sizes:
+        #   Toolbar labels: ~9-10pt, Inspector text: ~10-11pt,
+        #   Track names: ~11-12pt bold, Transport time: ~14-18pt,
+        #   MixConsole channel names: ~9-10pt
         basefont = ""
         font_sizes = {
-                'VERYSMALL' : '7',
-                'SMALLER' : '9',
-                'SMALL' : '10',
-                'NORMAL' : '11',
-                'BIG' : '13',
+                'VERYSMALL' : '8',
+                'SMALLER' : '9.5',
+                'SMALL' : '10.5',
+                'NORMAL' : '11.5',
+                'BIG' : '13.5',
                 'BIGGER' : '17',
                 'LARGE' : '18',
                 'LARGER' : '28',
@@ -801,18 +806,19 @@ def build(bld):
                 'CLOCKFONT' : 'ArdourMono',
                 }
     else: # Linux/X11 & Windows fonts
+        # Cubase-compatible font sizing for Linux/Windows
         basefont = '' # unspecified - use system defaults
         font_sizes = {
                 'VERYSMALL' : '8',
-                'SMALLER' : '6',
-                'SMALL' : '7',
-                'NORMAL' : '8',
-                'BIG' : '11',
-                'BIGGER' : '13.5',
-                'LARGE' : '14.5',
-                'LARGER' : '19',
-                'HUGER' : '27',
-                'MASSIVE' : '48',
+                'SMALLER' : '7',
+                'SMALL' : '8',
+                'NORMAL' : '9',
+                'BIG' : '11.5',
+                'BIGGER' : '14',
+                'LARGE' : '15',
+                'LARGER' : '20',
+                'HUGER' : '28',
+                'MASSIVE' : '50',
         }
         font_names = {
                 'MONOSPACE' : 'ArdourMono',
