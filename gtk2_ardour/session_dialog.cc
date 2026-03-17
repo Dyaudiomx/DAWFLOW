@@ -77,7 +77,7 @@ using namespace ArdourWidgets;
 using namespace ARDOUR_UI_UTILS;
 
 SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_name, const std::string& session_path, const std::string& template_name, bool cancel_not_quit)
-	: ArdourDialog (initial_tab == New ? _("Session Setup") : _("Recent Sessions"), true, true)
+	: ArdourDialog (_("DAWFLOW Hub"), true, true)
 	, _initial_tab (initial_tab)
 	, new_name_was_edited (false)
 	, new_folder_chooser (FILE_CHOOSER_ACTION_SELECT_FOLDER)
@@ -95,10 +95,6 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	set_position (WIN_POS_CENTER);
 	get_vbox()->set_spacing (6);
 	get_vbox()->pack_start (_open_table, false, false);
-
-	string image_path;
-	Searchpath rc (ARDOUR::ardour_data_search_path());
-	rc.add_subdirectory_to_paths ("resources");
 
 	new_button.set_text (_("NEW"));
 	new_button.set_name ("tab button");
@@ -165,12 +161,14 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	}
 #endif
 
-	if (find_file (rc, PROGRAM_NAME "-small-splash.png", image_path)) {
-		Gtk::Image* image;
-		if ((image = manage (new Gtk::Image (image_path))) != 0) {
-			_open_table.attach (*image, 0,1,  row , row + 1, FILL, FILL); ++row;
-			grp->add_widget (*image);
-		}
+	/* DAWFLOW branding label in place of splash image */
+	{
+		Gtk::Label* brand_label = manage (new Gtk::Label ());
+		brand_label->set_markup ("<span size='xx-large' weight='bold' foreground='#cccccc'>DAWFLOW</span>");
+		brand_label->set_alignment (0.5, 0.5);
+		brand_label->set_size_request (-1, 60);
+		_open_table.attach (*brand_label, 0,1, row, row + 1, FILL, FILL); ++row;
+		grp->add_widget (*brand_label);
 	}
 
 	_open_table.attach (recent_button,     0,1, row, row + 1, FILL, FILL); ++row;

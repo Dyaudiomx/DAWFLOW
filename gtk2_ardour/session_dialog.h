@@ -23,7 +23,6 @@
 
 #include <string>
 
-#include <ydkmm/pixbuf.h>
 #include <ytkmm/label.h>
 #include <ytkmm/drawingarea.h>
 #include <ytkmm/expander.h>

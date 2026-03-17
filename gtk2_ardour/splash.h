@@ -26,7 +26,6 @@
 #include <ytkmm/drawingarea.h>
 #include <ytkmm/box.h>
 #include <ytkmm/label.h>
-#include <ydkmm/pixbuf.h>
 
 #include "pbd/signals.h"
 
@@ -56,9 +55,10 @@ private:
 	Splash ();
 	static Splash* the_splash;
 
-	Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 	Gtk::DrawingArea darea;
 	Glib::RefPtr<Pango::Layout> layout;
+
+	std::string current_message;
 
 	void pop_front ();
 	std::set<Gtk::Window*> _window_stack;
@@ -70,5 +70,7 @@ private:
 	volatile bool expose_done;
 	bool expose_is_the_one;
 	bool idle_after_expose ();
-};
 
+	static const int splash_width  = 700;
+	static const int splash_height = 380;
+};

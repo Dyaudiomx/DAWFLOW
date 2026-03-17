@@ -20,7 +20,13 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifdef WAF_BUILD
+#include "gtk2ardour-version.h"
+#endif
+
 #include <string>
+
+#include <cairo.h>
 
 #include "pbd/failed_constructor.h"
 #include "pbd/file_utils.h"
@@ -40,6 +46,10 @@
 #include "ui_config.h"
 
 #include "pbd/i18n.h"
+
+#ifndef VERSIONSTRING
+#define VERSIONSTRING PROGRAM_VERSION
+#endif
 
 using namespace Gtk;
 using namespace Glib;
@@ -75,45 +85,21 @@ Splash::Splash ()
 {
 	assert (the_splash == 0);
 
-	std::string splash_file;
-
-	Searchpath rc (ARDOUR::ardour_data_search_path());
-	rc.add_subdirectory_to_paths ("resources");
-
-	if (!find_file (rc, PROGRAM_NAME "-splash.png", splash_file)) {
-		cerr << "Cannot find splash screen image file\n";
-		throw failed_constructor();
-	}
-
-	try {
-		pixbuf = Gdk::Pixbuf::create_from_file (splash_file);
-	}
-
-	catch (...) {
-		cerr << "Cannot construct splash screen image\n";
-		throw failed_constructor();
-	}
-
-	darea.set_size_request (pixbuf->get_width(), pixbuf->get_height());
+	darea.set_size_request (splash_width, splash_height);
 	pop_front ();
 	set_position (WIN_POS_CENTER);
 	darea.add_events (Gdk::BUTTON_PRESS_MASK|Gdk::BUTTON_RELEASE_MASK);
-	darea.set_double_buffered (false);
+	darea.set_double_buffered (true);
 
 	layout = create_pango_layout ("");
-	string str = "<b>";
-	string i18n = string_compose (_("%1 loading ..."), PROGRAM_NAME);
-	str += i18n;
-	str += "</b>";
-
-	layout->set_markup (str);
+	current_message = string_compose (_("%1 loading ..."), PROGRAM_NAME);
 
 	darea.show ();
 	darea.signal_expose_event().connect (sigc::mem_fun (*this, &Splash::expose));
 
 	add (darea);
 
-	set_default_size (pixbuf->get_width(), pixbuf->get_height());
+	set_default_size (splash_width, splash_height);
 	set_resizable (false);
 	set_type_hint(Gdk::WINDOW_TYPE_HINT_SPLASHSCREEN);
 	the_splash = this;
@@ -217,7 +203,6 @@ Splash::on_realize ()
 {
 	Window::on_realize ();
 	get_window()->set_decorations (Gdk::WMDecoration(0));
-	layout->set_font_description (get_style()->get_font());
 }
 
 bool
@@ -237,30 +222,78 @@ bool
 Splash::expose (GdkEventExpose* ev)
 {
 	RefPtr<Gdk::Window> window = darea.get_window();
+	if (!window) {
+		return true;
+	}
 
-	/* clear background (for transparent splash images */
-	Glib::RefPtr<Gdk::GC> bg = get_style()->get_bg_gc (STATE_NORMAL);
-	window->draw_rectangle(bg, true, ev->area.x, ev->area.y, ev->area.width, ev->area.height);
+	Cairo::RefPtr<Cairo::Context> cr = window->create_cairo_context ();
 
-	/* note: height & width need to be constrained to the pixbuf size
-	   in case a WM provides us with a screwy allocation
-	*/
+	/* clip to exposed area */
+	cr->rectangle (ev->area.x, ev->area.y, ev->area.width, ev->area.height);
+	cr->clip ();
 
-	window->draw_pixbuf (get_style()->get_bg_gc (STATE_NORMAL), pixbuf,
-			     ev->area.x, ev->area.y,
-			     ev->area.x, ev->area.y,
-			     min ((pixbuf->get_width() - ev->area.x), ev->area.width),
-			     min ((pixbuf->get_height() - ev->area.y), ev->area.height),
-			     Gdk::RGB_DITHER_NONE, 0, 0);
+	/* dark background */
+	cr->set_source_rgb (0.118, 0.118, 0.118); /* #1e1e1e */
+	cr->rectangle (0, 0, splash_width, splash_height);
+	cr->fill ();
 
-	Glib::RefPtr<Gtk::Style> style = darea.get_style();
-	Glib::RefPtr<Gdk::GC> white = style->get_white_gc();
+	/* green accent strip at top (3px) */
+	cr->set_source_rgb (0.239, 0.549, 0.251); /* #3d8c40 */
+	cr->rectangle (0, 0, splash_width, 3);
+	cr->fill ();
 
-	window->draw_layout (white, 10, pixbuf->get_height() - 30, layout);
+	/* Title: "DAWFLOW" centered */
+	{
+		Glib::RefPtr<Pango::Layout> title_layout = darea.create_pango_layout ("");
+		Pango::FontDescription title_font ("Sans Bold 48");
+		title_layout->set_font_description (title_font);
+		title_layout->set_text ("DAWFLOW");
+		int tw, th;
+		title_layout->get_pixel_size (tw, th);
+		cr->set_source_rgb (1.0, 1.0, 1.0);
+		cr->move_to ((splash_width - tw) / 2.0, (splash_height / 2.0) - th - 8);
+		title_layout->show_in_cairo_context (cr);
+	}
 
-	/* this must execute AFTER the GDK idle update mechanism
-	 */
+	/* Subtitle: "Digital Audio Workstation" centered */
+	{
+		Glib::RefPtr<Pango::Layout> sub_layout = darea.create_pango_layout ("");
+		Pango::FontDescription sub_font ("Sans 16");
+		sub_layout->set_font_description (sub_font);
+		sub_layout->set_text ("Digital Audio Workstation");
+		int sw, sh;
+		sub_layout->get_pixel_size (sw, sh);
+		cr->set_source_rgb (0.533, 0.533, 0.533); /* #888888 */
+		cr->move_to ((splash_width - sw) / 2.0, (splash_height / 2.0) + 4);
+		sub_layout->show_in_cairo_context (cr);
+	}
 
+	/* Version info bottom left */
+	{
+		Glib::RefPtr<Pango::Layout> ver_layout = darea.create_pango_layout ("");
+		Pango::FontDescription ver_font ("Sans 11");
+		ver_layout->set_font_description (ver_font);
+		string ver_text = string_compose ("Version %1 (Apple Silicon)", VERSIONSTRING);
+		ver_layout->set_text (ver_text);
+		cr->set_source_rgb (0.4, 0.4, 0.4); /* #666666 */
+		cr->move_to (14, splash_height - 52);
+		ver_layout->show_in_cairo_context (cr);
+	}
+
+	/* Boot message bottom left */
+	{
+		Glib::RefPtr<Pango::Layout> msg_layout = darea.create_pango_layout ("");
+		Pango::FontDescription msg_font ("Sans 11");
+		msg_layout->set_font_description (msg_font);
+		msg_layout->set_text (current_message);
+		msg_layout->set_width ((splash_width - 28) * PANGO_SCALE);
+		msg_layout->set_ellipsize (Pango::ELLIPSIZE_END);
+		cr->set_source_rgb (0.533, 0.533, 0.533); /* #888888 */
+		cr->move_to (14, splash_height - 30);
+		msg_layout->show_in_cairo_context (cr);
+	}
+
+	/* this must execute AFTER the GDK idle update mechanism */
 	if (expose_is_the_one) {
 		idle_connection = Glib::signal_idle().connect (
 				sigc::mem_fun (this, &Splash::idle_after_expose),
@@ -316,16 +349,14 @@ Splash::display ()
 void
 Splash::message (const string& msg)
 {
-	string str ("<b>");
-	str += Gtkmm2ext::markup_escape_text (msg);
-	str += "</b>";
+	current_message = msg;
 
-	layout->set_markup (str);
 	Glib::RefPtr<Gdk::Window> win = darea.get_window();
 
 	if (win) {
 		if (win->is_visible ()) {
-			win->invalidate_rect (Gdk::Rectangle (0, darea.get_height() - 30, darea.get_width(), 30), true);
+			/* invalidate the bottom strip where the message is drawn */
+			win->invalidate_rect (Gdk::Rectangle (0, splash_height - 60, splash_width, 60), true);
 		} else {
 			darea.queue_draw ();
 		}
