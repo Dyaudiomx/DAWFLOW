@@ -66,7 +66,7 @@ UI_CONFIG_VARIABLE (bool, never_display_periodic_midi, "never-display-periodic-m
 UI_CONFIG_VARIABLE (bool, sound_midi_notes, "sound-midi-notes", true)
 UI_CONFIG_VARIABLE (bool, select_last_drawn_note_only, "select-last-drawn-note-only", true)
 UI_CONFIG_VARIABLE (bool, exclusive_solo_selects_route, "exclusive-solo-selects-route", false)
-UI_CONFIG_VARIABLE (bool, show_plugin_scan_window, "show-plugin-scan-window", false)
+UI_CONFIG_VARIABLE (bool, show_plugin_scan_window, "show-plugin-scan-window", true)
 UI_CONFIG_VARIABLE (bool, show_manager_if_plugins_are_missing, "show-manager-if-plugins-are-missing", true)
 UI_CONFIG_VARIABLE (bool, show_zoom_tools, "show-zoom-tools", true)
 UI_CONFIG_VARIABLE (bool, use_mouse_position_as_zoom_focus_on_scroll, "use-mouse-position-as-zoom-focus-on-scroll", true)

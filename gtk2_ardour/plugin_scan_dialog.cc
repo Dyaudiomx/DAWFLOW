@@ -291,15 +291,7 @@ PluginScanDialog::message_handler (std::string type, std::string plugin, bool ca
 
 	const bool cancelled = PluginManager::instance ().cancelled ();
 
-	if (type != X_("closeme") && !UIConfiguration::instance ().get_show_plugin_scan_window () && !verbose) {
-		if (get_mapped ()) {
-			hide ();
-			connections.drop_connections ();
-			ARDOUR_UI::instance ()->gui_idle_handler ();
-			return;
-		}
-		return;
-	}
+	/* Always show the plugin scan dialog so users can see progress and skip stuck plugins */
 
 	if (type == X_("closeme")) {
 		disable_per_plugin_interaction ();
@@ -315,7 +307,9 @@ PluginScanDialog::message_handler (std::string type, std::string plugin, bool ca
 	} else {
 		format_frame.set_label (type);
 		message.set_text (_("Scanning: ") + PBD::basename_nosuffix (plugin));
+		set_keep_above (true);
 		show ();
+		present ();
 	}
 
 	btn_cancel_one.set_sensitive (can_cancel && !cancelled);

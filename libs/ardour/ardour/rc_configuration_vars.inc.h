@@ -259,7 +259,7 @@ CONFIG_VARIABLE (bool, show_vst3_micro_edit_inline, "show-vst3-micro-edit-inline
 CONFIG_VARIABLE (bool, ask_replace_instrument, "ask-replace-instrument", true)
 CONFIG_VARIABLE (bool, ask_setup_instrument, "ask-setup-instrument", true)
 CONFIG_VARIABLE (bool, setup_sidechain, "setup-sidechain", false)
-CONFIG_VARIABLE (uint32_t, plugin_scan_timeout, "plugin-scan-timeout", 150) /* deci-seconds */
+CONFIG_VARIABLE (uint32_t, plugin_scan_timeout, "plugin-scan-timeout", 300) /* deci-seconds, 30s */
 CONFIG_VARIABLE (uint32_t, limit_n_automatables, "limit-n-automatables", 512)
 CONFIG_VARIABLE (uint32_t, plugin_cache_version, "plugin-cache-version", 0)
 CONFIG_VARIABLE (VST3KnobMode, vst3_knob_mode, "vst3-knob-mode", VST3KnobLinearMode)
