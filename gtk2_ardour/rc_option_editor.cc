@@ -2373,10 +2373,10 @@ RCOptionEditor::RCOptionEditor ()
 
 	/* GENERAL *****************************************************************/
 
-	add_option (_("General"), new OptionEditorHeading (_("Audio/MIDI Setup")));
+	add_option (_("General"), new OptionEditorHeading (_("Studio Setup")));
 
 	add_option (_("General"),
-			new RcActionButton (_("Show Audio/MIDI Setup Window"),
+			new RcActionButton (_("Show Studio Setup Window"),
 				sigc::mem_fun (*this, &RCOptionEditor::show_audio_setup)));
 
 	bo = new BoolOption (

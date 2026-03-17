@@ -461,8 +461,8 @@ StartupFSM::start_audio_midi_setup ()
 	}
 
 	/* Always try to auto-start the engine with saved/default settings.
-	 * This skips the Audio/MIDI Setup dialog on startup (like Cubase).
-	 * The dialog remains accessible via Window > Audio/MIDI Setup.
+	 * This skips the Studio Setup dialog on startup (like Cubase).
+	 * The dialog remains accessible via Window > Studio Setup.
 	 */
 	bool try_autostart = !new_user;
 	if (session_is_new) {

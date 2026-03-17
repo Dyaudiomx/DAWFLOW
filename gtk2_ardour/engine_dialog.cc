@@ -79,7 +79,7 @@ static const unsigned int latency_tab = 1; /* zero-based, page zero is the main 
 static const char* results_markup = X_("<span weight=\"bold\" size=\"larger\">%1</span>");
 
 EngineControl::EngineControl ()
-	: ArdourDialog (_("Audio/MIDI Setup"))
+	: ArdourDialog (_("Studio Setup"))
 	, engine_status ("")
 	, settings_table (4, 4)
 	, latency_expander (_("Advanced Settings"))
@@ -92,8 +92,13 @@ EngineControl::EngineControl ()
 	, lbl_midi_system (_("MIDI System:"), Gtk::ALIGN_START)
 	, lbl_driver (_("Driver:"), Gtk::ALIGN_START)
 	, lbl_device (_("Device:"), Gtk::ALIGN_START)
+#ifdef __APPLE__
+	, lbl_input_device (_("Audio Driver:"), Gtk::ALIGN_START)
+	, lbl_output_device (_("Output Device:"), Gtk::ALIGN_START)
+#else
 	, lbl_input_device (_("Input Device:"), Gtk::ALIGN_START)
 	, lbl_output_device (_("Output Device:"), Gtk::ALIGN_START)
+#endif
 	, lbl_sample_rate (_("Sample Rate:"), Gtk::ALIGN_START)
 	, lbl_buffer_size (_("Buffer Size:"), Gtk::ALIGN_START)
 	, lbl_nperiods (_("Periods:"), Gtk::ALIGN_START)
@@ -151,6 +156,22 @@ EngineControl::EngineControl ()
 	}
 
 	set_popdown_strings (backend_combo, backend_names);
+
+#ifdef __APPLE__
+	/* On macOS, auto-select CoreAudio and hide the backend selector.
+	 * This gives a Cubase-style "Studio Setup" experience where
+	 * the user just picks their audio device directly.
+	 */
+	for (vector<string>::const_iterator bn = backend_names.begin (); bn != backend_names.end (); ++bn) {
+		if (*bn == "CoreAudio") {
+			backend_combo.set_active_text ("CoreAudio");
+			break;
+		}
+	}
+	/* Hide backend combo row — it will be skipped in build_notebook() */
+	lbl_audio_system.set_no_show_all ();
+	backend_combo.set_no_show_all ();
+#endif
 
 	/* setup HW monitoring */
 	monitor_expander.set_expanded (true);
@@ -506,7 +527,7 @@ EngineControl::start_engine ()
 	} else if (rv > 0) {
 		/* error from push_state_to_backend() */
 		// TODO: get error message from push_state_to_backend
-		ArdourMessageDialog msg (*this, _("Could not configure Audio/MIDI engine with given settings."));
+		ArdourMessageDialog msg (*this, _("Could not configure audio engine with given settings."));
 		msg.run ();
 	}
 	return rv == 0;
@@ -529,10 +550,20 @@ EngineControl::build_notebook ()
 	/* clear the table */
 	Gtkmm2ext::container_clear (settings_table);
 
+#ifdef __APPLE__
+	/* On macOS, hide the Audio System row — CoreAudio is auto-selected.
+	 * Still attach engine_status for feedback.
+	 */
+	settings_table.attach (engine_status, 0, 3, 0, 1, xopt, SHRINK);
+	engine_status.show ();
+	lbl_audio_system.hide ();
+	backend_combo.hide ();
+#else
 	settings_table.attach (lbl_audio_system, 0, 1, 0, 1, xopt, SHRINK);
 	settings_table.attach (backend_combo,    1, 2, 0, 1, xopt, SHRINK);
 	settings_table.attach (engine_status,    2, 3, 0, 1, xopt, SHRINK);
 	engine_status.show ();
+#endif
 
 	if (_have_control) {
 		build_full_control_notebook ();
@@ -578,7 +609,12 @@ EngineControl::build_full_control_notebook ()
 
 	if (backend->can_request_update_devices ()) {
 		/* same line and height as Device(s) */
+#ifdef __APPLE__
+		/* On macOS we show only a single device row (Audio Driver) */
+		int ht = 1;
+#else
 		int ht = backend->use_separate_input_and_output_devices () ? 2 : 1;
+#endif
 		settings_table.attach (update_devices_button, 3, 4, btn, btn + ht, xopt, xopt);
 	}
 
@@ -592,6 +628,19 @@ EngineControl::build_full_control_notebook ()
 	}
 
 	if (backend->use_separate_input_and_output_devices ()) {
+#ifdef __APPLE__
+		/* Cubase-style: single "Audio Driver:" dropdown (using input_device_combo).
+		 * Output device is synced to match input device automatically.
+		 * The separate output device selector is available under Advanced Settings.
+		 */
+		settings_table.attach (lbl_input_device,   0, 1, row, row + 1, xopt, SHRINK);
+		settings_table.attach (input_device_combo, 1, 2, row, row + 1, xopt, SHRINK);
+		/* reset so it isn't used in state comparisons */
+		device_combo.set_active_text ("");
+		++row;
+		++btn;
+		/* output_device_combo will be attached in the Advanced Settings section below */
+#else
 		settings_table.attach (lbl_input_device,   0, 1, row, row + 1, xopt, SHRINK);
 		settings_table.attach (input_device_combo, 1, 2, row, row + 1, xopt, SHRINK);
 		++row;
@@ -601,6 +650,7 @@ EngineControl::build_full_control_notebook ()
 		device_combo.set_active_text ("");
 		++row;
 		btn += 2;
+#endif
 	} else {
 		settings_table.attach (lbl_device,   0, 1, row, row + 1, xopt, SHRINK);
 		settings_table.attach (device_combo, 1, 2, row, row + 1, xopt, SHRINK);
@@ -646,7 +696,19 @@ EngineControl::build_full_control_notebook ()
 	settings_table.attach (latency_expander, 0, 4, row, row + 1, xopt, SHRINK);
 	++row;
 
-	/* Advanced: Systemic Latency, MIDI */
+	/* Advanced: Systemic Latency, MIDI, and Output Device override */
+#ifdef __APPLE__
+	/* On macOS, place the separate output device selector in Advanced Settings
+	 * for power users who want different input/output devices.
+	 */
+	if (backend->use_separate_input_and_output_devices ()) {
+		settings_table.attach (lbl_output_device,   0, 1, row, row + 1, xopt, SHRINK);
+		settings_table.attach (output_device_combo, 1, 2, row, row + 1, xopt, SHRINK);
+		lbl_output_device.set_no_show_all ();
+		output_device_combo.set_no_show_all ();
+		++row;
+	}
+#endif
 	settings_table.attach (lbl_midi_system,     0, 1, row, row + 1, xopt, SHRINK);
 	settings_table.attach (midi_option_combo,   1, 2, row, row + 1, xopt, SHRINK);
 	settings_table.attach (midi_devices_button, 3, 4, row, row + 1, xopt, SHRINK);
@@ -1586,6 +1648,25 @@ EngineControl::input_device_changed ()
 	DEBUG_ECONTROL ("input_device_changed");
 
 	std::shared_ptr<ARDOUR::AudioBackend> backend = ARDOUR::AudioEngine::instance ()->current_backend ();
+
+#ifdef __APPLE__
+	/* Cubase-style: when the "Audio Driver" (input device) changes,
+	 * automatically set the output device to match, giving a single-device
+	 * selection experience. The user can override this via Advanced Settings.
+	 */
+	if (backend) {
+		const std::string& input_dev = get_input_device_name ();
+		const std::string& dev_none = ARDOUR::AudioBackend::get_standard_device_name (ARDOUR::AudioBackend::DeviceNone);
+
+		if (input_dev != dev_none && input_dev != get_output_device_name ()) {
+			block_changed_signals ();
+			if (contains_value (output_device_combo, input_dev)) {
+				output_device_combo.set_active_text (input_dev);
+			}
+			unblock_changed_signals ();
+		}
+	}
+#else
 	if (backend && backend->match_input_output_devices_or_none ()) {
 		const std::string& dev_none = ARDOUR::AudioBackend::get_standard_device_name (ARDOUR::AudioBackend::DeviceNone);
 
@@ -1600,6 +1681,7 @@ EngineControl::input_device_changed ()
 			unblock_changed_signals ();
 		}
 	}
+#endif
 	device_changed ();
 }
 
@@ -2703,7 +2785,7 @@ EngineControl::on_response (int r)
 	/* Do not run ArdourDialog::on_response() which will hide us. Leave
 	 * that to whoever invoked us, if they wish to hide us after "start".
 	 *
-	 * StartupFSM does hide us after response(); Window > Audio/MIDI Setup
+	 * StartupFSM does hide us after response(); Window > Studio Setup
 	 * does not.
 	 */
 	if (r == RESPONSE_OK) {
@@ -2856,6 +2938,11 @@ EngineControl::on_latency_expand ()
 		lbl_midi_system.show ();
 		midi_option_combo.show ();
 		midi_devices_button.show ();
+#ifdef __APPLE__
+		/* Show output device override in Advanced Settings on macOS */
+		lbl_output_device.show ();
+		output_device_combo.show ();
+#endif
 	} else {
 		lbl_input_latency.hide ();
 		lbl_output_latency.hide ();
@@ -2867,6 +2954,11 @@ EngineControl::on_latency_expand ()
 		lbl_midi_system.hide ();
 		midi_option_combo.hide ();
 		midi_devices_button.hide ();
+#ifdef __APPLE__
+		/* Hide output device override when Advanced Settings is collapsed on macOS */
+		lbl_output_device.hide ();
+		output_device_combo.hide ();
+#endif
 		if (!UIConfiguration::instance().get_allow_to_resize_init_dialog ()) {
 			resize (1, 1); // shrink window
 		}

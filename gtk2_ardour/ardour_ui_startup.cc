@@ -229,7 +229,7 @@ This session was created with a sample rate of %1 Hz, but \
 %2 is currently running at %3 Hz.\n\
 Audio is resampled for both playback and recording to match the sampling \
 rate, which reduces quality. Reconfigure the Audio Engine in \
-Menu > Window > Audio/Midi Setup"),
+Menu > Window > Studio Setup"),
 				desired, PROGRAM_NAME, actual),
 			true,
 			Gtk::MESSAGE_WARNING);

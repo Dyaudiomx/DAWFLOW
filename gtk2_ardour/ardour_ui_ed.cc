@@ -937,7 +937,7 @@ ARDOUR_UI::build_menu_bar ()
 	ArdourWidgets::set_tooltip (session_path_label, _("Double click to open session folder."));
 	ArdourWidgets::set_tooltip (format_label, _("Double click to edit audio file format."));
 	ArdourWidgets::set_tooltip (timecode_format_label, _("Double click to change timecode settings."));
-	ArdourWidgets::set_tooltip (sample_rate_label, _("Double click to show audio/midi setup."));
+	ArdourWidgets::set_tooltip (sample_rate_label, _("Double click to show Studio Setup."));
 }
 
 void
