@@ -23,7 +23,7 @@ The open source release will contain: Ardour's full functionality + the ability 
 
 ### What Is Proprietary (Closed Source, Sellable)
 
-**ALL new features, UI improvements, AI tools, branding, and value-adds are built as `.dawflow` plugins.** These plugins:
+**ALL new features, UI improvements, AI tools, branding, and value-adds are proprietary.** This includes the React UI (`dawflow-ui/`) which communicates with the engine over WebSocket (port 3818), and `.dawflow` plugins which communicate over Unix domain sockets (IPC). These:
 
 - Run as **separate processes** communicating via Unix domain sockets (IPC)
 - Are **NOT derivative works** of the GPL DAW — they are independent executables
@@ -31,6 +31,7 @@ The open source release will contain: Ardour's full functionality + the ability 
 - Are built using the Plugin SDK (`sdk/dawflow_sdk.h`, MIT licensed)
 
 This includes:
+- DAWFLOW React UI (`dawflow-ui/`) — the full Cubase-style interface
 - DAWFLOW branding (name, splash screen, icons, theme)
 - AI Chat Assistant (natural language DAW control)
 - AI Mixing/Mastering tools
@@ -69,7 +70,7 @@ The ONLY acceptable reasons to modify core DAW code are:
 4. **Performance improvements** to existing core code
 5. **Plugin system infrastructure** (improving the IPC, loader, or host itself)
 
-If you're tempted to add a feature directly to `gtk2_ardour/` or `libs/ardour/`, stop and ask: "Can this be a plugin instead?" The answer is almost always yes.
+If you're tempted to add a feature directly to `engine/gtk2_ardour/` or `engine/libs/ardour/`, stop and ask: "Can this be a plugin or part of the React UI instead?" The answer is almost always yes.
 
 ---
 
@@ -117,74 +118,81 @@ my-plugin.dawflow
 - `daw.session.dirty_changed` — session save state changed
 - `daw.record.changed` — record arm state changed
 
-**When you need a new command or event:** Add it to `DawflowPluginHost::_register_commands()` or `_connect_session_signals()` in the core, then use it from the plugin. Expanding the API surface is an acceptable core modification.
+**When you need a new command or event:** Add it to `DawflowPluginHost::_register_commands()` or `_connect_session_signals()` in `engine/libs/ardour/`, then use it from the plugin. Expanding the API surface is an acceptable core modification.
 
 ---
 
-## Project Structure
+## Repository Structure
+
+This is the **product repo** (proprietary). The GPL engine lives in a separate repo as a git submodule.
+
+| Repo | License | Visibility |
+|---|---|---|
+| `Dyaudiomx/DAWFLOW` (this repo) | Proprietary | Private forever |
+| `Dyaudiomx/dawflow-engine` (submodule at `engine/`) | GPL-2.0 | Private now, public at ship |
 
 ```
-/Users/davidyousefi/dev/DAW FLOW/
-├── libs/
-│   ├── dawflow_ipc/           # IPC library (GPL, part of core)
-│   │   ├── dawflow_ipc/
-│   │   │   ├── message.h      # JSON-RPC 2.0 messages
-│   │   │   ├── socket_server.h # Unix socket server
-│   │   │   ├── socket_client.h # Unix socket client
-│   │   │   ├── plugin_manifest.h # .dawflow manifest parser
-│   │   │   ├── plugin_loader.h # Plugin process management
-│   │   │   └── json.hpp       # nlohmann/json
-│   │   └── test/              # Unit tests
-│   ├── ardour/                # Core audio engine (GPL)
-│   │   ├── ardour/
-│   │   │   ├── dawflow_plugin_host.h  # Plugin host (GPL)
-│   │   │   └── session.h      # Modified to include plugin host
-│   │   └── dawflow_plugin_host.cc
-│   └── ... (other Ardour libs)
-├── gtk2_ardour/               # GUI (GPL)
-│   ├── dawflow_webview_panel.h/mm    # WKWebView wrapper
-│   ├── dawflow_panel_manager.h/cc    # Panel lifecycle
-│   ├── dawflow_plugin_manager_dialog.h/cc # Plugin manager UI
-│   └── ... (other Ardour GUI)
-├── sdk/                       # Plugin SDK (MIT licensed, distributable)
-│   ├── dawflow_sdk.h          # Single-header SDK for plugin developers
-│   ├── json.hpp               # Bundled JSON library
-│   └── examples/
-│       └── hello-plugin/      # Working example plugin
-├── docs/plans/                # Design documents
-└── run-dawflow.sh             # Launch script
+/Users/davidyousefi/dev/DAW FLOW/          (PRODUCT REPO - proprietary)
+├── engine/                                 ← git submodule (GPL engine)
+│   ├── libs/
+│   │   ├── dawflow_ipc/                   # IPC library (GPL)
+│   │   └── ardour/                        # Core audio engine (GPL)
+│   ├── gtk2_ardour/                       # GUI (GPL)
+│   │   ├── dawflow_webview_panel.h/mm     # WKWebView wrapper
+│   │   ├── dawflow_panel_manager.h/cc     # Panel lifecycle
+│   │   └── dawflow_plugin_manager_dialog.h/cc
+│   ├── share/web_surfaces/                # Ardour web surfaces
+│   └── wscript                            # Engine build system
+├── dawflow-ui/                            # React UI (PROPRIETARY)
+│   ├── src/                               # TypeScript source
+│   ├── deploy.sh                          # Build + deploy to engine
+│   └── package.json
+├── sdk/                                   # Plugin SDK (MIT licensed)
+│   ├── dawflow_sdk.h                      # Single-header SDK
+│   ├── examples/hello-plugin/
+│   └── plugins/ai-chat/                   # AI chat plugin source
+├── plugins/                               # Future proprietary plugins
+├── branding/                              # Splash, icons, theme
+├── configs/                               # Default preferences
+├── installer/                             # macOS .app bundler
+├── docs/plans/                            # Design documents
+├── build.sh                               # Build everything
+└── run-dawflow.sh                         # Launch DAWFLOW
 ```
 
 ---
 
 ## Building
 
-### macOS (arm64)
+### Full build (engine + React UI)
 
 ```bash
-# Install dependencies
+./build.sh           # configures engine, builds C++, builds React UI, deploys
+./run-dawflow.sh     # launches DAWFLOW
+```
+
+### Engine only (after modifying C++ code in engine/)
+
+```bash
+cd engine
+python3 waf build -j$(sysctl -n hw.ncpu)
+```
+
+### React UI only (after modifying dawflow-ui/)
+
+```bash
+cd dawflow-ui
+./deploy.sh          # builds + deploys to engine/share/web_surfaces/
+```
+
+### First-time setup (install dependencies)
+
+```bash
 brew install gtkmm cairomm glibmm pangomm libsigc++ lv2 lilv serd sord sratom \
   fftw liblo aubio taglib vamp-plugin-sdk libwebsockets hidapi libusb lrdf
-
-# Configure
-export PKG_CONFIG_PATH="/opt/homebrew/opt/libarchive/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig"
-export CXXFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/libarchive/include -I/opt/homebrew/include/raptor2"
-export CFLAGS="-I/opt/homebrew/include -I/opt/homebrew/opt/libarchive/include -I/opt/homebrew/include/raptor2"
-export LDFLAGS="-L/opt/homebrew/lib -L/opt/homebrew/opt/libarchive/lib"
-
-python3 waf configure \
-  --with-backends=coreaudio,dummy \
-  --no-phone-home \
-  --boost-include=/opt/homebrew/include \
-  --also-include=/opt/homebrew/include,/opt/homebrew/opt/libarchive/include,/opt/homebrew/include/raptor2 \
-  --also-libdir=/opt/homebrew/lib,/opt/homebrew/opt/libarchive/lib \
-  --keepflags --arm64 --noconfirm
-
-# Build
-python3 waf build -j$(sysctl -n hw.ncpu)
-
-# Run
-./run-dawflow.sh
+git submodule update --init --recursive
+cd dawflow-ui && npm install && cd ..
+./build.sh
 ```
 
 ### Building a Plugin
@@ -199,9 +207,27 @@ cp hello-plugin.dawflow ~/.config/dawflow/plugins/
 
 ## Git Workflow
 
-- **Branch**: `feature/dawflow-plugin-system` — plugin system implementation
-- **Remote `origin`**: `https://github.com/Dyaudiomx/DAWFLOW.git` (our repo)
-- **Remote `upstream`**: `https://github.com/Ardour/ardour.git` (for pulling Ardour updates)
+### Product repo (this repo)
+- **Branch**: `feature/dawflow-plugin-system`
+- **Remote `origin`**: `https://github.com/Dyaudiomx/DAWFLOW.git`
+- Contains: React UI, SDK, plugins, branding, installer, docs
+
+### Engine repo (submodule at `engine/`)
+- **Branch**: `main` (DAWFLOW changes), `master` (Ardour baseline)
+- **Remote**: `https://github.com/Dyaudiomx/dawflow-engine.git`
+- **Upstream**: `https://github.com/Ardour/ardour.git` (for pulling Ardour updates)
+- Contains: All GPL engine code
+
+### When modifying engine code:
+```bash
+cd engine
+# make changes to libs/, gtk2_ardour/, etc.
+python3 waf build -j$(sysctl -n hw.ncpu)
+git add . && git commit -m "fix: description"
+git push origin main
+cd ..
+git add engine && git commit -m "chore: update engine submodule"
+```
 
 ---
 
