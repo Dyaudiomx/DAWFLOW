@@ -125,6 +125,7 @@ Splash::Splash ()
 
 	if (!ARDOUR_COMMAND_LINE::no_splash) {
 		ARDOUR::BootMessage.connect (msg_connection, invalidator (*this), std::bind (&Splash::boot_message, this, _1), gui_context());
+		ARDOUR::PluginScanMessage.connect (scan_connection, invalidator (*this), std::bind (&Splash::plugin_scan_message, this, _1, _2, _3), gui_context());
 		present ();
 	}
 }
@@ -253,11 +254,6 @@ Splash::expose (GdkEventExpose* ev)
 	cr->rectangle (0, 0, splash_width, splash_height);
 	cr->fill ();
 
-	/* green accent strip at top (3px) */
-	cr->set_source_rgb (0.239, 0.549, 0.251); /* #3d8c40 */
-	cr->rectangle (0, 0, splash_width, 3);
-	cr->fill ();
-
 	/* Logo image centered */
 	int logo_bottom = splash_height / 2 - 40;
 	if (logo_pixbuf) {
@@ -337,6 +333,20 @@ Splash::boot_message (std::string msg)
 	if (!get_visible() && _window_stack.empty ()) {
 		display ();
 	}
+	message (msg);
+}
+
+void
+Splash::plugin_scan_message (std::string type, std::string plugin, bool /*scanning*/)
+{
+	/* Show per-plugin progress: "Scanning VST3 (12/45): FabFilter Pro-Q 3" */
+	std::string basename = Glib::path_get_basename (plugin);
+	/* Remove file extension for cleaner display */
+	std::string::size_type dot = basename.rfind ('.');
+	if (dot != std::string::npos) {
+		basename = basename.substr (0, dot);
+	}
+	std::string msg = type + ": " + basename;
 	message (msg);
 }
 

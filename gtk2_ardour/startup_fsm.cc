@@ -78,7 +78,7 @@ StartupFSM::StartupFSM (EngineControl& amd)
 	, new_user (false)  // Never show first-run wizard - Cubase-style
 	, new_session_required (ARDOUR_COMMAND_LINE::new_session)
 	, plugins_scanned_before_hub (false)
-	, _state (WaitingForSessionPath)  // Show Hub immediately, plugins scan after engine starts
+	, _state (WaitingForPluginScan)  // Cubase-style: splash with plugin scan first, then Hub
 	, audiomidi_dialog (amd)
 	, new_user_dialog (0)
 	, session_dialog (0)
@@ -472,6 +472,14 @@ StartupFSM::start_engine_for_plugin_scan ()
 	set_state (WaitingForPluginScan);
 
 	std::shared_ptr<AudioBackend> backend = AudioEngine::instance()->current_backend();
+
+	/* On macOS, force CoreAudio backend if none configured (first run) */
+#ifdef __APPLE__
+	if (!backend) {
+		BootMessage (_("Setting up CoreAudio..."));
+		backend = AudioEngine::instance()->set_backend("CoreAudio", "", "");
+	}
+#endif
 
 	if (backend && !AudioEngine::instance()->running()) {
 		/* Try to start the engine with default/saved settings */

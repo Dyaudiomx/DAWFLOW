@@ -66,7 +66,9 @@ private:
 	std::set<Gtk::Window*> _window_stack;
 
 	void boot_message (std::string);
+	void plugin_scan_message (std::string type, std::string plugin, bool);
 	PBD::ScopedConnection msg_connection;
+	PBD::ScopedConnection scan_connection;
 
 	sigc::connection idle_connection;
 	volatile bool expose_done;
