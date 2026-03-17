@@ -75,9 +75,9 @@ StartupFSM::StartupFSM (EngineControl& amd)
 	, session_is_new (false)
 	, session_name_edited (false)
 	, session_loaded (false)
-	, new_user (NewUserWizard::required())
-	, new_session_required (ARDOUR_COMMAND_LINE::new_session || new_user)
-	, _state (new_user ? WaitingForNewUser : WaitingForSessionPath)
+	, new_user (false)  // Never show first-run wizard - Cubase-style
+	, new_session_required (ARDOUR_COMMAND_LINE::new_session)
+	, _state (WaitingForSessionPath)  // Go straight to session dialog
 	, audiomidi_dialog (amd)
 	, new_user_dialog (0)
 	, session_dialog (0)
@@ -152,7 +152,8 @@ StartupFSM::start ()
 		show_pre_release_dialog ();
 		break;
 	case WaitingForNewUser:
-		show_new_user_dialog ();
+		/* Wizard disabled - Cubase-style: skip straight to session dialog */
+		handle_waiting_for_session_path ();
 		break;
 	case WaitingForSessionPath:
 		handle_waiting_for_session_path ();
@@ -230,33 +231,15 @@ StartupFSM::dialog_response_handler (int response, StartupFSM::DialogID dialog_i
 			*/
 			end_dialog (&pre_release_dialog);
 
-			if (NewUserWizard::required()) {
-				show_new_user_dialog ();
-			} else {
-				handle_waiting_for_session_path ();
-			}
+			/* Wizard disabled - Cubase-style: always skip to session path */
+			handle_waiting_for_session_path ();
 			break;
 		}
 		break;
 
 	case WaitingForNewUser:
-		switch (dialog_id) {
-		case ApplicationPseudoDialog:
-			/* this shouldn't happen; ignore it */
-			break;
-		case NewUserDialog:
-			switch (response) {
-			case RESPONSE_OK:
-				end_dialog (&new_user_dialog);
-				show_session_dialog (new_session_required);
-				break;
-			default:
-				_signal_response (QuitProgram);
-			}
-		default:
-			/* ERROR */
-			break;
-		}
+		/* Wizard disabled - Cubase-style: skip to session dialog */
+		handle_waiting_for_session_path ();
 		break;
 
 	case WaitingForSessionPath:
@@ -427,11 +410,8 @@ StartupFSM::show_plugin_scan_dialog ()
 void
 StartupFSM::show_new_user_dialog ()
 {
-	set_state (WaitingForNewUser);
-	new_user_dialog = new NewUserWizard;
-	current_dialog_connection = new_user_dialog->signal_response().connect (sigc::bind (sigc::mem_fun (*this, &StartupFSM::dialog_response_handler), NewUserDialog));
-	new_user_dialog->set_position (WIN_POS_CENTER);
-	new_user_dialog->present ();
+	/* Wizard disabled - Cubase-style: skip straight to session dialog */
+	handle_waiting_for_session_path ();
 }
 
 void
@@ -480,7 +460,11 @@ StartupFSM::start_audio_midi_setup ()
 		}
 	}
 
-	bool try_autostart = !new_user && (Config->get_try_autostart_engine () || g_getenv ("ARDOUR_TRY_AUTOSTART_ENGINE"));
+	/* Always try to auto-start the engine with saved/default settings.
+	 * This skips the Audio/MIDI Setup dialog on startup (like Cubase).
+	 * The dialog remains accessible via Window > Audio/MIDI Setup.
+	 */
+	bool try_autostart = !new_user;
 	if (session_is_new) {
 		try_autostart = false;
 	} else if (!backend) {
