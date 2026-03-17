@@ -41,6 +41,7 @@
 #include "temporal/beats.h"
 #include "evoral/Note.h"
 #include "pbd/id.h"
+#include "pbd/stateful.h"
 
 #include <algorithm>
 #include <cmath>
@@ -701,7 +702,8 @@ ARDOUR::dawflow_register_medium_commands (
 
 		bool found = false;
 		for (auto it = tempi.begin (); it != tempi.end (); ++it) {
-			if (it->sample () == pos || std::abs ((int64_t)it->sample () - pos) < 64) {
+			int64_t tp_samples = it->time ().samples ();
+			if (tp_samples == pos || std::abs (tp_samples - pos) < 64) {
 				if (it == tempi.begin ()) {
 					throw std::runtime_error ("Cannot remove the initial tempo point");
 				}
@@ -739,7 +741,8 @@ ARDOUR::dawflow_register_medium_commands (
 
 		auto& tempi = tmap->tempos ();
 		for (auto it = tempi.begin (); it != tempi.end (); ++it) {
-			if (std::abs ((int64_t)it->sample () - start_pos) < 64) {
+			int64_t tp_samples = it->time ().samples ();
+			if (std::abs (tp_samples - start_pos) < 64) {
 				auto& tp = const_cast<Temporal::TempoPoint&> (*it);
 				tmap->set_ramped (tp, true);
 				break;
@@ -803,7 +806,7 @@ ARDOUR::dawflow_register_medium_commands (
 		auto new_insert = std::shared_ptr<PluginInsert> (
 			new PluginInsert (session, *dst_route, new_plugin));
 
-		new_insert->set_state (state, Stateful::current_state_version);
+		new_insert->set_state (state, PBD::Stateful::current_state_version);
 		dst_route->add_processor (new_insert, PreFader);
 
 		json result;
@@ -1435,9 +1438,10 @@ ARDOUR::dawflow_register_medium_commands (
 	);
 
 	/* 46-47. plugin.added / plugin.removed — via processors_changed */
-	auto wire_processor_signals = [&host, &_medium_signal_connections](std::shared_ptr<Route> route) {
+	static PBD::ScopedConnectionList* _med_sig_ptr = &_medium_signal_connections;
+	auto wire_processor_signals = [&host](std::shared_ptr<Route> route) {
 		route->processors_changed.connect_same_thread (
-			_medium_signal_connections,
+			*_med_sig_ptr,
 			[&host, weak_route = std::weak_ptr<Route>(route)](RouteProcessorChange /* rpc */) {
 				auto r = weak_route.lock ();
 				if (r) {
