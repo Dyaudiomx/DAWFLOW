@@ -114,6 +114,7 @@
 #include "ardour/send.h"
 #include "ardour/selection.h"
 #include "ardour/session.h"
+#include "ardour/dawflow_plugin_host.h"
 #include "ardour/session_directory.h"
 #include "ardour/session_metadata.h"
 #include "ardour/session_playlists.h"
@@ -579,6 +580,10 @@ Session::Session (AudioEngine &eng,
 		save_template (mix_template, template_description, true);
 	}
 
+	/* Initialize DAWFLOW plugin host */
+	_dawflow_plugin_host = std::make_unique<DawflowPluginHost> (*this);
+	_dawflow_plugin_host->start ();
+
 	BootMessage (_("Session loading complete"));
 }
 
@@ -663,6 +668,12 @@ Session::destroy ()
 	/* if we got to here, leaving pending state around
 	 * is a mistake.
 	 */
+
+	/* Shut down DAWFLOW plugin host before other teardown */
+	if (_dawflow_plugin_host) {
+		_dawflow_plugin_host->stop ();
+		_dawflow_plugin_host.reset ();
+	}
 
 	remove_pending_capture_state ();
 

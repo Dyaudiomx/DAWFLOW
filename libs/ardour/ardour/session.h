@@ -189,6 +189,7 @@ class Track;
 class UI_TransportMaster;
 class VCAManager;
 class WindowsVSTPlugin;
+class DawflowPluginHost;
 
 extern void setup_enum_writer ();
 
@@ -238,6 +239,8 @@ public:
 	std::string uuid() const { return _uuid.to_s(); }
 	std::string path() const { return _path; }
 	std::string name() const { return _name; }
+
+	DawflowPluginHost& dawflow_plugin_host () { return *_dawflow_plugin_host; }
 	std::string snap_name() const { return _current_snapshot_name; }
 	std::string raid_path () const;
 	bool path_is_within_session (const std::string&);
@@ -1627,6 +1630,8 @@ private:
 	samplepos_t              last_loopend;
 
 	const std::unique_ptr<SessionDirectory> _session_dir;
+
+	std::unique_ptr<DawflowPluginHost> _dawflow_plugin_host;
 
 	void hookup_io ();
 	void graph_reordered (bool called_from_backend);
