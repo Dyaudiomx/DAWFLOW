@@ -59,6 +59,7 @@ class StartupFSM : public sigc::trackable
 		NotWaiting,
 		WaitingForPreRelease,
 		WaitingForNewUser,
+		WaitingForPluginScan,   /* Cubase-style: engine + plugin scan before Hub */
 		WaitingForSessionPath,
 		WaitingForEngineParams,
 		WaitingForPlugins
@@ -97,6 +98,7 @@ class StartupFSM : public sigc::trackable
   private:
 	bool new_user;
 	bool new_session_required;
+	bool plugins_scanned_before_hub;  /* true if Cubase-style pre-Hub scan was done */
 
 	MainState _state;
 
@@ -118,6 +120,7 @@ class StartupFSM : public sigc::trackable
 	bool ask_about_loading_existing_session (const std::string& session_path);
 	int  check_session_parameters (bool must_be_new);
 	void start_audio_midi_setup ();
+	void start_engine_for_plugin_scan ();
 	void engine_running ();
 	void handle_waiting_for_session_path ();
 

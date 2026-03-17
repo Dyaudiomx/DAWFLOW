@@ -211,6 +211,7 @@ setup_gtk_ardour_enums ()
 	REGISTER_CLASS_ENUM (StartupFSM, NotWaiting);
 	REGISTER_CLASS_ENUM (StartupFSM, WaitingForPreRelease);
 	REGISTER_CLASS_ENUM (StartupFSM, WaitingForNewUser);
+	REGISTER_CLASS_ENUM (StartupFSM, WaitingForPluginScan);
 	REGISTER_CLASS_ENUM (StartupFSM, WaitingForSessionPath);
 	REGISTER_CLASS_ENUM (StartupFSM, WaitingForEngineParams);
 	REGISTER_CLASS_ENUM (StartupFSM, WaitingForPlugins);

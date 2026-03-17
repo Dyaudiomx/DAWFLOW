@@ -77,7 +77,8 @@ StartupFSM::StartupFSM (EngineControl& amd)
 	, session_loaded (false)
 	, new_user (false)  // Never show first-run wizard - Cubase-style
 	, new_session_required (ARDOUR_COMMAND_LINE::new_session)
-	, _state (WaitingForSessionPath)  // Go straight to session dialog
+	, plugins_scanned_before_hub (false)
+	, _state (WaitingForPluginScan)  // Cubase-style: engine + plugin scan first, then Hub
 	, audiomidi_dialog (amd)
 	, new_user_dialog (0)
 	, session_dialog (0)
@@ -152,8 +153,12 @@ StartupFSM::start ()
 		show_pre_release_dialog ();
 		break;
 	case WaitingForNewUser:
-		/* Wizard disabled - Cubase-style: skip straight to session dialog */
-		handle_waiting_for_session_path ();
+		/* Wizard disabled - Cubase-style: skip straight to plugin scan */
+		start_engine_for_plugin_scan ();
+		break;
+	case WaitingForPluginScan:
+		/* Cubase-style: start engine and scan plugins before showing Hub */
+		start_engine_for_plugin_scan ();
 		break;
 	case WaitingForSessionPath:
 		handle_waiting_for_session_path ();
@@ -231,15 +236,15 @@ StartupFSM::dialog_response_handler (int response, StartupFSM::DialogID dialog_i
 			*/
 			end_dialog (&pre_release_dialog);
 
-			/* Wizard disabled - Cubase-style: always skip to session path */
-			handle_waiting_for_session_path ();
+			/* Cubase-style: engine + plugin scan before Hub */
+			start_engine_for_plugin_scan ();
 			break;
 		}
 		break;
 
 	case WaitingForNewUser:
-		/* Wizard disabled - Cubase-style: skip to session dialog */
-		handle_waiting_for_session_path ();
+		/* Wizard disabled - Cubase-style: engine + plugin scan before Hub */
+		start_engine_for_plugin_scan ();
 		break;
 
 	case WaitingForSessionPath:
@@ -305,6 +310,26 @@ StartupFSM::dialog_response_handler (int response, StartupFSM::DialogID dialog_i
 				_signal_response (QuitProgram);
 			}
 			break;
+		default:
+			/* ERROR */
+			break;
+		}
+		break;
+
+	case WaitingForPluginScan:
+		/* Cubase-style: plugin scan done before Hub — now show session dialog */
+		switch (dialog_id) {
+		case PluginDialog:
+			end_dialog (&plugin_scan_dialog);
+			switch (response) {
+			case RESPONSE_OK:
+				/* Plugin scan complete. Now show the Hub (session dialog). */
+				handle_waiting_for_session_path ();
+				break;
+			default:
+				_signal_response (QuitProgram);
+				break;
+			}
 		default:
 			/* ERROR */
 			break;
@@ -385,7 +410,12 @@ StartupFSM::handle_waiting_for_session_path ()
 void
 StartupFSM::show_plugin_scan_dialog ()
 {
-	set_state (WaitingForPlugins);
+	/* Preserve WaitingForPluginScan state if already set (Cubase-style pre-Hub scan).
+	 * Otherwise use the normal WaitingForPlugins state (post-session-pick scan).
+	 */
+	if (_state != WaitingForPluginScan) {
+		set_state (WaitingForPlugins);
+	}
 
 	/* if the user does not ask to discover AU/VSTs at startup, or if this is Mixbus, then the plugin scan
 	 * that we run here, during startup, should only use the existing plugin cache (if any).
@@ -410,8 +440,8 @@ StartupFSM::show_plugin_scan_dialog ()
 void
 StartupFSM::show_new_user_dialog ()
 {
-	/* Wizard disabled - Cubase-style: skip straight to session dialog */
-	handle_waiting_for_session_path ();
+	/* Wizard disabled - Cubase-style: engine + plugin scan before Hub */
+	start_engine_for_plugin_scan ();
 }
 
 void
@@ -434,6 +464,53 @@ StartupFSM::show_audiomidi_dialog ()
 }
 
 void
+StartupFSM::start_engine_for_plugin_scan ()
+{
+	DEBUG_TRACE (DEBUG::GuiStartup, "Cubase-style: starting engine for plugin scan before Hub\n");
+	BootMessage (_("Starting Audio Engine"));
+
+	set_state (WaitingForPluginScan);
+
+	std::shared_ptr<AudioBackend> backend = AudioEngine::instance()->current_backend();
+
+	if (backend && !AudioEngine::instance()->running()) {
+		/* Try to start the engine with default/saved settings */
+		if (!AudioEngine::instance()->start()) {
+			if (ARDOUR::AudioEngine::instance()->running()) {
+				DEBUG_TRACE (DEBUG::GuiStartup, "engine auto-started for plugin scan\n");
+				/* Engine is running — proceed to plugin scan */
+				show_plugin_scan_dialog ();
+
+				DEBUG_TRACE (DEBUG::GuiStartup, "attach UI to engine (pre-Hub)\n");
+				ARDOUR_UI::instance()->attach_to_engine ();
+
+				plugins_scanned_before_hub = true;
+				plugin_scan_dialog->response (RESPONSE_OK);
+				return;
+			}
+		}
+	} else if (backend && AudioEngine::instance()->running()) {
+		DEBUG_TRACE (DEBUG::GuiStartup, "engine already running for plugin scan\n");
+		/* Engine already running — proceed to plugin scan */
+		show_plugin_scan_dialog ();
+
+		DEBUG_TRACE (DEBUG::GuiStartup, "attach UI to engine (pre-Hub)\n");
+		ARDOUR_UI::instance()->attach_to_engine ();
+
+		plugins_scanned_before_hub = true;
+		plugin_scan_dialog->response (RESPONSE_OK);
+		return;
+	}
+
+	/* If we get here, engine could not auto-start.
+	 * Fall back to showing the Hub without plugin scan.
+	 * The plugin scan will happen later after session is picked and engine starts.
+	 */
+	DEBUG_TRACE (DEBUG::GuiStartup, "engine could not auto-start, showing Hub without plugin scan\n");
+	handle_waiting_for_session_path ();
+}
+
+void
 StartupFSM::start_audio_midi_setup ()
 {
 	BootMessage (_("Starting Audio/MIDI Engine"));
@@ -445,9 +522,7 @@ StartupFSM::start_audio_midi_setup ()
 		setup_required = true;
 
 	} else if (session_is_new && AudioEngine::instance()->running() && AudioEngine::instance()->sample_rate () == session_existing_sample_rate) {
-		/* keep engine */
-
-		warning << "A running engine should not be possible at this point" << endmsg;
+		/* keep engine — this is expected when engine was started for pre-Hub plugin scan */
 
 	} else if (AudioEngine::instance()->setup_required()) {
 		/* backend is known, but setup is needed */
@@ -530,6 +605,15 @@ StartupFSM::start_audio_midi_setup ()
 void
 StartupFSM::engine_running ()
 {
+	if (plugins_scanned_before_hub) {
+		/* Cubase-style: plugins were already scanned during pre-Hub phase.
+		 * Skip re-scanning and just signal that we're ready to load.
+		 */
+		DEBUG_TRACE (DEBUG::GuiStartup, "engine running, plugins already scanned pre-Hub — proceeding to load session\n");
+		_signal_response (session_loaded ? LoadedSession : LoadSession);
+		return;
+	}
+
 	DEBUG_TRACE (DEBUG::GuiStartup, "engine running, start plugin scan then attach UI to engine\n");
 
 	/* This may be very slow. See comments in PluginScanDialog::start() */
