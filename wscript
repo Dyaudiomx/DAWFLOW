@@ -361,6 +361,8 @@ children = [
         'libs/tk/ydkmm',
         'libs/tk/ytkmm',
         'libs/tk/suil',
+        # dawflow plugin system (no Ardour dependencies)
+        'libs/dawflow_ipc',
         # core ardour libraries
         'libs/pbd',
         'libs/lua',
