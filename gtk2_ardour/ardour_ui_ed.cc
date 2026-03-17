@@ -295,6 +295,9 @@ ARDOUR_UI::install_actions ()
 
 	ActionManager::register_action (common_actions, X_("toggle-meterbridge"), S_("Window|Meterbridge"),  sigc::mem_fun(*this, &ARDOUR_UI::toggle_meterbridge));
 
+	act = ActionManager::register_action (common_actions, X_("toggle-dawflow-plugins"), _("DAWFLOW Plugins..."), sigc::mem_fun (*this, &ARDOUR_UI::toggle_dawflow_plugin_manager));
+	ActionManager::session_sensitive_actions.push_back (act);
+
 	act = ActionManager::register_action (common_actions, X_("NewMIDITracer"), _("MIDI Tracer"), sigc::mem_fun(*this, &ARDOUR_UI::new_midi_tracer_window));
 	ActionManager::session_sensitive_actions.push_back (act);
 

@@ -726,6 +726,7 @@
       <menuitem action='toggle-big-transport'/>
       <menuitem action='toggle-virtual-keyboard'/>
       <menuitem action='toggle-library-downloader'/>
+      <menuitem action='toggle-dawflow-plugins'/>
 
       <separator/><!-- Video Monitor !-->
       <menuitem action='ToggleJadeo'/>

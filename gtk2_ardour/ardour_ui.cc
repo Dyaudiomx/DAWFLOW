@@ -306,6 +306,7 @@ ARDOUR_UI::ARDOUR_UI (int *argcp, char **argvp[], const char* localedir)
 	, last_key_press_time (0)
 	, save_as_dialog (0)
 	, meterbridge (0)
+	, _dawflow_plugin_manager (0)
 	, rc_option_editor (0)
 	, speaker_config_window (X_("speaker-config"), _("Speaker Configuration"))
 	, add_route_dialog (X_("add-routes"), _("Add Tracks/Busses"))
@@ -859,6 +860,7 @@ ARDOUR_UI::~ARDOUR_UI ()
 		delete secondary_clock; secondary_clock = 0;
 		delete _process_thread; _process_thread = 0;
 		delete meterbridge; meterbridge = 0;
+		delete _dawflow_plugin_manager; _dawflow_plugin_manager = 0;
 		delete duplicate_routes_dialog; duplicate_routes_dialog = 0;
 		delete trigger_page; trigger_page = 0;
 		delete recorder; recorder = 0;

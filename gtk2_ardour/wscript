@@ -365,7 +365,8 @@ gtk2_ardour_sources = [
         'utils_videotl.cc',
         'export_video_dialog.cc',
         # DAWFLOW plugin system
-        'dawflow_panel_manager.cc'
+        'dawflow_panel_manager.cc',
+        'dawflow_plugin_manager_dialog.cc'
 ]
 
 def enoify (major, minor):

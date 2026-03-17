@@ -91,6 +91,7 @@
 #include "transport_masters_dialog.h"
 #include "trigger_page.h"
 #include "virtual_keyboard_window.h"
+#include "dawflow_plugin_manager_dialog.h"
 
 #include "pbd/i18n.h"
 
@@ -895,6 +896,25 @@ ARDOUR_UI::toggle_meterbridge ()
 		meterbridge->raise ();
 	} else {
 		meterbridge->hide_window (NULL);
+	}
+}
+
+void
+ARDOUR_UI::toggle_dawflow_plugin_manager ()
+{
+	if (!_session) {
+		return;
+	}
+
+	if (!_dawflow_plugin_manager) {
+		_dawflow_plugin_manager = new DawflowPluginManagerDialog (_session);
+		_dawflow_plugin_manager->signal_response().connect (sigc::hide (sigc::mem_fun (*_dawflow_plugin_manager, &Gtk::Widget::hide)));
+	}
+
+	if (_dawflow_plugin_manager->is_visible ()) {
+		_dawflow_plugin_manager->hide ();
+	} else {
+		_dawflow_plugin_manager->present ();
 	}
 }
 

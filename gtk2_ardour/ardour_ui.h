@@ -168,6 +168,7 @@ class NSM_Client;
 class LevelMeterHBox;
 class GUIObjectState;
 class BasicUI;
+class DawflowPluginManagerDialog;
 
 namespace ARDOUR {
 	class ControlProtocolInfo;
@@ -472,6 +473,7 @@ private:
 	void tabbable_state_change (ArdourWidgets::Tabbable&);
 
 	void toggle_meterbridge ();
+	void toggle_dawflow_plugin_manager ();
 
 	int  setup_windows ();
 	void apply_window_settings (bool);
@@ -672,6 +674,7 @@ private:
 	int         create_trigger_page ();
 
 	Meterbridge  *meterbridge;
+	DawflowPluginManagerDialog* _dawflow_plugin_manager;
 
 	/* Dialogs that can be created via new<T> */
 
