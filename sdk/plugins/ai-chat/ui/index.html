@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAWFLOW AI Assistant</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg-root: #0c0c10;
+    --bg-surface: #131318;
+    --bg-elevated: #1a1a22;
+    --bg-hover: #22222e;
+    --bg-input: #16161e;
+    --border: #2a2a36;
+    --border-subtle: #1f1f2a;
+    --text-primary: #e4e4ec;
+    --text-secondary: #8888a0;
+    --text-tertiary: #5c5c72;
+    --accent: #8b5cf6;
+    --accent-dim: rgba(139, 92, 246, 0.15);
+    --accent-glow: rgba(139, 92, 246, 0.08);
+    --user-bubble: #1e1b4b;
+    --user-border: #312e81;
+    --ai-bubble: #18181f;
+    --ai-border: #26263a;
+    --success: #22c55e;
+    --success-dim: rgba(34, 197, 94, 0.12);
+    --warning: #eab308;
+    --warning-dim: rgba(234, 179, 8, 0.12);
+    --error: #ef4444;
+    --error-dim: rgba(239, 68, 68, 0.12);
+    --action-bg: #12121a;
+    --action-border: #2a2a3a;
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: #2a2a36;
+    --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+    --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-root);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========== LAYOUT ========== */
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 100%;
+}
+
+/* ========== HEADER ========== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    min-height: 52px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    user-select: none;
+    -webkit-app-region: drag;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logo {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.header-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    transition: background var(--transition);
+}
+
+.status-dot.connected { background: var(--success); box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+.status-dot.error { background: var(--error); box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+
+.header-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 16px;
+}
+
+.header-btn:hover {
+    background: var(--bg-elevated);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+/* ========== CONTEXT BAR ========== */
+.context-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 20px;
+    background: var(--bg-root);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.context-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all var(--transition);
+}
+
+.context-tag .label { color: var(--text-tertiary); }
+.context-tag .value { color: var(--accent); }
+
+/* ========== MESSAGES ========== */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+}
+
+.messages::-webkit-scrollbar { width: 6px; }
+.messages::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+.messages::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.messages::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+
+/* Welcome message */
+.msg-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 48px 24px 32px;
+    gap: 16px;
+}
+
+.welcome-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 50%, #4c1d95 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+}
+
+.welcome-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.welcome-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    max-width: 420px;
+    line-height: 1.6;
+}
+
+.welcome-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.welcome-chip {
+    padding: 7px 14px;
+    border-radius: 100px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.welcome-chip:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+}
+
+/* Message bubbles */
+.msg { display: flex; gap: 10px; max-width: 85%; animation: msgIn 250ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg.assistant { align-self: flex-start; }
+
+@keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-avatar {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.msg.user .msg-avatar {
+    background: var(--user-border);
+    color: #c4b5fd;
+}
+
+.msg.assistant .msg-avatar {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: #fff;
+    font-size: 12px;
+}
+
+.msg-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.msg-sender {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    padding: 0 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.msg-content {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13.5px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.msg.user .msg-content {
+    background: var(--user-bubble);
+    border: 1px solid var(--user-border);
+    color: #e0deff;
+    border-bottom-right-radius: 4px;
+}
+
+.msg.assistant .msg-content {
+    background: var(--ai-bubble);
+    border: 1px solid var(--ai-border);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.msg-content p { margin-bottom: 8px; }
+.msg-content p:last-child { margin-bottom: 0; }
+
+.msg-content code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(139, 92, 246, 0.1);
+    color: #c4b5fd;
+    border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.msg-content pre {
+    margin: 8px 0;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-root);
+    border: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.msg-content pre code {
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: inherit;
+}
+
+/* ========== ACTION BLOCK ========== */
+.action-block {
+    margin-top: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    overflow: hidden;
+}
+
+.action-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(139, 92, 246, 0.06);
+    border-bottom: 1px solid var(--action-border);
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+}
+
+.action-header:hover { background: rgba(139, 92, 246, 0.1); }
+
+.action-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-header-left .icon { font-size: 13px; }
+
+.action-count {
+    padding: 1px 6px;
+    border-radius: 100px;
+    background: var(--accent-dim);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.action-chevron {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    transition: transform var(--transition);
+}
+
+.action-block.expanded .action-chevron { transform: rotate(180deg); }
+
+.action-body {
+    display: none;
+    padding: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.action-block.expanded .action-body { display: block; }
+
+.action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.action-item + .action-item { border-top: 1px solid var(--border-subtle); }
+
+.action-status {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 9px;
+    margin-top: 1px;
+}
+
+.action-status.ok { background: var(--success-dim); color: var(--success); }
+.action-status.err { background: var(--error-dim); color: var(--error); }
+.action-status.pending { background: var(--warning-dim); color: var(--warning); }
+
+.action-method { color: #c4b5fd; font-weight: 500; }
+.action-params { color: var(--text-tertiary); }
+
+/* ========== ERROR MESSAGE ========== */
+.msg-error {
+    align-self: center;
+    max-width: 90%;
+}
+
+.msg-error .msg-content {
+    background: var(--error-dim);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+    font-size: 12px;
+    text-align: center;
+}
+
+/* ========== THINKING ========== */
+.thinking {
+    align-self: flex-start;
+    display: flex;
+    gap: 10px;
+    animation: msgIn 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.thinking .msg-avatar {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.thinking-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    background: var(--ai-bubble);
+    border: 1px solid var(--ai-border);
+    border-radius: var(--radius-md);
+    border-bottom-left-radius: 4px;
+}
+
+.thinking-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.3;
+    animation: pulse 1.4s infinite ease-in-out;
+}
+
+.thinking-dots span:nth-child(1) { animation-delay: 0s; }
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ========== INPUT BAR ========== */
+.input-bar {
+    padding: 12px 20px 16px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.input-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 6px 6px 6px 16px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.input-wrap textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    line-height: 1.5;
+    resize: none;
+    max-height: 120px;
+    padding: 6px 0;
+    scrollbar-width: none;
+}
+
+.input-wrap textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+.input-wrap textarea::-webkit-scrollbar { display: none; }
+
+.send-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    font-size: 15px;
+}
+
+.send-btn:hover:not(:disabled) { background: #7c3aed; transform: scale(1.05); }
+.send-btn:active:not(:disabled) { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.3; cursor: default; }
+
+.input-hint {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 4px 0;
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+/* ========== SETTINGS OVERLAY ========== */
+.settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 200ms ease;
+}
+
+.settings-overlay.open { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.settings-panel {
+    width: 440px;
+    max-width: 92vw;
+    max-height: 85vh;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+    animation: slideUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-header h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+}
+
+.settings-close {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all var(--transition);
+}
+
+.settings-close:hover { background: var(--bg-elevated); color: var(--text-primary); }
+
+.settings-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+
+.field label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.field select,
+.field input[type="text"],
+.field input[type="password"] {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color var(--transition);
+    -webkit-appearance: none;
+}
+
+.field select { cursor: pointer; font-family: var(--font-body); }
+
+.field select:focus,
+.field input:focus {
+    border-color: var(--accent);
+}
+
+.field .hint {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}
+
+.range-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.range-field input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+}
+
+.range-field input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    transition: transform var(--transition);
+}
+
+.range-field input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.range-value {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 32px;
+    text-align: right;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.btn-primary {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-primary:hover { background: #7c3aed; }
+
+.btn-secondary {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 600px) {
+    .msg { max-width: 95%; }
+    .messages { padding: 12px; }
+    .input-bar { padding: 8px 12px 12px; }
+    .welcome-chips { gap: 6px; }
+    .welcome-chip { font-size: 11px; padding: 5px 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-logo">df</div>
+            <span class="header-title">AI Assistant</span>
+        </div>
+        <div class="header-right">
+            <div class="header-status" id="statusBar">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <button class="header-btn" onclick="clearChat()" title="Clear chat">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            <button class="header-btn" onclick="toggleSettings()" title="Settings">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- CONTEXT BAR -->
+    <div class="context-bar" id="contextBar">
+        <span class="context-tag"><span class="label">Session</span> <span class="value" id="ctxSession">--</span></span>
+        <span class="context-tag"><span class="label">Tracks</span> <span class="value" id="ctxTracks">--</span></span>
+        <span class="context-tag"><span class="label">Transport</span> <span class="value" id="ctxTransport">--</span></span>
+        <span class="context-tag"><span class="label">SR</span> <span class="value" id="ctxSR">--</span></span>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="messages" id="messages">
+        <div class="msg-welcome" id="welcome">
+            <div class="welcome-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v4a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            </div>
+            <div class="welcome-title">DAWFLOW AI Assistant</div>
+            <div class="welcome-sub">
+                Talk to your DAW in natural language. I can control tracks, transport, mixing, routing, plugins, and more. Just tell me what you need.
+            </div>
+            <div class="welcome-chips">
+                <div class="welcome-chip" onclick="quickSend('Show me all tracks and their levels')">Show all tracks</div>
+                <div class="welcome-chip" onclick="quickSend('Mute all tracks except the master bus')">Mute all tracks</div>
+                <div class="welcome-chip" onclick="quickSend('Create 4 new audio tracks named Drums, Bass, Keys, Vocals')">Create tracks</div>
+                <div class="welcome-chip" onclick="quickSend('Set the tempo to 120 BPM')">Set tempo</div>
+                <div class="welcome-chip" onclick="quickSend('Solo the first track and play from the beginning')">Solo and play</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPUT BAR -->
+    <div class="input-bar">
+        <div class="input-wrap">
+            <textarea id="userInput" rows="1" placeholder="Tell your DAW what to do..." autofocus></textarea>
+            <button class="send-btn" id="sendBtn" onclick="handleSend()" title="Send (Enter)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+        <div class="input-hint">
+            <span>Enter to send, Shift+Enter for newline</span>
+            <span id="tokenCount"></span>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-panel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button class="settings-close" onclick="toggleSettings()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="settings-body">
+            <div class="field">
+                <label>AI Provider</label>
+                <select id="cfgProvider" onchange="onProviderChange()">
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="openai">OpenAI (GPT)</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>API Key</label>
+                <input type="password" id="cfgApiKey" placeholder="sk-... or sk-ant-...">
+                <span class="hint">Stored locally in your browser. Never sent to DAWFLOW servers.</span>
+            </div>
+            <div class="field">
+                <label>Model</label>
+                <select id="cfgModel">
+                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+                    <option value="claude-opus-4-20250514">Claude Opus 4</option>
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Temperature</label>
+                <div class="range-field">
+                    <input type="range" id="cfgTemp" min="0" max="1" step="0.05" value="0.3">
+                    <span class="range-value" id="cfgTempVal">0.30</span>
+                </div>
+                <span class="hint">Lower = more precise actions. Higher = more creative responses.</span>
+            </div>
+            <div class="field">
+                <label>Max Tokens</label>
+                <select id="cfgMaxTokens">
+                    <option value="2048">2048</option>
+                    <option value="4096" selected>4096</option>
+                    <option value="8192">8192</option>
+                </select>
+            </div>
+            <div class="settings-actions">
+                <button class="btn-secondary" onclick="toggleSettings()">Cancel</button>
+                <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let conversationHistory = [];
+let dawContext = null;
+let isThinking = false;
+let connectionOk = false;
+
+// ============================================================
+// CONFIG (persisted to localStorage)
+// ============================================================
+function loadConfig() {
+    return {
+        provider: localStorage.getItem('dawflow_provider') || 'anthropic',
+        apiKey: localStorage.getItem('dawflow_api_key') || '',
+        model: localStorage.getItem('dawflow_model') || 'claude-sonnet-4-20250514',
+        temperature: parseFloat(localStorage.getItem('dawflow_temperature') || '0.3'),
+        maxTokens: parseInt(localStorage.getItem('dawflow_max_tokens') || '4096')
+    };
+}
+
+function saveConfig(cfg) {
+    localStorage.setItem('dawflow_provider', cfg.provider);
+    localStorage.setItem('dawflow_api_key', cfg.apiKey);
+    localStorage.setItem('dawflow_model', cfg.model);
+    localStorage.setItem('dawflow_temperature', cfg.temperature.toString());
+    localStorage.setItem('dawflow_max_tokens', cfg.maxTokens.toString());
+}
+
+// ============================================================
+// DAW COMMUNICATION
+// ============================================================
+async function dawCommand(method, params = {}) {
+    try {
+        const r = await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ method, params })
+        });
+        return await r.json();
+    } catch (e) {
+        console.error('DAW command failed:', method, e);
+        return { error: e.message };
+    }
+}
+
+async function getDawContext() {
+    const results = await Promise.allSettled([
+        dawCommand('daw.get_session_info'),
+        dawCommand('daw.get_tracks'),
+        dawCommand('daw.get_transport_state'),
+        dawCommand('daw.get_command_list'),
+        dawCommand('daw.get_markers'),
+        dawCommand('daw.get_position_info')
+    ]);
+
+    const ctx = {};
+    const keys = ['session', 'tracks', 'transport', 'commands', 'markers', 'position'];
+    keys.forEach((k, i) => {
+        ctx[k] = results[i].status === 'fulfilled' ? results[i].value : null;
+    });
+    return ctx;
+}
+
+async function refreshContext() {
+    try {
+        dawContext = await getDawContext();
+        connectionOk = true;
+        updateContextBar(dawContext);
+        updateStatus('connected', 'Connected');
+    } catch (e) {
+        connectionOk = false;
+        updateStatus('error', 'Disconnected');
+    }
+}
+
+function updateContextBar(ctx) {
+    if (!ctx) return;
+    const s = ctx.session;
+    const t = ctx.tracks;
+    const tr = ctx.transport;
+
+    document.getElementById('ctxSession').textContent = s && s.name ? s.name : '--';
+    document.getElementById('ctxTracks').textContent = t && t.tracks ? t.tracks.length : '--';
+    document.getElementById('ctxTransport').textContent = tr ? (tr.playing ? 'Playing' : 'Stopped') : '--';
+    document.getElementById('ctxSR').textContent = s && s.sample_rate ? (s.sample_rate / 1000) + 'k' : '--';
+}
+
+function updateStatus(state, text) {
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    dot.className = 'status-dot ' + state;
+    txt.textContent = text;
+}
+
+// ============================================================
+// SYSTEM PROMPT
+// ============================================================
+function buildSystemPrompt(context) {
+    let prompt = `You are DAWFLOW AI Assistant — an expert music production AI that controls the DAWFLOW digital audio workstation.
+
+## Your Capabilities
+You can control EVERY aspect of the DAW through commands. When the user asks you to do something, respond with:
+1. A brief natural language explanation of what you'll do
+2. A JSON action plan in a \`\`\`actions code block
+
+## Action Plan Format
+\`\`\`actions
+[
+  {"method": "daw.command_name", "params": {"key": "value"}},
+  {"method": "daw.another_command", "params": {"key": "value"}}
+]
+\`\`\`
+
+## Available Commands
+`;
+
+    if (context && context.commands && context.commands.commands) {
+        prompt += 'The following commands are available:\n';
+        context.commands.commands.forEach(cmd => {
+            prompt += '- `' + cmd + '`\n';
+        });
+    }
+
+    prompt += '\n## Current Session State\n';
+
+    if (context && context.session) {
+        prompt += 'Session: ' + JSON.stringify(context.session, null, 2) + '\n';
+    }
+    if (context && context.tracks) {
+        prompt += 'Tracks: ' + JSON.stringify(context.tracks, null, 2) + '\n';
+    }
+    if (context && context.transport) {
+        prompt += 'Transport: ' + JSON.stringify(context.transport, null, 2) + '\n';
+    }
+    if (context && context.position) {
+        prompt += 'Position: ' + JSON.stringify(context.position, null, 2) + '\n';
+    }
+    if (context && context.markers) {
+        prompt += 'Markers: ' + JSON.stringify(context.markers, null, 2) + '\n';
+    }
+
+    prompt += `
+## Rules
+1. ALWAYS respond with actionable commands when the user asks you to do something
+2. Use daw.execute_batch to run multiple commands efficiently
+3. After describing actions, briefly confirm what was done
+4. If unsure about a track name, use daw.get_tracks first
+5. If unsure about available plugins, use daw.search_plugins first
+6. For complex tasks, break them into steps and execute each
+7. Be conversational and helpful — you're a music production expert
+8. When creating arrangements, think about proper bus routing, color coding, and naming conventions
+9. For mixing tasks, always check current levels first before making changes
+10. Use musical time (bars/beats) when discussing positions with the user
+11. Keep explanations concise and action-oriented
+12. If the user asks a question that doesn't require DAW actions, just answer conversationally without an actions block
+`;
+
+    return prompt;
+}
+
+// ============================================================
+// AI API CALLS
+// ============================================================
+async function callAnthropic(systemPrompt, messages, cfg) {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': cfg.apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+            model: cfg.model,
+            max_tokens: cfg.maxTokens,
+            temperature: cfg.temperature,
+            system: systemPrompt,
+            messages: messages
+        })
+    });
+
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error?.message || `API error ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    if (data.content && data.content.length > 0) {
+        return data.content[0].text;
+    }
+    throw new Error('Empty response from Claude');
+}
+
+async function callOpenAI(systemPrompt, messages, cfg) {
+    const oaiMessages = [
+        { role: 'system', content: systemPrompt },
+        ...messages
+    ];
+
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + cfg.apiKey
+        },
+        body: JSON.stringify({
+            model: cfg.model,
+            max_tokens: cfg.maxTokens,
+            temperature: cfg.temperature,
+            messages: oaiMessages
+        })
+    });
+
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error?.message || `API error ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    if (data.choices && data.choices.length > 0) {
+        return data.choices[0].message.content;
+    }
+    throw new Error('Empty response from OpenAI');
+}
+
+async function callAI(systemPrompt, userMessage) {
+    const cfg = loadConfig();
+
+    if (!cfg.apiKey) {
+        throw new Error('No API key configured. Click the settings gear to add your API key.');
+    }
+
+    // Build messages from history (last 20 messages)
+    const historySlice = conversationHistory.slice(-20);
+    const messages = historySlice.map(m => ({ role: m.role, content: m.content }));
+    messages.push({ role: 'user', content: userMessage });
+
+    if (cfg.provider === 'openai') {
+        return await callOpenAI(systemPrompt, messages, cfg);
+    }
+    return await callAnthropic(systemPrompt, messages, cfg);
+}
+
+// ============================================================
+// ACTION PARSING & EXECUTION
+// ============================================================
+function parseActions(response) {
+    const regex = /```(?:actions|json)\s*\n([\s\S]*?)```/g;
+    let match;
+    let actions = [];
+
+    while ((match = regex.exec(response)) !== null) {
+        try {
+            const parsed = JSON.parse(match[1]);
+            if (Array.isArray(parsed)) {
+                actions = actions.concat(parsed);
+            }
+        } catch (e) {
+            console.warn('Failed to parse actions block:', e);
+        }
+    }
+    return actions;
+}
+
+async function executeActions(actions) {
+    if (actions.length === 0) return [];
+
+    // Try batch execution first
+    try {
+        const batchResult = await dawCommand('daw.execute_batch', { commands: actions });
+        if (batchResult && batchResult.results) {
+            return batchResult.results;
+        }
+    } catch (e) {
+        console.warn('Batch execution failed, falling back to individual:', e);
+    }
+
+    // Fallback: execute individually
+    const results = [];
+    for (const action of actions) {
+        try {
+            const r = await dawCommand(action.method, action.params || {});
+            results.push({ method: action.method, result: r, ok: true });
+        } catch (e) {
+            results.push({ method: action.method, error: e.message, ok: false });
+        }
+    }
+    return results;
+}
+
+// ============================================================
+// CHAT LOGIC
+// ============================================================
+async function sendMessage(userMessage) {
+    if (isThinking || !userMessage.trim()) return;
+    isThinking = true;
+
+    // Remove welcome if visible
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    // Add user message to UI
+    addMessageToUI('user', userMessage);
+    conversationHistory.push({ role: 'user', content: userMessage });
+
+    // Show thinking indicator
+    const thinkingEl = showThinking();
+
+    // Update send button state
+    updateSendBtn();
+
+    try {
+        // Refresh context before every AI call
+        await refreshContext();
+
+        const systemPrompt = buildSystemPrompt(dawContext);
+        const aiResponse = await callAI(systemPrompt, userMessage);
+
+        // Remove thinking
+        thinkingEl.remove();
+
+        // Parse actions from response
+        const actions = parseActions(aiResponse);
+
+        // Clean response for display (remove action blocks)
+        const displayText = aiResponse
+            .replace(/```(?:actions|json)\s*\n[\s\S]*?```/g, '')
+            .trim();
+
+        // Add AI message to UI
+        addMessageToUI('assistant', displayText);
+        conversationHistory.push({ role: 'assistant', content: aiResponse });
+
+        // Execute actions if any
+        if (actions.length > 0) {
+            const results = await executeActions(actions);
+            addActionBlock(actions, results);
+
+            // Refresh context after actions
+            await refreshContext();
+        }
+
+    } catch (e) {
+        thinkingEl.remove();
+        addErrorMessage(e.message);
+    }
+
+    isThinking = false;
+    updateSendBtn();
+    scrollToBottom();
+}
+
+// ============================================================
+// UI RENDERING
+// ============================================================
+function addMessageToUI(role, content) {
+    const messagesEl = document.getElementById('messages');
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + role;
+
+    const avatarText = role === 'user' ? 'U' : 'AI';
+
+    msg.innerHTML = `
+        <div class="msg-avatar">${avatarText}</div>
+        <div class="msg-body">
+            <div class="msg-sender">${role === 'user' ? 'You' : 'AI Assistant'}</div>
+            <div class="msg-content">${formatMessage(content)}</div>
+        </div>
+    `;
+
+    messagesEl.appendChild(msg);
+    scrollToBottom();
+}
+
+function formatMessage(text) {
+    if (!text) return '';
+
+    // Escape HTML
+    let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    // Code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        return '<pre><code>' + code.trim() + '</code></pre>';
+    });
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // Italic
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Line breaks to paragraphs
+    html = html.split('\n\n').map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('');
+
+    return html;
+}
+
+function addActionBlock(actions, results) {
+    const messagesEl = document.getElementById('messages');
+    const block = document.createElement('div');
+    block.className = 'action-block expanded';
+
+    let itemsHtml = '';
+    actions.forEach((action, i) => {
+        const result = results && results[i] ? results[i] : null;
+        const isOk = result ? (result.ok !== false && !result.error) : true;
+        const statusClass = result ? (isOk ? 'ok' : 'err') : 'pending';
+        const statusIcon = isOk ? '&#10003;' : '&#10007;';
+        const params = action.params ? JSON.stringify(action.params) : '';
+
+        itemsHtml += `
+            <div class="action-item">
+                <span class="action-status ${statusClass}">${statusIcon}</span>
+                <span>
+                    <span class="action-method">${escapeHtml(action.method)}</span>
+                    ${params ? '<span class="action-params"> ' + escapeHtml(params) + '</span>' : ''}
+                </span>
+            </div>
+        `;
+    });
+
+    block.innerHTML = `
+        <div class="action-header" onclick="this.parentElement.classList.toggle('expanded')">
+            <div class="action-header-left">
+                <span class="icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+                </span>
+                Executed Actions
+                <span class="action-count">${actions.length}</span>
+            </div>
+            <span class="action-chevron">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+        </div>
+        <div class="action-body">${itemsHtml}</div>
+    `;
+
+    messagesEl.appendChild(block);
+    scrollToBottom();
+}
+
+function addErrorMessage(text) {
+    const messagesEl = document.getElementById('messages');
+    const msg = document.createElement('div');
+    msg.className = 'msg-error';
+    msg.innerHTML = `<div class="msg-content">${escapeHtml(text)}</div>`;
+    messagesEl.appendChild(msg);
+    scrollToBottom();
+}
+
+function showThinking() {
+    const messagesEl = document.getElementById('messages');
+    const el = document.createElement('div');
+    el.className = 'thinking';
+    el.innerHTML = `
+        <div class="msg-avatar">AI</div>
+        <div class="thinking-dots">
+            <span></span><span></span><span></span>
+        </div>
+    `;
+    messagesEl.appendChild(el);
+    scrollToBottom();
+    return el;
+}
+
+function scrollToBottom() {
+    const el = document.getElementById('messages');
+    requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function updateSendBtn() {
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = isThinking;
+}
+
+// ============================================================
+// USER INPUT
+// ============================================================
+function handleSend() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.style.height = 'auto';
+    sendMessage(text);
+}
+
+function quickSend(text) {
+    sendMessage(text);
+}
+
+// Auto-resize textarea
+const textarea = document.getElementById('userInput');
+
+textarea.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+    }
+});
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function toggleSettings() {
+    const overlay = document.getElementById('settingsOverlay');
+    const isOpen = overlay.classList.contains('open');
+
+    if (!isOpen) {
+        // Load current config into form
+        const cfg = loadConfig();
+        document.getElementById('cfgProvider').value = cfg.provider;
+        document.getElementById('cfgApiKey').value = cfg.apiKey;
+        document.getElementById('cfgModel').value = cfg.model;
+        document.getElementById('cfgTemp').value = cfg.temperature;
+        document.getElementById('cfgTempVal').textContent = cfg.temperature.toFixed(2);
+        document.getElementById('cfgMaxTokens').value = cfg.maxTokens.toString();
+        onProviderChange();
+    }
+
+    overlay.classList.toggle('open');
+}
+
+function onProviderChange() {
+    const provider = document.getElementById('cfgProvider').value;
+    const modelSelect = document.getElementById('cfgModel');
+    const keyInput = document.getElementById('cfgApiKey');
+
+    // Update model options
+    modelSelect.innerHTML = '';
+    if (provider === 'anthropic') {
+        addOption(modelSelect, 'claude-sonnet-4-20250514', 'Claude Sonnet 4');
+        addOption(modelSelect, 'claude-opus-4-20250514', 'Claude Opus 4');
+        keyInput.placeholder = 'sk-ant-api03-...';
+    } else {
+        addOption(modelSelect, 'gpt-4o', 'GPT-4o');
+        addOption(modelSelect, 'gpt-4o-mini', 'GPT-4o Mini');
+        keyInput.placeholder = 'sk-...';
+    }
+
+    // Restore saved model if it matches the provider
+    const savedModel = localStorage.getItem('dawflow_model') || '';
+    if (modelSelect.querySelector('option[value="' + savedModel + '"]')) {
+        modelSelect.value = savedModel;
+    }
+}
+
+function addOption(select, value, text) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = text;
+    select.appendChild(opt);
+}
+
+document.getElementById('cfgTemp').addEventListener('input', function() {
+    document.getElementById('cfgTempVal').textContent = parseFloat(this.value).toFixed(2);
+});
+
+function saveSettings() {
+    const cfg = {
+        provider: document.getElementById('cfgProvider').value,
+        apiKey: document.getElementById('cfgApiKey').value,
+        model: document.getElementById('cfgModel').value,
+        temperature: parseFloat(document.getElementById('cfgTemp').value),
+        maxTokens: parseInt(document.getElementById('cfgMaxTokens').value)
+    };
+    saveConfig(cfg);
+    toggleSettings();
+
+    // Update status
+    if (cfg.apiKey) {
+        updateStatus('connected', 'Ready');
+    }
+}
+
+// Close settings on overlay click
+document.getElementById('settingsOverlay').addEventListener('click', function(e) {
+    if (e.target === this) toggleSettings();
+});
+
+// Close settings on Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const overlay = document.getElementById('settingsOverlay');
+        if (overlay.classList.contains('open')) {
+            toggleSettings();
+        }
+    }
+});
+
+// ============================================================
+// CLEAR CHAT
+// ============================================================
+function clearChat() {
+    conversationHistory = [];
+    const messagesEl = document.getElementById('messages');
+    messagesEl.innerHTML = `
+        <div class="msg-welcome" id="welcome">
+            <div class="welcome-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v4a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            </div>
+            <div class="welcome-title">DAWFLOW AI Assistant</div>
+            <div class="welcome-sub">
+                Talk to your DAW in natural language. I can control tracks, transport, mixing, routing, plugins, and more. Just tell me what you need.
+            </div>
+            <div class="welcome-chips">
+                <div class="welcome-chip" onclick="quickSend('Show me all tracks and their levels')">Show all tracks</div>
+                <div class="welcome-chip" onclick="quickSend('Mute all tracks except the master bus')">Mute all tracks</div>
+                <div class="welcome-chip" onclick="quickSend('Create 4 new audio tracks named Drums, Bass, Keys, Vocals')">Create tracks</div>
+                <div class="welcome-chip" onclick="quickSend('Set the tempo to 120 BPM')">Set tempo</div>
+                <div class="welcome-chip" onclick="quickSend('Solo the first track and play from the beginning')">Solo and play</div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+(async function init() {
+    // Check for API key
+    const cfg = loadConfig();
+    if (!cfg.apiKey) {
+        updateStatus('error', 'No API Key');
+    }
+
+    // Try connecting to DAW
+    await refreshContext();
+
+    // Poll for context updates every 5 seconds
+    setInterval(refreshContext, 5000);
+})();
+</script>
+</body>
+</html>

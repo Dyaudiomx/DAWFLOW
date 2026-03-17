@@ -1,0 +1,24 @@
+{
+    "id": "com.dawflow.ai-chat",
+    "name": "DAWFLOW AI Assistant",
+    "version": "1.0.0",
+    "api_version": "1",
+    "author": "DAWFLOW",
+    "description": "AI-powered DAW control — talk to your DAW in natural language",
+    "entry_point": "bin/{platform}/dawflow-ai-chat",
+    "capabilities": ["ui_panel", "session_events", "actions"],
+    "ui": {
+        "panels": [
+            {
+                "id": "ai-chat",
+                "title": "AI Assistant",
+                "location": "bottom",
+                "url": "http://localhost:19200/"
+            }
+        ]
+    },
+    "actions": [
+        {"id": "ai.open_chat", "label": "Open AI Chat"},
+        {"id": "ai.quick_command", "label": "AI Quick Command"}
+    ]
+}
