@@ -7,8 +7,8 @@ style "default" = "medium_text"
 
   GtkTreeView         :: vertical-padding                 = 0
   GtkTreeView         :: horizontal-padding               = 0
-  GtkTreeView         :: even-row-color                   = @bases
-  GtkTreeView         :: odd-row-color                    = @bases
+  GtkTreeView         :: even-row-color                   = "#1e1e1e"
+  GtkTreeView         :: odd-row-color                    = "#1e1e1e"
   GtkTreeView         :: focus-line-width                 = 0
   GtkTreeView         :: tree-line-width                  = 1
   GtkTreeView         :: row-ending-details               = 0
@@ -19,8 +19,8 @@ style "default" = "medium_text"
   GtkWidget           :: interior-focus                   = 1                 # [               1 ] ( bool ) Draw the focus indicator inside widgets.
   GtkWidget           :: scroll-arrow-hlength             = 16                # [              16 ] ( >= 1 ) Length of horizontal scroll arrows.
   GtkWidget           :: scroll-arrow-vlength             = 16                # [              16 ] ( >= 1 ) Length of vertical scroll arrows.
-  GtkWidget           :: link-color                       = shade(1.25, @bright_color)
-  GtkWidget           :: visited-link-color               = @bright_color
+  GtkWidget           :: link-color                       = "#5a7ab5"
+  GtkWidget           :: visited-link-color               = "#4a6fa5"
 
   GtkDialog           :: action-area-border               = 4                 # [               5 ] ( >= 0 ) Width of border around the button area at the bottom of the dialog.
   GtkDialog           :: button-spacing                   = 4                 # [               6 ] ( >= 0 ) Spacing between buttons.
@@ -105,34 +105,34 @@ style "default" = "medium_text"
   GtkTreeView         :: horizontal-separator             = 8                 # [               2 ] ( >= 0 ) Horizontal space between cells. Must be an even number.
   GtkTreeView         :: vertical-separator               = 2                 # [               2 ] ( >= 0 ) Vertical space between cells. Must be an even number.
 
-  GtkEntry::cursor_color = @entry_cursor
+  GtkEntry::cursor_color = "#cc3333"
   GtkEntry::state-hint = 0
 
-  bg[NORMAL]          = @background
-  bg[PRELIGHT]        = shade(1.1, @background)
-  bg[ACTIVE]          = shade(0.9, @background)
-  bg[INSENSITIVE]     = @background
-  bg[SELECTED]        = @bg_selected
+  bg[NORMAL]          = "#2a2a2a"
+  bg[PRELIGHT]        = "#333333"
+  bg[ACTIVE]          = "#262626"
+  bg[INSENSITIVE]     = "#2a2a2a"
+  bg[SELECTED]        = "#4a6fa5"
 
-  fg[NORMAL]          = @foreground
-  fg[PRELIGHT]        = @foreground
-  fg[ACTIVE]          = shade(0.9, @foreground)
-  fg[INSENSITIVE]     = shade(0.7, @background)
-  fg[SELECTED]        = @fg_selected
+  fg[NORMAL]          = "#cccccc"
+  fg[PRELIGHT]        = "#e0e0e0"
+  fg[ACTIVE]          = "#b8b8b8"
+  fg[INSENSITIVE]     = "#666666"
+  fg[SELECTED]        = "#e0e0e0"
 
   # These base and text colors will be used by treeviews and some other widgets.
 
-  base[NORMAL]        = @bases
-  base[PRELIGHT]      = @bases
-  base[INSENSITIVE]   = shade(1.0, @background)
-  base[ACTIVE]        = shade(0.9, @bg_selected) /* base for focused, selected text */
-  base[SELECTED]      = @bg_selected /* base for non-focused, selected text */
+  base[NORMAL]        = "#1e1e1e"
+  base[PRELIGHT]      = "#1e1e1e"
+  base[INSENSITIVE]   = "#2a2a2a"
+  base[ACTIVE]        = "#3a5a8a" /* base for focused, selected text */
+  base[SELECTED]      = "#4a6fa5" /* base for non-focused, selected text */
 
-  text[NORMAL]        = @texts
-  text[PRELIGHT]      = @texts
-  text[INSENSITIVE]   = shade(0.7, @lightest)
-  text[ACTIVE]        = @fg_selected          /* text color for focused selected text */
-  text[SELECTED]      = @fg_selected          /* text color for non-focused selected text */
+  text[NORMAL]        = "#cccccc"
+  text[PRELIGHT]      = "#cccccc"
+  text[INSENSITIVE]   = "#9c9c9c"
+  text[ACTIVE]        = "#e0e0e0"          /* text color for focused selected text */
+  text[SELECTED]      = "#e0e0e0"          /* text color for non-focused selected text */
 
   #engine specific tweaks
 
@@ -144,7 +144,7 @@ style "default" = "medium_text"
 
 style "entry"
 {
-  GtkEntry::cursor_color = @entry_cursor
+  GtkEntry::cursor_color = "#cc3333"
   GtkEntry::inner-border = { 2, 2, 2, 2 }
 
   xthickness = 0
@@ -152,26 +152,26 @@ style "entry"
 
   # special base + text for GtkEntry to aid with visibility during text entry
 
-  base[NORMAL]      = @bases
-  base[PRELIGHT]    = @bases
-  base[INSENSITIVE] = shade(1.0, @background)
-  base[ACTIVE]      = @bases
-  base[SELECTED]    = @bg_selected
+  base[NORMAL]      = "#1e1e1e"
+  base[PRELIGHT]    = "#1e1e1e"
+  base[INSENSITIVE] = "#2a2a2a"
+  base[ACTIVE]      = "#1e1e1e"
+  base[SELECTED]    = "#4a6fa5"
 
-  text[NORMAL]      = @texts
-  text[PRELIGHT]    = @texts
-  text[INSENSITIVE] = shade(0.7, @lightest)
-  text[ACTIVE]      = @texts
-  text[SELECTED]    = @fg_selected
+  text[NORMAL]      = "#cccccc"
+  text[PRELIGHT]    = "#cccccc"
+  text[INSENSITIVE] = "#9c9c9c"
+  text[ACTIVE]      = "#cccccc"
+  text[SELECTED]    = "#e0e0e0"
 }
 
 style "shaded_entry" = "entry"
 {
-   base[NORMAL]      = shade(0.5, @background)
-   base[PRELIGHT]    = shade(0.5, @background)
-   base[INSENSITIVE] = shade(0.5, @background)
-   base[ACTIVE]      = shade(0.5, @background)
-   base[SELECTED]    = shade(0.5, @background)
+   base[NORMAL]      = "#151515"
+   base[PRELIGHT]    = "#151515"
+   base[INSENSITIVE] = "#151515"
+   base[ACTIVE]      = "#151515"
+   base[SELECTED]    = "#151515"
 }
 
 style "spin_button" = "entry"
@@ -188,30 +188,30 @@ style "mixer_strip_entry" = "small_text"
         xthickness = 3
         ythickness = 3
 
-	bg[NORMAL] = @bases
-	bg[ACTIVE] = @bases
-	bg[SELECTED] = @bases
+	bg[NORMAL] = "#1e1e1e"
+	bg[ACTIVE] = "#1e1e1e"
+	bg[SELECTED] = "#1e1e1e"
 
-	text[NORMAL] = @texts
-	text[ACTIVE] = @texts
-	text[SELECTED] = @texts
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#cccccc"
+	text[SELECTED] = "#cccccc"
 
-	base[NORMAL] = @bases
-	base[ACTIVE] = @bases
-	base[SELECTED] = shade (0.4, @texts)
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#1e1e1e"
+	base[SELECTED] = "#525252"
 }
 
 style "peak_display_peaked_entry" = "mixer_strip_entry"
 {
-	fg[ACTIVE] = @texts
-	fg[SELECTED] = @texts
-	text[SELECTED] = @texts
+	fg[ACTIVE] = "#cccccc"
+	fg[SELECTED] = "#cccccc"
+	text[SELECTED] = "#cccccc"
 
-	base[NORMAL] = @clip_indicator
-	base[ACTIVE] = @clip_indicator
-	base[PRELIGHT] = @clip_indicator
-	base[INSENSITIVE] = @clip_indicator
-	base[SELECTED] = @clip_indicator
+	base[NORMAL] = "#cc3333"
+	base[ACTIVE] = "#cc3333"
+	base[PRELIGHT] = "#cc3333"
+	base[INSENSITIVE] = "#cc3333"
+	base[SELECTED] = "#cc3333"
 }
 
 style "treeview_parent_node"
@@ -252,35 +252,35 @@ style "treeview_display" = "small_bold_text"
 
 style "track_header_inactive"  = "large_text"
 {
-	bg[NORMAL] =      @track_header_inactive
-	bg[ACTIVE] =      @track_header_inactive
-	bg[INSENSITIVE] = @track_header_inactive
-	bg[SELECTED] =    @track_header_inactive
-	bg[PRELIGHT] =    @track_header_inactive
+	bg[NORMAL] = "#2a2a2a"
+	bg[ACTIVE] = "#2a2a2a"
+	bg[INSENSITIVE] = "#2a2a2a"
+	bg[SELECTED] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
 }
 
 style "track_header_inactive_selected" = "track_header_inactive"
 {
-	bg[NORMAL] = mix(0.7,@track_header_inactive,@track_header_selected)
-	bg[SELECTED] = mix(0.7,@track_header_inactive,@track_header_selected)
+	bg[NORMAL] = "#3a2525"
+	bg[SELECTED] = "#3a2525"
 }
 
 style "track_header_selected" = "track_header"
 {
-	bg[NORMAL] = @track_header_selected
-	bg[ACTIVE] = @track_header_selected
-	bg[INSENSITIVE] = @track_header_selected
-	bg[SELECTED] = @track_header_selected
-	bg[PRELIGHT] = @track_header_selected
+	bg[NORMAL] = "#6b3030"
+	bg[ACTIVE] = "#6b3030"
+	bg[INSENSITIVE] = "#6b3030"
+	bg[SELECTED] = "#6b3030"
+	bg[PRELIGHT] = "#6b3030"
 }
 
 style "automation_track_header"
 {
-	bg[NORMAL] = @automation_track_header
-	bg[ACTIVE] = @automation_track_header
-	bg[INSENSITIVE] = @automation_track_header
-	bg[SELECTED] = @automation_track_header
-	bg[PRELIGHT] = @automation_track_header
+	bg[NORMAL] = "#2a2a2a"
+	bg[ACTIVE] = "#2a2a2a"
+	bg[INSENSITIVE] = "#2a2a2a"
+	bg[SELECTED] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
 }
 
 style "inspector_processor_list" = "processor_list"
@@ -290,12 +290,12 @@ style "inspector_processor_list" = "processor_list"
 
 style "time_info_box"
 {
-        bg[NORMAL] = @darkest
+        bg[NORMAL] = "#1a1a1a"
 }
 
 style "status_bar_box"
 {
-        bg[NORMAL] = @background
+        bg[NORMAL] = "#2a2a2a"
 }
 
 style "smaller_text"
@@ -345,9 +345,9 @@ style "medium_monospace_text"
 
 style "red_medium_text" = "medium_text"
 {
-	fg[NORMAL] = @bright_indicator
-	fg[ACTIVE] = @bright_indicator
-	fg[SELECTED] = @bright_indicator
+	fg[NORMAL] = "#cc3333"
+	fg[ACTIVE] = "#cc3333"
+	fg[SELECTED] = "#cc3333"
 }
 
 style "large_bold_text"
@@ -387,12 +387,12 @@ style "big_bold_text"
 
 style "plugin_name_text" = "big_bold_text"
 {
-	fg[NORMAL] = @texts
+	fg[NORMAL] = "#cccccc"
 }
 
 style "plugin_maker_text" = "large_bold_text"
 {
-	fg[NORMAL] = @texts
+	fg[NORMAL] = "#cccccc"
 }
 
 style "verbose_canvas_cursor" = "big_bold_text"
@@ -405,7 +405,7 @@ style "marker_text" = "small_text"
 
 style "text_on_bg" = "medium_text"
 {
-	base[NORMAL] = @background
+	base[NORMAL] = "#2a2a2a"
 }
 
 style "midi_tracer_textview" = "medium_monospace_text"
@@ -427,24 +427,24 @@ style "time_axis_view_item_name" = "smaller_text"
 }
 style "contrasting_popup" = "medium_monospace_text"
 {
-	bg[NORMAL]          = @lightest
-	fg[NORMAL]          = @darkest
-	base[NORMAL]        = @lightest
-	text[NORMAL]        = @darkest
-	text[ACTIVE]        = @darkest
-	text[SELECTED]      = @darkest
+	bg[NORMAL]          = "#e0e0e0"
+	fg[NORMAL]          = "#1a1a1a"
+	base[NORMAL]        = "#e0e0e0"
+	text[NORMAL]        = "#1a1a1a"
+	text[ACTIVE]        = "#1a1a1a"
+	text[SELECTED]      = "#1a1a1a"
 }
 
 style "base_frame"
 {
-	fg[NORMAL] = @background
-	bg[NORMAL] = @background
+	fg[NORMAL] = "#2a2a2a"
+	bg[NORMAL] = "#2a2a2a"
 }
 
 style "text_highlight_frame"
 {
-	fg[NORMAL] = shade (0.4, @texts)
-	bg[NORMAL] = shade (0.4, @texts)
+	fg[NORMAL] = "#525252"
+	bg[NORMAL] = "#525252"
 }
 
 style "transport_frame"
@@ -457,7 +457,7 @@ style "editor_window"
 
 style "editor_dark" = "editor_window"
 {
-	bg[NORMAL] = shade (0.7, @background)
+	bg[NORMAL] = "#1d1d1d"
 }
 
 style "transport_base" = "medium_bold_text"
@@ -470,13 +470,13 @@ style "default_button" = "small_text"
 
 style "gain_fader"
 {
-	bg[NORMAL] = shade (0.7, @background)
-	bg[ACTIVE] = shade (0.705, @background)
-	bg[INSENSITIVE] = shade (0.705, @background)
+	bg[NORMAL] = "#1d1d1d"
+	bg[ACTIVE] = "#1d1d1d"
+	bg[INSENSITIVE] = "#1d1d1d"
 
-	fg[INSENSITIVE] = shade(1.7, @background)
-	fg[NORMAL] = shade(1.4, @background)
-	fg[ACTIVE] = shade(1.4, @background)
+	fg[INSENSITIVE] = "#484848"
+	fg[NORMAL] = "#3c3c3c"
+	fg[ACTIVE] = "#3c3c3c"
 }
 
 style "default_menu" = "medium_text"
@@ -503,16 +503,16 @@ style "small_button" = "default_button"
 
 style "very_small_red_active_and_selected_button" = "very_small_button"
 {
-	fg[ACTIVE] = @darkest
-	bg[ACTIVE] = @bright_indicator
-	bg[SELECTED] = @bright_indicator
+	fg[ACTIVE] = "#1a1a1a"
+	bg[ACTIVE] = "#cc3333"
+	bg[SELECTED] = "#cc3333"
 }
 
 style "small_red_active_and_selected_button" = "small_button"
 {
-	fg[ACTIVE] = @darkest
-	bg[ACTIVE] = @bright_indicator
-	bg[SELECTED] = @bright_indicator
+	fg[ACTIVE] = "#1a1a1a"
+	bg[ACTIVE] = "#cc3333"
+	bg[SELECTED] = "#cc3333"
 }
 
 style "meterbridge_label" = "small_text"
@@ -549,38 +549,38 @@ style "processor" = "small_text"
 
 style "ruler_label" = "small_text"
 {
-	fg[NORMAL] = @light_text_on_dark
+	fg[NORMAL] = "#aaaaaa"
 }
 
 style "midi_channel_selector_button"
 {
-	bg[NORMAL] = @background
-	bg[ACTIVE] = @midi_channel_selector
-	fg[NORMAL] = @foreground
-	fg[ACTIVE] = @light_text_on_dark
+	bg[NORMAL] = "#2a2a2a"
+	bg[ACTIVE] = "#4a6fa5"
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#aaaaaa"
 }
 
 style "shuttle_control" = "smaller_text"
 {
-	fg[NORMAL] = @control_text2
-	fg[ACTIVE] = @control_text2
-	fg[PRELIGHT] = @control_text2
-	fg[SELECTED] = @control_text2
-	fg[INSENSITIVE] = @control_text2
+	fg[NORMAL] = "#993333"
+	fg[ACTIVE] = "#993333"
+	fg[PRELIGHT] = "#993333"
+	fg[SELECTED] = "#993333"
+	fg[INSENSITIVE] = "#993333"
 
-	bg[NORMAL] = @darkest
-	bg[PRELIGHT] = @darkest
-	bg[INSENSITIVE] = @darkest
-	bg[ACTIVE] = @bright_color
-	bg[SELECTED] = @bright_color
+	bg[NORMAL] = "#1a1a1a"
+	bg[PRELIGHT] = "#1a1a1a"
+	bg[INSENSITIVE] = "#1a1a1a"
+	bg[ACTIVE] = "#4a6fa5"
+	bg[SELECTED] = "#4a6fa5"
 }
 
 style "ardour_adjusters" = "default_generic"
 {
 	# this is the color of the slider
-	bg[NORMAL] = @scrollbar_slider
+	bg[NORMAL] = "#555555"
 	# this is the color of the trough
-	bg[ACTIVE] = @darkest
+	bg[ACTIVE] = "#1a1a1a"
 }
 
 style "editor_hscrollbar" = "ardour_adjusters"
@@ -599,12 +599,12 @@ style "ardour_progressbars" = "default_generic"
 {
 	# Clearlooks always uses darkest for the advancing bar, sigh
 	# so this is just a contrasting color for the trough
-	bg[NORMAL] = @bright_color
+	bg[NORMAL] = "#4a6fa5"
 }
 
 style "preferences"  = "default"
 {
-	fg[PRELIGHT] = lighter(@foreground)
+	fg[PRELIGHT] = "#e0e0e0"
 }
 
 style "option_entry"  = "default"
@@ -617,176 +617,176 @@ style "font_scale_slider" = "default"
   # scale-marks are based on style->dark/light,
 	# which cannot be specified directly in the gtkrc.
 	# this is a quick hack to increase visibility of the marks
-  bg[NORMAL] = shade(1.4, @background)
+  bg[NORMAL] = "#3c3c3c"
 }
 
 style "very_small_bright_when_active" = "smaller_text"
 {
-	fg[NORMAL] = @foreground
-	bg[NORMAL] = @background
-	bg[PRELIGHT] = @background
+	fg[NORMAL] = "#cccccc"
+	bg[NORMAL] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
 
-	fg[ACTIVE] = @foreground
-	bg[ACTIVE] = @bright_indicator
-	bg[PRELIGHT] = @bright_indicator
+	fg[ACTIVE] = "#cccccc"
+	bg[ACTIVE] = "#cc3333"
+	bg[PRELIGHT] = "#cc3333"
 }
 
 style "bright_when_active" = "medium_text"
 {
-	fg[NORMAL] = @foreground
-	bg[NORMAL] = @background
-	bg[PRELIGHT] = @background
+	fg[NORMAL] = "#cccccc"
+	bg[NORMAL] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
 
-	fg[ACTIVE] = @foreground
-	bg[ACTIVE] = @bright_indicator
-	bg[PRELIGHT] = @bright_indicator
+	fg[ACTIVE] = "#cccccc"
+	bg[ACTIVE] = "#cc3333"
+	bg[PRELIGHT] = "#cc3333"
 }
 
 style "xrun_warn"  = "large_bold_text"
 {
-	fg[NORMAL] = @foreground
-	fg[ACTIVE] = @foreground
-	text[NORMAL] = @foreground
-	text[ACTIVE] = @foreground
-	base[NORMAL] = @bases
-	base[ACTIVE] = @bases
-	bg[NORMAL] = @bright_indicator
-	bg[ACTIVE] = @contrasting_indicator
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#cccccc"
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#cccccc"
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#1e1e1e"
+	bg[NORMAL] = "#cc3333"
+	bg[ACTIVE] = "#3d8c40"
 }
 
 style "fatal_message" = "medium_text"
 {
-	fg[ACTIVE] = @bright_indicator
-	fg[NORMAL] = @bright_indicator
-	bg[ACTIVE]   = @bases
-	bg[NORMAL]   = @bases
-	base[NORMAL] = @bases
+	fg[ACTIVE] = "#cc3333"
+	fg[NORMAL] = "#cc3333"
+	bg[ACTIVE]   = "#1e1e1e"
+	bg[NORMAL]   = "#1e1e1e"
+	base[NORMAL] = "#1e1e1e"
 }
 
 style "error_message" = "medium_text"
 {
-	fg[ACTIVE] = @bright_indicator
-	fg[NORMAL] = @bright_indicator
-	bg[ACTIVE]   = @bases
-	bg[NORMAL]   = @bases
-	base[NORMAL] = @bases
+	fg[ACTIVE] = "#cc3333"
+	fg[NORMAL] = "#cc3333"
+	bg[ACTIVE]   = "#1e1e1e"
+	bg[NORMAL]   = "#1e1e1e"
+	base[NORMAL] = "#1e1e1e"
 }
 
 style "warning_message" = "medium_text"
 {
-	fg[ACTIVE] = @bright_color
-	fg[NORMAL] = @bright_color
-	bg[ACTIVE]   = @bases
-	bg[NORMAL]   = @bases
-	base[NORMAL] = @bases
+	fg[ACTIVE] = "#4a6fa5"
+	fg[NORMAL] = "#4a6fa5"
+	bg[ACTIVE]   = "#1e1e1e"
+	bg[NORMAL]   = "#1e1e1e"
+	base[NORMAL] = "#1e1e1e"
 }
 
 style "info_message" = "medium_text"
 {
-	fg[ACTIVE]   = @contrasting_indicator
-	fg[NORMAL]   = @contrasting_indicator
-	bg[ACTIVE]   = @bases
-	bg[NORMAL]   = @bases
-	base[NORMAL] = @bases
+	fg[ACTIVE]   = "#3d8c40"
+	fg[NORMAL]   = "#3d8c40"
+	bg[ACTIVE]   = "#1e1e1e"
+	bg[NORMAL]   = "#1e1e1e"
+	base[NORMAL] = "#1e1e1e"
 }
 
 style "debug_message" = "medium_text"
 {
-	fg[ACTIVE]   = @texts
-	fg[NORMAL]   = @texts
-	bg[ACTIVE]   = @bases
-	bg[NORMAL]   = @bases
-	base[NORMAL] = @bases
+	fg[ACTIVE]   = "#cccccc"
+	fg[NORMAL]   = "#cccccc"
+	bg[ACTIVE]   = "#1e1e1e"
+	bg[NORMAL]   = "#1e1e1e"
+	base[NORMAL] = "#1e1e1e"
 }
 
 style "medium_entry" = "medium_text"
 {
-	fg[NORMAL] = @texts
-	fg[ACTIVE] = @contrasting_indicator
-	fg[SELECTED] = @fg_selected
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#3d8c40"
+	fg[SELECTED] = "#e0e0e0"
 
-	text[NORMAL] = @texts
-	text[ACTIVE] = @texts
-	text[SELECTED] = @fg_selected
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#cccccc"
+	text[SELECTED] = "#e0e0e0"
 
-	bg[NORMAL] = @bases
-	bg[SELECTED] = @bases
-	bg[SELECTED] = @bg_selected
+	bg[NORMAL] = "#1e1e1e"
+	bg[SELECTED] = "#1e1e1e"
+	bg[SELECTED] = "#4a6fa5"
 
-	base[NORMAL] = @bases
-	base[ACTIVE] = @bases
-	base[SELECTED] = @bg_selected
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#1e1e1e"
+	base[SELECTED] = "#4a6fa5"
 }
 
 style "medium_entry_noselection_fg" = "medium_entry"
 {
 	# this seems wrong to me, but the light theme uses it
-	fg[SELECTED] = @contrasting_indicator
+	fg[SELECTED] = "#3d8c40"
 }
 
 style "medium_entry_noselection_bg" = "medium_entry"
 {
 	# this seems wrong to me, but the light theme uses it
-	bg[SELECTED] = @texts
+	bg[SELECTED] = "#cccccc"
 }
 
 style "medium_bold_entry"  = "medium_bold_text"
 {
-	fg[NORMAL] = @texts
-	fg[ACTIVE] = @contrasting_indicator
-	fg[SELECTED] = @fg_selected
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#3d8c40"
+	fg[SELECTED] = "#e0e0e0"
 
-	text[NORMAL] = @texts
-	text[ACTIVE] = @texts
-	text[SELECTED] = @fg_selected
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#cccccc"
+	text[SELECTED] = "#e0e0e0"
 
-	bg[NORMAL] = @bases
-	bg[SELECTED] = @bases
+	bg[NORMAL] = "#1e1e1e"
+	bg[SELECTED] = "#1e1e1e"
 
-	base[NORMAL] = @bases
-	base[ACTIVE] = @bases
-	base[SELECTED] = @bg_selected
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#1e1e1e"
+	base[SELECTED] = "#4a6fa5"
 }
 
 style "small_spinner" = "small_text"
 {
 	xthickness = 0
 	ythickness = 0
-	fg[NORMAL] = @texts
-	fg[ACTIVE] = @contrasting_indicator
-	fg[SELECTED] = @fg_selected
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#3d8c40"
+	fg[SELECTED] = "#e0e0e0"
 
-	text[NORMAL] = @texts
-	text[ACTIVE] = @texts
-	text[SELECTED] = @fg_selected
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#cccccc"
+	text[SELECTED] = "#e0e0e0"
 
-	base[NORMAL] = @bases
-	base[ACTIVE] = @bases
-	base[SELECTED] = @background
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#1e1e1e"
+	base[SELECTED] = "#2a2a2a"
 }
 
 style "small_red_on_black_entry"  = "small_bold_text"
 {
-	fg[NORMAL] = @bright_indicator
-	fg[ACTIVE] = @bright_indicator
-	base[NORMAL] = @bases
-	base[ACTIVE] = @bases
-	bg[NORMAL] = @bases
-	bg[ACTIVE] = @bases
+	fg[NORMAL] = "#cc3333"
+	fg[ACTIVE] = "#cc3333"
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#1e1e1e"
+	bg[NORMAL] = "#1e1e1e"
+	bg[ACTIVE] = "#1e1e1e"
 }
 
 style "audio_bus_base" = "smaller_text"
 {
-	fg[NORMAL] = @foreground
-	bg[NORMAL] = @audio_bus
-	bg[ACTIVE] = @background
+	fg[NORMAL] = "#cccccc"
+	bg[NORMAL] = "#1e2a3a"
+	bg[ACTIVE] = "#2a2a2a"
 }
 
 style "foldback_bus_base" = "smaller_text"
 {
-	fg[NORMAL] = @foreground
-	bg[NORMAL] = @foldback_bg
-	bg[ACTIVE] = @background
+	fg[NORMAL] = "#cccccc"
+	bg[NORMAL] = "#252528"
+	bg[ACTIVE] = "#2a2a2a"
 }
 
 style "send_strip_base" = "default"
@@ -794,15 +794,15 @@ style "send_strip_base" = "default"
 	font_name = " 8"
 	# NORMAL is used for single-data type labels, or Audio
 	# ACTIVE is used for MIDI in the presence of multiple data type
-	fg[NORMAL] = @send_fg
-	fg[ACTIVE] = darker(@foreground)
-	fg[INSENSITIVE] = darker(@send_fg)
+	fg[NORMAL] = "#4a6fa5"
+	fg[ACTIVE] = "#aaaaaa"
+	fg[INSENSITIVE] = "#3a5a8a"
 
-	bg[NORMAL] = @send_bg
-	bg[ACTIVE] = @send_bg
-	bg[PRELIGHT] = @send_bg
-	bg[INSENSITIVE] = shade(0.705, @send_bg)
-	bg[SELECTED] = @send_bg
+	bg[NORMAL] = "#252528"
+	bg[ACTIVE] = "#252528"
+	bg[PRELIGHT] = "#252528"
+	bg[INSENSITIVE] = "#1a1a1d"
+	bg[SELECTED] = "#252528"
 }
 
 style "audio_track_base" = "default"
@@ -810,14 +810,14 @@ style "audio_track_base" = "default"
 	font_name = " 8"
 	# NORMAL is used for single-data type labels, or Audio
 	# ACTIVE is used for MIDI in the presence of multiple data type
-	fg[NORMAL] = @foreground
-	fg[ACTIVE] = darker(@foreground)
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#aaaaaa"
 
-	bg[NORMAL] = @audio_track
-	bg[ACTIVE] = @background
-	bg[PRELIGHT] = @background
-	bg[INSENSITIVE] = @background
-	bg[SELECTED] = @background
+	bg[NORMAL] = "#1e1e1e"
+	bg[ACTIVE] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
+	bg[INSENSITIVE] = "#2a2a2a"
+	bg[SELECTED] = "#2a2a2a"
 }
 
 style "control_master_base" = "default"
@@ -825,14 +825,14 @@ style "control_master_base" = "default"
 	font_name = " 8"
 	# NORMAL is used for single-data type labels, or Audio
 	# ACTIVE is used for MIDI in the presence of multiple data type
-	fg[NORMAL] = @foreground
-	fg[ACTIVE] = darker(@foreground)
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#aaaaaa"
 
-	bg[NORMAL] = @control_master
-	bg[ACTIVE] = @background
-	bg[PRELIGHT] = @background
-	bg[INSENSITIVE] = @background
-	bg[SELECTED] = @background
+	bg[NORMAL] = "#252528"
+	bg[ACTIVE] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
+	bg[INSENSITIVE] = "#2a2a2a"
+	bg[SELECTED] = "#2a2a2a"
 }
 
 style "midi_track_base" = "default"
@@ -840,27 +840,27 @@ style "midi_track_base" = "default"
 	font_name = " 8"
 	# NORMAL is used for single-data type labels, or Audio
 	# ACTIVE is used for MIDI in the presence of multiple data type
-	fg[NORMAL] = @foreground
-	fg[ACTIVE] = darker(@foreground)
+	fg[NORMAL] = "#cccccc"
+	fg[ACTIVE] = "#aaaaaa"
 
-	bg[NORMAL] = @midi_track
-	bg[ACTIVE] = @background
-	bg[PRELIGHT] = @background
-	bg[INSENSITIVE] = @background
-	bg[SELECTED] = @background
+	bg[NORMAL] = "#2a3a2e"
+	bg[ACTIVE] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
+	bg[INSENSITIVE] = "#2a2a2a"
+	bg[SELECTED] = "#2a2a2a"
 }
 
 style "audio_track_fader" = "gain_fader"
 {
-	bg[PRELIGHT] = @audio_track
+	bg[PRELIGHT] = "#1e1e1e"
 }
 style "audio_bus_fader" = "gain_fader"
 {
-	bg[PRELIGHT] = @audio_bus
+	bg[PRELIGHT] = "#1e2a3a"
 }
 style "midi_track_fader" = "gain_fader"
 {
-	bg[PRELIGHT] = @midi_track
+	bg[PRELIGHT] = "#2a3a2e"
 }
 
 style "audio_track_metrics" = "audio_track_base"
@@ -911,7 +911,7 @@ style "track_name_editor" = "medium_text"
 
 style "track_separator"
 {
-	bg[NORMAL] = darker(@background)
+	bg[NORMAL] = "#1a1a1a"
 }
 
 # Plugin Editors
@@ -922,29 +922,29 @@ style "plugin_slider"
 	# the slider itself. the inactive part is INSENSITIVE,
 	# the active part is taken from some other state.
 
-	fg[NORMAL] = @bright_color
-	fg[ACTIVE] = @bright_color
-	fg[INSENSITIVE] = @lightest # matches default
-	fg[SELECTED] = @bright_color
-	fg[PRELIGHT] = @bright_color
+	fg[NORMAL] = "#4a6fa5"
+	fg[ACTIVE] = "#4a6fa5"
+	fg[INSENSITIVE] = "#e0e0e0" # matches default
+	fg[SELECTED] = "#4a6fa5"
+	fg[PRELIGHT] = "#4a6fa5"
 
 	# draws the outer rectangle around the slider
 
-	bg[NORMAL] = shade (0.6, @lightest)
-	bg[ACTIVE] = shade (0.6, @lightest)
-	bg[INSENSITIVE] = shade (0.6, @lightest)
-	bg[SELECTED] = shade (0.6, @lightest)
+	bg[NORMAL] = "#868686"
+	bg[ACTIVE] = "#868686"
+	bg[INSENSITIVE] = "#868686"
+	bg[SELECTED] = "#868686"
 
 	# outer round-corner-background (pixslider does its own hover prelight)
-	bg[PRELIGHT] = @background
+	bg[PRELIGHT] = "#2a2a2a"
 
 	# the numeric display
 
-	text[NORMAL] = @texts
-	text[ACTIVE] = @texts
-	text[INSENSITIVE] = @texts
-	text[SELECTED] = @texts
-	text[PRELIGHT] = @texts
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#cccccc"
+	text[INSENSITIVE] = "#cccccc"
+	text[SELECTED] = "#cccccc"
+	text[PRELIGHT] = "#cccccc"
 }
 
 style "processor_control_button"  = "smaller_text"
@@ -953,21 +953,21 @@ style "processor_control_button"  = "smaller_text"
 
 style "processor_control_slider"  = "plugin_slider"
 {
-	bg[PRELIGHT] = @background
-	bg[NORMAL] = @darkest
+	bg[PRELIGHT] = "#2a2a2a"
+	bg[NORMAL] = "#1a1a1a"
 }
 
 style "track_list_display" = "small_bold_text"
 {
-	text[NORMAL] = @texts
-	text[ACTIVE] = darker(@texts)
-	text[INSENSITIVE] = @bases
-	text[SELECTED] = @fg_selected
+	text[NORMAL] = "#cccccc"
+	text[ACTIVE] = "#aaaaaa"
+	text[INSENSITIVE] = "#1e1e1e"
+	text[SELECTED] = "#e0e0e0"
 
-	base[NORMAL] = @bases
-	base[ACTIVE] = lighter(@bases)
-	base[INSENSITIVE] = darker(@bases)
-	base[SELECTED] = @bg_selected
+	base[NORMAL] = "#1e1e1e"
+	base[ACTIVE] = "#2a2a2a"
+	base[INSENSITIVE] = "#141414"
+	base[SELECTED] = "#4a6fa5"
 }
 
 style "inspector_track_list_display" = "track_list_display"
@@ -977,13 +977,13 @@ style "inspector_track_list_display" = "track_list_display"
 
 style "processor_list" = "smaller_text"
 {
-	bg[NORMAL] = @bases
-	bg[ACTIVE] = shade (1.8, @fg_selected)
-	fg[ACTIVE] = @bases
+	bg[NORMAL] = "#1e1e1e"
+	bg[ACTIVE] = "#ffffff"
+	fg[ACTIVE] = "#1e1e1e"
 }
 style "processor_scroller"
 {
-	bg[ACTIVE] = @bases
+	bg[ACTIVE] = "#1e1e1e"
 	ythickness = 1
 	xthickness = 0
 }
@@ -995,25 +995,25 @@ style "processor_scroller"
 
 style "pan_zone" = "default"
 {
-	fg[NORMAL] = @contrasting_indicator
-	fg[ACTIVE] = darker(@bright_color)
+	fg[NORMAL] = "#3d8c40"
+	fg[ACTIVE] = "#3a5a8a"
 }
 
 style "paler_bright_when_active" = "medium_text"
 {
-	fg[NORMAL] = @foreground
-	fg[PRELIGHT] = @foreground
-	bg[NORMAL] = @background
-	bg[PRELIGHT] = @background
+	fg[NORMAL] = "#cccccc"
+	fg[PRELIGHT] = "#cccccc"
+	bg[NORMAL] = "#2a2a2a"
+	bg[PRELIGHT] = "#2a2a2a"
 
-	fg[ACTIVE] = @foreground
-	bg[ACTIVE] = lighter(@bright_indicator)
+	fg[ACTIVE] = "#cccccc"
+	bg[ACTIVE] = "#dd5555"
 }
 
 style "selected_strip_frame"
 {
-	fg[NORMAL] = @bright_indicator
-	bg[NORMAL] = darker(@bright_indicator)
+	fg[NORMAL] = "#cc3333"
+	bg[NORMAL] = "#992222"
 }
 
 style "flashing_alert" = "smaller_text"
@@ -1021,13 +1021,13 @@ style "flashing_alert" = "smaller_text"
 	GtkButton::child-displacement-x = 0
 	GtkButton::child-displacement-y = 0
 
-	fg[NORMAL] = darker(@foreground)
-	fg[PRELIGHT] = darker(@foreground)
-	bg[NORMAL] = mix(0.1,@bright_indicator,darker(@background))
-	bg[PRELIGHT] = mix(0.1,@bright_indicator,darker(@background))
+	fg[NORMAL] = "#aaaaaa"
+	fg[PRELIGHT] = "#aaaaaa"
+	bg[NORMAL] = "#1e1a1a"
+	bg[PRELIGHT] = "#1e1a1a"
 
-	fg[ACTIVE] = @foreground
-	bg[ACTIVE] = @bright_indicator
+	fg[ACTIVE] = "#cccccc"
+	bg[ACTIVE] = "#cc3333"
 }
 
 style "sync_alert"
@@ -1037,23 +1037,23 @@ style "sync_alert"
 	# active, and alternates with another style if sync is active
 	# but we are not locked
 	#
-	bg[ACTIVE] = @somewhat_bright_indicator
-	bg[PRELIGHT] = @somewhat_bright_indicator
-	bg[SELECTED] = @somewhat_bright_indicator
-	bg[NORMAL] = @somewhat_bright_indicator
+	bg[ACTIVE] = "#ccaa33"
+	bg[PRELIGHT] = "#ccaa33"
+	bg[SELECTED] = "#ccaa33"
+	bg[NORMAL] = "#ccaa33"
 
-	fg[NORMAL] = @darkest
-	fg[PRELIGHT] = @darkest
-	fg[SELECTED] = @darkest
-	fg[ACTIVE] = @darkest
+	fg[NORMAL] = "#1a1a1a"
+	fg[PRELIGHT] = "#1a1a1a"
+	fg[SELECTED] = "#1a1a1a"
+	fg[ACTIVE] = "#1a1a1a"
 }
 
 style "tearoff_arrow" = "medium_bold_entry"
 {
-	fg[NORMAL] = darker(@foreground)
-	fg[PRELIGHT] = darker(@foreground)
-	bg[NORMAL] = darker(@foreground)
-	bg[PRELIGHT] = darker(@foreground)
+	fg[NORMAL] = "#aaaaaa"
+	fg[PRELIGHT] = "#aaaaaa"
+	bg[NORMAL] = "#aaaaaa"
+	bg[PRELIGHT] = "#aaaaaa"
 }
 
 style "location_row_button" = "default_button"
@@ -1069,26 +1069,26 @@ style "ardour_button" ="default_button"
 
 style "tooltip" = "medium_text"
 {
-	fg[NORMAL] = @fg_tooltip
-	bg[NORMAL] = @bg_tooltip
-	bg[SELECTED] = @bg_tooltip
+	fg[NORMAL] = "#cccccc"
+	bg[NORMAL] = "#141414"
+	bg[SELECTED] = "#141414"
 	xthickness = 4
 	ythickness = 4
 }
 
 style "default_toggle_button"
 {
-	bg[NORMAL] = @background
-	bg[PRELIGHT] = shade(1.1, @background)
-	bg[ACTIVE] = @contrasting_indicator
+	bg[NORMAL] = "#2a2a2a"
+	bg[PRELIGHT] = "#333333"
+	bg[ACTIVE] = "#3d8c40"
 }
 
 style "default_toggle_button_active" = "default_toggle_button"
 {
-	bg[NORMAL] = @contrasting_indicator
-	bg[ACTIVE] = @contrasting_indicator
-	bg[SELECTED] = @contrasting_indicator
-	bg[PRELIGHT] = shade(1.2, @contrasting_indicator)
+	bg[NORMAL] = "#3d8c40"
+	bg[ACTIVE] = "#3d8c40"
+	bg[SELECTED] = "#3d8c40"
+	bg[PRELIGHT] = "#4aa64d"
 }
 
 #style "meter_strip_dpm" = "default"
@@ -1097,7 +1097,7 @@ style "default_toggle_button_active" = "default_toggle_button"
 
 style "black_separator" = "default"
 {
-	bg[NORMAL] = @darkest
+	bg[NORMAL] = "#1a1a1a"
 }
 
 style "settings_notebook" = "big_text"
@@ -1107,16 +1107,16 @@ style "settings_notebook" = "big_text"
 
 style "pane"
 {
-	fg[NORMAL] = lighter(@background)
-	fg[SELECTED] = @foreground
-	fg[ACTIVE] = @somewhat_bright_indicator
-	bg[ACTIVE] = shade(1.2, @background)
+	fg[NORMAL] = "#3a3a3a"
+	fg[SELECTED] = "#cccccc"
+	fg[ACTIVE] = "#ccaa33"
+	bg[ACTIVE] = "#333333"
 }
 
 style "vca_label_bar" = "medium_bold_text"
 {
-	bg[NORMAL] = @darkest
-	fg[NORMAL] = @lightest
+	bg[NORMAL] = "#1a1a1a"
+	fg[NORMAL] = "#e0e0e0"
 }
 
 class "GtkWidget" style:highest "default"
