@@ -78,7 +78,7 @@ StartupFSM::StartupFSM (EngineControl& amd)
 	, new_user (false)  // Never show first-run wizard - Cubase-style
 	, new_session_required (ARDOUR_COMMAND_LINE::new_session)
 	, plugins_scanned_before_hub (false)
-	, _state (WaitingForPluginScan)  // Cubase-style: engine + plugin scan first, then Hub
+	, _state (WaitingForSessionPath)  // Show Hub immediately, plugins scan after engine starts
 	, audiomidi_dialog (amd)
 	, new_user_dialog (0)
 	, session_dialog (0)
