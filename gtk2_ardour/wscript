@@ -677,7 +677,7 @@ def build(bld):
     if sys.platform == 'darwin':
         obj.uselib += ' AUDIOUNITS OSX '
         obj.use    += ' libappleutility'
-        obj.source += [ 'cocoacarbon.mm', 'bundle_env_cocoa.cc', 'dawflow_webview_panel.mm' ]
+        obj.source += [ 'cocoacarbon.mm', 'bundle_env_cocoa.cc', 'dawflow_webview_panel.mm', 'session_dialog_mac.mm' ]
     elif bld.env['build_target'] == 'mingw' or bld.env['build_target'] == 'msvc':
         obj.source += [ 'bundle_env_mingw.cc' ]
         obj.source += [ 'windows_icon.rc' ]

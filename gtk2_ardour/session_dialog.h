@@ -281,6 +281,18 @@ private:
 	void populate_device_combo ();
 	void device_combo_changed ();
 
+	/* Hub Settings inline panel */
+	Gtk::VBox      settings_panel;
+	Gtk::EventBox  settings_panel_bg;
+	Gtk::ComboBoxText sample_rate_combo;
+	Gtk::ComboBoxText buffer_size_combo;
+	Gtk::Label     sr_label;
+	Gtk::Label     bs_label;
+	bool           settings_panel_visible;
+	void           build_settings_panel ();
+	void           populate_sample_rate_combo ();
+	void           populate_buffer_size_combo ();
+
 	Glib::RefPtr<Gtk::ActionGroup> action_group;
 	Glib::RefPtr<Gtk::Action> new_session_action;
 	Glib::RefPtr<Gtk::Action> recent_session_action;

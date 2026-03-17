@@ -68,6 +68,13 @@
 #include "ui_config.h"
 #include "utils.h"
 
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+
+// Implemented in session_dialog_mac.mm
+extern std::string dawflow_native_open_dialog(const std::string& title, const std::string& start_dir);
+#endif
+
 using namespace std;
 using namespace Gtk;
 using namespace Gdk;
@@ -84,6 +91,7 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	, templates_section_visible (true)
 	, _initial_tab (initial_tab)
 	, new_name_was_edited (false)
+	, settings_panel_visible (false)
 	, new_folder_chooser (FILE_CHOOSER_ACTION_SELECT_FOLDER)
 {
 	action_group = ActionGroup::create (X_("SessionDialog"));
@@ -166,9 +174,10 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	Gdk::Color sidebar_item_selected ("#3a3a3a");
 
 	/* Projects item */
-	sidebar_label_projects.set_markup ("<span size='small' foreground='#cccccc'>    Projects</span>");
+	sidebar_label_projects.set_markup ("<span foreground='#cccccc'>Projects</span>");
 	sidebar_label_projects.set_alignment (0.0, 0.5);
-	sidebar_label_projects.set_size_request (180, 36);
+	sidebar_label_projects.set_padding (12, 0);
+	sidebar_label_projects.set_size_request (180, 38);
 	sidebar_item_projects.add (sidebar_label_projects);
 	sidebar_item_projects.modify_bg (STATE_NORMAL, sidebar_item_selected);
 	sidebar_item_projects.set_events (Gdk::BUTTON_PRESS_MASK);
@@ -176,9 +185,10 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	sidebar.pack_start (sidebar_item_projects, false, false);
 
 	/* Tutorials item */
-	sidebar_label_tutorials.set_markup ("<span size='small' foreground='#888888'>    Tutorials</span>");
+	sidebar_label_tutorials.set_markup ("<span foreground='#888888'>Tutorials</span>");
 	sidebar_label_tutorials.set_alignment (0.0, 0.5);
-	sidebar_label_tutorials.set_size_request (180, 36);
+	sidebar_label_tutorials.set_padding (12, 0);
+	sidebar_label_tutorials.set_size_request (180, 38);
 	sidebar_item_tutorials.add (sidebar_label_tutorials);
 	sidebar_item_tutorials.modify_bg (STATE_NORMAL, sidebar_item_normal);
 	sidebar_item_tutorials.set_events (Gdk::BUTTON_PRESS_MASK);
@@ -187,12 +197,13 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 
 	/* Separator */
 	Gtk::HSeparator* sidebar_sep1 = manage (new HSeparator());
-	sidebar.pack_start (*sidebar_sep1, false, false, 6);
+	sidebar.pack_start (*sidebar_sep1, false, false, 8);
 
 	/* Hub Settings item */
-	sidebar_label_settings.set_markup ("<span size='small' foreground='#888888'>    Hub Settings</span>");
+	sidebar_label_settings.set_markup ("<span foreground='#888888'>Hub Settings</span>");
 	sidebar_label_settings.set_alignment (0.0, 0.5);
-	sidebar_label_settings.set_size_request (180, 36);
+	sidebar_label_settings.set_padding (12, 0);
+	sidebar_label_settings.set_size_request (180, 38);
 	sidebar_item_settings.add (sidebar_label_settings);
 	sidebar_item_settings.modify_bg (STATE_NORMAL, sidebar_item_normal);
 	sidebar_item_settings.set_events (Gdk::BUTTON_PRESS_MASK);
@@ -286,6 +297,10 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	content_scroller.add (content_list);
 	main_content.pack_start (content_scroller, true, true);
 
+	/* ---- Hub Settings inline panel (hidden by default) ---- */
+	build_settings_panel ();
+	main_content.pack_start (settings_panel_bg, false, false);
+
 	main_content_bg.add (main_content);
 	content_area.pack_start (main_content_bg, true, true);
 
@@ -360,15 +375,15 @@ SessionDialog::SessionDialog (DialogTab initial_tab, const std::string& session_
 	device_combo.signal_changed().connect (sigc::mem_fun (*this, &SessionDialog::device_combo_changed));
 
 	/* Set overall dialog size */
-	set_default_size (800, 520);
+	set_default_size (1200, 700);
+	set_resizable (true);
 
 	main_vbox->show_all ();
 
-	disallow_idle ();
+	/* Settings panel starts hidden */
+	settings_panel_bg.hide ();
 
-	if (!UIConfiguration::instance().get_allow_to_resize_init_dialog ()) {
-		set_resizable (false);
-	}
+	disallow_idle ();
 }
 
 SessionDialog::~SessionDialog()
@@ -399,14 +414,14 @@ SessionDialog::sidebar_select (SidebarPage page)
 	sidebar_item_settings.modify_bg (STATE_NORMAL, page == PageSettings ? selected_bg : normal_bg);
 
 	sidebar_label_projects.set_markup (page == PageProjects
-		? "<span size='small' foreground='#cccccc'>    Projects</span>"
-		: "<span size='small' foreground='#888888'>    Projects</span>");
+		? "<span foreground='#cccccc'>Projects</span>"
+		: "<span foreground='#888888'>Projects</span>");
 	sidebar_label_tutorials.set_markup (page == PageTutorials
-		? "<span size='small' foreground='#cccccc'>    Tutorials</span>"
-		: "<span size='small' foreground='#888888'>    Tutorials</span>");
+		? "<span foreground='#cccccc'>Tutorials</span>"
+		: "<span foreground='#888888'>Tutorials</span>");
 	sidebar_label_settings.set_markup (page == PageSettings
-		? "<span size='small' foreground='#cccccc'>    Hub Settings</span>"
-		: "<span size='small' foreground='#888888'>    Hub Settings</span>");
+		? "<span foreground='#cccccc'>Hub Settings</span>"
+		: "<span foreground='#888888'>Hub Settings</span>");
 
 	/* Show/hide content based on selected page */
 	if (page == PageProjects) {
@@ -437,6 +452,17 @@ bool
 SessionDialog::sidebar_settings_clicked (GdkEventButton*)
 {
 	sidebar_select (PageSettings);
+
+	/* Toggle the inline settings panel */
+	settings_panel_visible = !settings_panel_visible;
+	if (settings_panel_visible) {
+		/* Refresh combos before showing */
+		populate_sample_rate_combo ();
+		populate_buffer_size_combo ();
+		settings_panel_bg.show_all ();
+	} else {
+		settings_panel_bg.hide ();
+	}
 	return true;
 }
 
@@ -516,6 +542,14 @@ SessionDialog::search_changed ()
 void
 SessionDialog::choose_file_clicked ()
 {
+#ifdef __APPLE__
+	std::string start_dir = poor_mans_glob (Config->get_default_session_parent_dir());
+	std::string path = dawflow_native_open_dialog (_("Open Session"), start_dir);
+	if (!path.empty()) {
+		existing_session_chooser.set_filename (path);
+		response (RESPONSE_ACCEPT);
+	}
+#else
 	Gtk::FileChooserDialog chooser (_("Open Session"), FILE_CHOOSER_ACTION_OPEN);
 	chooser.set_transient_for (*this);
 
@@ -544,11 +578,11 @@ SessionDialog::choose_file_clicked ()
 	if (chooser.run() == RESPONSE_ACCEPT) {
 		std::string filename = chooser.get_filename();
 		if (!filename.empty()) {
-			/* Set the existing_session_chooser path so session_name/session_folder work */
 			existing_session_chooser.set_filename (filename);
 			response (RESPONSE_ACCEPT);
 		}
 	}
+#endif
 }
 
 /* ============================================================
@@ -560,7 +594,18 @@ SessionDialog::populate_device_combo ()
 {
 	device_combo.clear();
 
-	std::shared_ptr<ARDOUR::AudioBackend> backend = ARDOUR::AudioEngine::instance()->current_backend();
+	ARDOUR::AudioEngine& engine = *ARDOUR::AudioEngine::instance();
+	std::shared_ptr<ARDOUR::AudioBackend> backend = engine.current_backend();
+
+	/* If no backend is running yet, try to set CoreAudio (macOS) or ALSA (Linux) */
+	if (!backend) {
+#ifdef __APPLE__
+		backend = engine.set_backend ("CoreAudio", "", "");
+#else
+		backend = engine.set_backend ("ALSA", "", "");
+#endif
+	}
+
 	if (backend) {
 		std::string current_device = backend->device_name();
 		std::vector<ARDOUR::AudioBackend::DeviceStatus> devices = backend->enumerate_devices();
@@ -596,6 +641,124 @@ SessionDialog::device_combo_changed ()
 		if (backend->device_name() != selected) {
 			backend->set_device_name (selected);
 		}
+	}
+}
+
+/* ============================================================
+ *  HUB SETTINGS PANEL
+ * ============================================================ */
+
+void
+SessionDialog::build_settings_panel ()
+{
+	Gdk::Color settings_bg ("#2a2a2a");
+	settings_panel_bg.modify_bg (STATE_NORMAL, settings_bg);
+
+	settings_panel.set_spacing (8);
+	settings_panel.set_border_width (12);
+
+	/* Title */
+	Gtk::Label* settings_title = manage (new Label());
+	settings_title->set_markup ("<span size='medium' weight='bold' foreground='#cccccc'>Audio Settings</span>");
+	settings_title->set_alignment (0.0, 0.5);
+	settings_panel.pack_start (*settings_title, false, false);
+
+	/* Sample Rate row */
+	Gtk::HBox* sr_row = manage (new HBox());
+	sr_row->set_spacing (12);
+	sr_label.set_markup ("<span size='small' foreground='#999999'>Sample Rate</span>");
+	sr_label.set_alignment (0.0, 0.5);
+	sr_label.set_size_request (120, -1);
+	sample_rate_combo.set_size_request (200, -1);
+	sr_row->pack_start (sr_label, false, false);
+	sr_row->pack_start (sample_rate_combo, false, false);
+	settings_panel.pack_start (*sr_row, false, false);
+
+	/* Buffer Size row */
+	Gtk::HBox* bs_row = manage (new HBox());
+	bs_row->set_spacing (12);
+	bs_label.set_markup ("<span size='small' foreground='#999999'>Buffer Size</span>");
+	bs_label.set_alignment (0.0, 0.5);
+	bs_label.set_size_request (120, -1);
+	buffer_size_combo.set_size_request (200, -1);
+	bs_row->pack_start (bs_label, false, false);
+	bs_row->pack_start (buffer_size_combo, false, false);
+	settings_panel.pack_start (*bs_row, false, false);
+
+	settings_panel_bg.add (settings_panel);
+
+	/* Populate the combos */
+	populate_sample_rate_combo ();
+	populate_buffer_size_combo ();
+}
+
+void
+SessionDialog::populate_sample_rate_combo ()
+{
+	sample_rate_combo.clear();
+
+	std::shared_ptr<ARDOUR::AudioBackend> backend = ARDOUR::AudioEngine::instance()->current_backend();
+	if (backend) {
+		std::vector<float> rates = backend->available_sample_rates (backend->device_name());
+		float current_sr = backend->sample_rate();
+		int active_idx = 0;
+		int idx = 0;
+		for (auto& r : rates) {
+			char buf[64];
+			if (r >= 1000.0f) {
+				snprintf (buf, sizeof(buf), "%.1f kHz", r / 1000.0f);
+			} else {
+				snprintf (buf, sizeof(buf), "%.0f Hz", r);
+			}
+			sample_rate_combo.append_text (buf);
+			if (r == current_sr) {
+				active_idx = idx;
+			}
+			idx++;
+		}
+		if (idx > 0) {
+			sample_rate_combo.set_active (active_idx);
+		}
+	} else {
+		sample_rate_combo.append_text ("44.1 kHz");
+		sample_rate_combo.append_text ("48.0 kHz");
+		sample_rate_combo.append_text ("88.2 kHz");
+		sample_rate_combo.append_text ("96.0 kHz");
+		sample_rate_combo.set_active (1);
+	}
+}
+
+void
+SessionDialog::populate_buffer_size_combo ()
+{
+	buffer_size_combo.clear();
+
+	std::shared_ptr<ARDOUR::AudioBackend> backend = ARDOUR::AudioEngine::instance()->current_backend();
+	if (backend) {
+		std::vector<uint32_t> sizes = backend->available_buffer_sizes (backend->device_name());
+		uint32_t current_bs = backend->buffer_size();
+		int active_idx = 0;
+		int idx = 0;
+		for (auto& s : sizes) {
+			char buf[64];
+			snprintf (buf, sizeof(buf), "%u samples", s);
+			buffer_size_combo.append_text (buf);
+			if (s == current_bs) {
+				active_idx = idx;
+			}
+			idx++;
+		}
+		if (idx > 0) {
+			buffer_size_combo.set_active (active_idx);
+		}
+	} else {
+		buffer_size_combo.append_text ("64 samples");
+		buffer_size_combo.append_text ("128 samples");
+		buffer_size_combo.append_text ("256 samples");
+		buffer_size_combo.append_text ("512 samples");
+		buffer_size_combo.append_text ("1024 samples");
+		buffer_size_combo.append_text ("2048 samples");
+		buffer_size_combo.set_active (3);
 	}
 }
 
