@@ -151,7 +151,7 @@ interface ChannelStripProps {
 
 const ChannelStrip: React.FC<ChannelStripProps> = React.memo(({
   name, color, volume, pan, muted, solo, recordEnabled, monitorEnabled,
-  readAutomation, writeAutomation, meterLevel, type, index,
+  readAutomation, writeAutomation, meterLevel, type, index: _index,
   onVolumeChange, onPanChange, onMuteToggle, onSoloToggle, onRecordToggle, onMonitorToggle,
 }) => {
   const isRecordable = type === 'audio' || type === 'instrument' || type === 'midi';

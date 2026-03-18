@@ -7,7 +7,7 @@ import { useRegionStore } from './regions';
 // Engine → UI track conversion
 // ---------------------------------------------------------------------------
 
-function engineTrackToTrack(et: EngineTrack, index: number): Track {
+function engineTrackToTrack(et: EngineTrack, _index: number): Track {
   const COLORS: Record<string, string> = {
     audio: '#5B7FA5', midi: '#3A8C8C', instrument: '#B8963A',
     bus: '#6A9FD4', vca: '#8A6AAE', fx: '#8A6AAE', group: '#6A9FD4',
