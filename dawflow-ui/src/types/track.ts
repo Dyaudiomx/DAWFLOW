@@ -23,6 +23,7 @@ export interface Track {
   pan: number; // -1 to 1
   inputRouting: string;
   outputRouting: string;
+  meterLevel?: number; // 0-1 normalized meter level from engine
   children?: Track[]; // for folder tracks
 }
 

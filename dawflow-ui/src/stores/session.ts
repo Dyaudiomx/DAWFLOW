@@ -53,6 +53,7 @@ interface SessionStore {
   setTrackName: (id: string, name: string) => void;
   setTrackHeight: (id: string, height: number) => void;
   setTrackColor: (id: string, color: string) => void;
+  setTrackMeterLevel: (id: string, level: number) => void;
   updateTracks: (tracks: Track[]) => void;
   getTrackById: (id: string) => Track | undefined;
 }
@@ -111,6 +112,9 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   })),
   setTrackColor: (id, color) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, color } : t)
+  })),
+  setTrackMeterLevel: (id, level) => set((s) => ({
+    tracks: s.tracks.map((t) => t.id === id ? { ...t, meterLevel: level } : t)
   })),
   updateTracks: (tracks) => set({ tracks }),
   getTrackById: (id) => get().tracks.find((t) => t.id === id),

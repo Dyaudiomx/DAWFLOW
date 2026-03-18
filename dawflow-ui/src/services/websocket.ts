@@ -206,9 +206,15 @@ function handleMessage(msg: ArdourMessage) {
     }
 
     case 'strip_meter': {
-      // High-frequency meter data — route to mixer store if needed
-      // const stripId = addr[0];
-      // const level = val[0] as number; // dB
+      const stripId = addr[0];
+      const level = val[0] as number; // dB value from engine
+      const session = useSessionStore.getState();
+      const track = session.tracks[stripId];
+      if (track) {
+        // Convert dB to 0-1 range: -60dB = 0, 0dB = 1, clamp
+        const normalized = Math.max(0, Math.min(1, (level + 60) / 60));
+        session.setTrackMeterLevel(track.id, normalized);
+      }
       break;
     }
 

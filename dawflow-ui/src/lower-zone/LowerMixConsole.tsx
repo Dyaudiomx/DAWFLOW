@@ -1,17 +1,7 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useSessionStore } from '../stores/session';
 import { Fader } from '../shared/Fader';
 import styles from './LowerMixConsole.module.css';
-
-function getMeterDelay(index: number): string {
-  const delays = [0, 0.3, 0.7, 1.1, 0.5, 1.4, 0.2, 0.9, 1.6, 0.4];
-  return `${delays[index % delays.length]}s`;
-}
-
-function getMeterDuration(index: number): string {
-  const durations = [2.5, 2.8, 2.2, 3.0, 2.6, 2.3, 2.9, 2.4, 2.7, 3.1];
-  return `${durations[index % durations.length]}s`;
-}
 
 function volumeToDb(volume: number): string {
   if (volume <= 0) return '-\u221E';
@@ -51,6 +41,7 @@ export const LowerMixConsole: React.FC = () => {
             monitorEnabled={track.monitorEnabled}
             readAutomation={track.readAutomation}
             writeAutomation={track.writeAutomation}
+            meterLevel={track.meterLevel || 0}
             type={track.type}
             index={i}
             onVolumeChange={(v) => setTrackVolume(track.id, v)}
@@ -147,6 +138,7 @@ interface ChannelStripProps {
   monitorEnabled: boolean;
   readAutomation: boolean;
   writeAutomation: boolean;
+  meterLevel: number;
   type: string;
   index: number;
   onVolumeChange: (v: number) => void;
@@ -159,15 +151,10 @@ interface ChannelStripProps {
 
 const ChannelStrip: React.FC<ChannelStripProps> = React.memo(({
   name, color, volume, pan, muted, solo, recordEnabled, monitorEnabled,
-  readAutomation, writeAutomation, type, index,
+  readAutomation, writeAutomation, meterLevel, type, index,
   onVolumeChange, onPanChange, onMuteToggle, onSoloToggle, onRecordToggle, onMonitorToggle,
 }) => {
   const isRecordable = type === 'audio' || type === 'instrument' || type === 'midi';
-
-  const meterStyle = useMemo(() => ({
-    animationDelay: getMeterDelay(index),
-    animationDuration: getMeterDuration(index),
-  }), [index]);
 
   return (
     <div className={styles.strip}>
@@ -196,8 +183,11 @@ const ChannelStrip: React.FC<ChannelStripProps> = React.memo(({
       {/* ===== FADER + METER ===== */}
       <div className={styles.faderMeter}>
         <div className={styles.meterWrap}>
-          <div className={styles.meterSim}>
-            <div className={styles.meterSimFill} style={{ ...meterStyle, opacity: muted ? 0.15 : 1 }} />
+          <div className={styles.meterReal}>
+            <div
+              className={styles.meterRealFill}
+              style={{ height: `${(meterLevel || 0) * 100}%`, opacity: muted ? 0.15 : 1 }}
+            />
           </div>
         </div>
         <div className={styles.faderWrap}>
