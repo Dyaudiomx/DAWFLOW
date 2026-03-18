@@ -1,0 +1,11 @@
+{
+    "id": "com.dawflow.ui-shell",
+    "name": "DAWFLOW UI",
+    "version": "1.0.0",
+    "api_version": "1",
+    "author": "DAWFLOW",
+    "description": "Premium Cubase-style UI for DAWFLOW",
+    "entry_point": "bin/{platform}/dawflow-ui-shell",
+    "auto_start": true,
+    "capabilities": ["ui_takeover"]
+}
