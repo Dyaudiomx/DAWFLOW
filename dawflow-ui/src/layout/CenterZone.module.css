@@ -205,7 +205,20 @@
   background: #2E2E2E;
 }
 
-/* Audio events */
+/* Region blocks (real data from engine) */
+.regionBlock {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Audio events (legacy) */
 .audioEvent, .midiEvent {
   position: absolute;
   top: 1px;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSessionStore } from '../stores/session';
 import { useUIStore } from '../stores/ui';
+import { useRegionStore } from '../stores/regions';
 import styles from './CenterZone.module.css';
 
 const TRACK_TYPE_ICONS: Record<string, string> = {
@@ -24,11 +25,16 @@ const TRACK_TYPE_ICONS: Record<string, string> = {
 
 export const CenterZone: React.FC = () => {
   const tracks = useSessionStore((s) => s.tracks);
+  const sampleRate = useSessionStore((s) => s.sampleRate);
   const selectedTrackId = useUIStore((s) => s.selectedTrackId);
   const setSelectedTrackId = useUIStore((s) => s.setSelectedTrackId);
   const setTrackMute = useSessionStore((s) => s.setTrackMute);
   const setTrackSolo = useSessionStore((s) => s.setTrackSolo);
   const setTrackRecord = useSessionStore((s) => s.setTrackRecord);
+  const regionsByTrack = useRegionStore((s) => s.regionsByTrack);
+
+  // Timeline constants: show ~30 seconds of audio at default zoom
+  const PIXELS_PER_SECOND = 20;
 
   return (
     <div className={styles.container}>
@@ -90,63 +96,31 @@ export const CenterZone: React.FC = () => {
 
               {/* Event display area (timeline) */}
               <div className={styles.eventDisplay}>
-                {track.type === 'audio' && (
-                  <div
-                    className={styles.audioEvent}
-                    style={{
-                      left: `${3 + (parseInt(track.id) * 7) % 12}%`,
-                      width: `${25 + (parseInt(track.id) * 13) % 35}%`,
-                    }}
-                  >
-                    <div className={styles.eventTop} style={{ background: track.color }}>
-                      <span className={styles.eventLabel}>{track.name}</span>
-                    </div>
-                    <div className={styles.eventBody} style={{ background: track.color }}>
-                      <svg className={styles.waveform} viewBox="0 0 200 30" preserveAspectRatio="none">
-                        <path
-                          d={generateWaveformPath(parseInt(track.id))}
-                          fill="none"
-                          stroke="rgba(0,0,0,0.4)"
-                          strokeWidth="1"
-                        />
-                        <path
-                          d={generateWaveformPath(parseInt(track.id), true)}
-                          fill="none"
-                          stroke="rgba(0,0,0,0.3)"
-                          strokeWidth="1"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                )}
-                {(track.type === 'instrument' || track.type === 'midi') && (
-                  <div
-                    className={styles.midiEvent}
-                    style={{
-                      left: `${3 + (parseInt(track.id) * 11) % 15}%`,
-                      width: `${20 + (parseInt(track.id) * 17) % 30}%`,
-                    }}
-                  >
-                    <div className={styles.eventTop} style={{ background: track.color }}>
-                      <span className={styles.eventLabel}>{track.name}</span>
-                    </div>
-                    <div className={styles.eventBody} style={{ background: track.color }}>
-                      <div className={styles.midiNotesContainer}>
-                        {generateMidiNotes(parseInt(track.id)).map((note, i) => (
-                          <div
-                            key={i}
-                            className={styles.miniNote}
-                            style={{
-                              left: `${note.x}%`,
-                              top: `${note.y}%`,
-                              width: `${note.w}%`,
-                            }}
-                          />
-                        ))}
+                {/* Real regions from engine */}
+                {(regionsByTrack[track.id] || []).map((region) => {
+                  const startSec = region.position / sampleRate;
+                  const lengthSec = region.length / sampleRate;
+                  const leftPx = startSec * PIXELS_PER_SECOND;
+                  const widthPx = Math.max(4, lengthSec * PIXELS_PER_SECOND);
+
+                  return (
+                    <div
+                      key={region.id}
+                      className={styles.regionBlock}
+                      style={{
+                        left: `${leftPx}px`,
+                        width: `${widthPx}px`,
+                      }}
+                    >
+                      <div className={styles.eventTop} style={{ background: track.color }}>
+                        <span className={styles.eventLabel}>{region.name}</span>
+                      </div>
+                      <div className={styles.eventBody} style={{ background: track.color, opacity: 0.6 }}>
+                        {/* Placeholder for waveform/MIDI visualization -- future task */}
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
                 {/* Grid lines */}
                 {Array.from({ length: 64 }, (_, i) => (
                   <div
@@ -163,25 +137,3 @@ export const CenterZone: React.FC = () => {
     </div>
   );
 };
-
-function generateWaveformPath(seed: number, mirror = false): string {
-  const points: string[] = [];
-  const mid = mirror ? 20 : 15;
-  for (let x = 0; x <= 200; x += 2) {
-    const amp = (Math.sin(x * 0.15 + seed) * 4 + Math.sin(x * 0.08 + seed * 2) * 6 + Math.sin(x * 0.3 + seed * 0.5) * 2) * (mirror ? -1 : 1);
-    points.push(`${x === 0 ? 'M' : 'L'}${x},${mid + amp}`);
-  }
-  return points.join(' ');
-}
-
-function generateMidiNotes(seed: number): { x: number; y: number; w: number }[] {
-  const notes = [];
-  for (let i = 0; i < 16; i++) {
-    notes.push({
-      x: (i * 6 + ((seed * 3 + i * 7) % 4)) % 95,
-      y: 10 + ((seed * 7 + i * 13) % 70),
-      w: 3 + ((seed + i * 3) % 5),
-    });
-  }
-  return notes;
-}

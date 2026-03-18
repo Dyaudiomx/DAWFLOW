@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Track, TrackType } from '../types/track';
 import { ipc, type EngineTrack } from '../services/ipc';
+import { useRegionStore } from './regions';
 
 // ---------------------------------------------------------------------------
 // Engine → UI track conversion
@@ -79,6 +80,19 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         sampleRate: sessionInfo.sample_rate || 48000,
         loading: false,
       });
+
+      // Fetch regions for each track (non-blocking, don't await all)
+      for (const et of engineTracks) {
+        ipc.getRegions(et.id).then((regions) => {
+          useRegionStore.getState().setRegions(et.id, regions.map((r) => ({
+            ...r,
+            trackId: et.id,
+            type: et.type || 'audio',
+          })));
+        }).catch(() => {
+          // Track may not have regions -- that's fine
+        });
+      }
     } catch (e) {
       console.error('[DAWFLOW] Failed to fetch session data:', e);
       set({ loading: false });
