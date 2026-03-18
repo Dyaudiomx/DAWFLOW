@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { useUIStore } from '../stores/ui';
+import { useSessionStore } from '../stores/session';
 import { Toolbar } from './Toolbar';
 import { LeftZone } from './LeftZone';
 import { CenterZone } from './CenterZone';
@@ -10,6 +11,12 @@ import { ZoneDivider } from './ZoneDivider';
 import styles from './ProjectWindow.module.css';
 
 export const ProjectWindow: React.FC = () => {
+  const sessionName = useSessionStore((s) => s.sessionName);
+
+  React.useEffect(() => {
+    document.title = `${sessionName} — DAWFLOW`;
+  }, [sessionName]);
+
   const leftZoneVisible = useUIStore((s) => s.leftZoneVisible);
   const rightZoneVisible = useUIStore((s) => s.rightZoneVisible);
   const lowerZoneVisible = useUIStore((s) => s.lowerZoneVisible);
