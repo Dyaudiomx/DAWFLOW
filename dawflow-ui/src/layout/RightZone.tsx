@@ -1,14 +1,16 @@
 import React from 'react';
 import { useUIStore } from '../stores/ui';
+import { AIChatPanel } from '../right-zone/AIChatPanel';
 import styles from './RightZone.module.css';
 
-type RightZoneTab = 'vsti' | 'media' | 'cr' | 'meter';
+type RightZoneTab = 'vsti' | 'media' | 'cr' | 'meter' | 'ai';
 
 const TABS: { id: RightZoneTab; label: string }[] = [
   { id: 'vsti', label: 'VS.' },
   { id: 'media', label: 'Me.' },
   { id: 'cr', label: 'CR' },
   { id: 'meter', label: 'Met.' },
+  { id: 'ai' as const, label: 'AI' },
 ];
 
 const MEDIA_TILES = [
@@ -210,6 +212,7 @@ export const RightZone: React.FC = () => {
         {rightZoneTab === 'media' && <MediaTab />}
         {rightZoneTab === 'cr' && <CRTab />}
         {rightZoneTab === 'meter' && <MeterTab />}
+        {rightZoneTab === 'ai' && <AIChatPanel />}
       </div>
     </div>
   );

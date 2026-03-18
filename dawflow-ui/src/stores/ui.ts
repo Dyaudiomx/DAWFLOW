@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type LowerZoneTab = 'mixconsole' | 'editor' | 'sampler' | 'chordpads' | 'midiremote';
-export type RightZoneTab = 'vsti' | 'media' | 'cr' | 'meter';
+export type RightZoneTab = 'vsti' | 'media' | 'cr' | 'meter' | 'ai';
 export type InspectorTab = 'track' | 'editor' | 'visibility';
 export type ToolType = 'select' | 'range' | 'split' | 'glue' | 'erase' | 'zoom' | 'mute' | 'draw' | 'line' | 'play' | 'color' | 'comp' | 'timewarp';
 
