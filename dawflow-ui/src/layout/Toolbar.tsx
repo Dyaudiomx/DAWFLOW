@@ -1,6 +1,8 @@
 import React from 'react';
 import { useUIStore } from '../stores/ui';
 import { useTransportStore } from '../stores/transport';
+import { useSessionStore } from '../stores/session';
+import { ipc } from '../services/ipc';
 import { SvgIcon } from '../shared/SvgIcon';
 import styles from './Toolbar.module.css';
 
@@ -59,6 +61,25 @@ export const Toolbar: React.FC = () => {
 
   const transport = useTransportStore();
 
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        ipc.undo().then(() => useSessionStore.getState().fetchFromEngine());
+      } else if (e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        ipc.redo().then(() => useSessionStore.getState().fetchFromEngine());
+      } else if (e.key === 's') {
+        e.preventDefault();
+        ipc.saveSession();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   return (
     <div className={styles.toolbar}>
 
@@ -69,10 +90,12 @@ export const Toolbar: React.FC = () => {
 
       {/* Undo / Redo */}
       <div className={styles.section}>
-        <button className={styles.btn} title="Undo (Ctrl+Z)">
+        <button className={styles.btn} title="Undo (Ctrl+Z)"
+          onClick={() => ipc.undo().then(() => useSessionStore.getState().fetchFromEngine())}>
           <SvgIcon name="undo" size={16} />
         </button>
-        <button className={styles.btn} title="Redo (Ctrl+Shift+Z)">
+        <button className={styles.btn} title="Redo (Ctrl+Shift+Z)"
+          onClick={() => ipc.redo().then(() => useSessionStore.getState().fetchFromEngine())}>
           <SvgIcon name="redo" size={16} />
         </button>
       </div>
