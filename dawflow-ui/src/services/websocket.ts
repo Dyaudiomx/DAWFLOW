@@ -48,6 +48,9 @@ export function connectToEngine(url?: string) {
   ws.onopen = () => {
     console.log('[DAWFLOW] Connected to engine at', wsUrl);
     useConnectionStore.getState().setWsConnected(true);
+
+    // Fetch real track data from engine via IPC
+    useSessionStore.getState().fetchFromEngine();
   };
 
   ws.onmessage = (event) => {
