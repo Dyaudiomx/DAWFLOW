@@ -145,6 +145,17 @@ export const CenterZone: React.FC = () => {
           setContextMenu({ x: e.clientX, y: e.clientY });
         }}
       >
+        {/* Background grid — always visible even with no tracks */}
+        <div className={styles.backgroundGrid}>
+          {Array.from({ length: 200 }, (_, i) => (
+            <div
+              key={i}
+              className={`${styles.gridLine} ${i % 4 === 0 ? styles.gridLineBar : ''}`}
+              style={{ left: `${i * 30}px` }}
+            />
+          ))}
+        </div>
+
         <div className={styles.trackList}>
           {tracks.map((track) => (
             <div

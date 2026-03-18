@@ -85,6 +85,18 @@
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  background: #1a2a35;
+}
+
+/* Background grid — fills entire track area, always visible */
+.backgroundGrid {
+  position: absolute;
+  top: 0;
+  left: 250px; /* offset by track header width */
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .trackArea::-webkit-scrollbar {
