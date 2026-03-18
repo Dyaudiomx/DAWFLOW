@@ -1,7 +1,9 @@
 import React from 'react';
 import { useSessionStore } from '../stores/session';
 import { useUIStore } from '../stores/ui';
+import { useTransportStore } from '../stores/transport';
 import { useRegionStore } from '../stores/regions';
+import { ipc } from '../services/ipc';
 import styles from './CenterZone.module.css';
 
 const TRACK_TYPE_ICONS: Record<string, string> = {
@@ -32,6 +34,19 @@ export const CenterZone: React.FC = () => {
   const setTrackSolo = useSessionStore((s) => s.setTrackSolo);
   const setTrackRecord = useSessionStore((s) => s.setTrackRecord);
   const regionsByTrack = useRegionStore((s) => s.regionsByTrack);
+  const position = useTransportStore((s) => s.position);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = React.useState<{x: number; y: number; trackId?: string} | null>(null);
+
+  // Close context menu on click or Escape
+  React.useEffect(() => {
+    const close = () => setContextMenu(null);
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    window.addEventListener('click', close);
+    window.addEventListener('keydown', esc);
+    return () => { window.removeEventListener('click', close); window.removeEventListener('keydown', esc); };
+  }, []);
 
   // Timeline constants: show ~30 seconds of audio at default zoom
   const PIXELS_PER_SECOND = 20;
@@ -53,7 +68,14 @@ export const CenterZone: React.FC = () => {
       </div>
 
       {/* Track list + Event display */}
-      <div className={styles.trackArea}>
+      <div
+        className={styles.trackArea}
+        style={{ position: 'relative' }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setContextMenu({ x: e.clientX, y: e.clientY });
+        }}
+      >
         <div className={styles.trackList}>
           {tracks.map((track) => (
             <div
@@ -61,6 +83,11 @@ export const CenterZone: React.FC = () => {
               className={`${styles.trackRow} ${selectedTrackId === track.id ? styles.trackSelected : ''}`}
               style={{ height: track.height }}
               onClick={() => setSelectedTrackId(track.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setContextMenu({ x: e.clientX, y: e.clientY, trackId: track.id });
+              }}
             >
               {/* Track header */}
               <div className={styles.trackHeader}>
@@ -133,7 +160,53 @@ export const CenterZone: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Playhead */}
+        <div
+          className={styles.playhead}
+          style={{ left: `${250 + position * PIXELS_PER_SECOND}px` }}
+        />
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div className={styles.contextMenuOverlay} onClick={() => setContextMenu(null)}>
+          <div
+            className={styles.contextMenu}
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.menuItem} onClick={() => { useUIStore.getState().openAddTrackDialog(); setContextMenu(null); }}>
+              Add Track...
+            </div>
+            {contextMenu.trackId && (
+              <>
+                <div className={styles.menuDivider} />
+                <div className={styles.menuItem} onClick={() => {
+                  ipc.call('daw.duplicate_track', { track_id: contextMenu.trackId });
+                  useSessionStore.getState().fetchFromEngine();
+                  setContextMenu(null);
+                }}>Duplicate Track</div>
+                <div className={`${styles.menuItem} ${styles.menuItemDanger}`} onClick={() => {
+                  if (contextMenu.trackId) {
+                    ipc.removeTrack(contextMenu.trackId).then(() => useSessionStore.getState().fetchFromEngine());
+                  }
+                  setContextMenu(null);
+                }}>Remove Track</div>
+                <div className={styles.menuDivider} />
+                <div className={styles.menuItem} onClick={() => {
+                  setTrackMute(contextMenu.trackId!, !tracks.find(t => t.id === contextMenu.trackId)?.muted);
+                  setContextMenu(null);
+                }}>Toggle Mute</div>
+                <div className={styles.menuItem} onClick={() => {
+                  setTrackSolo(contextMenu.trackId!, !tracks.find(t => t.id === contextMenu.trackId)?.solo);
+                  setContextMenu(null);
+                }}>Toggle Solo</div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
