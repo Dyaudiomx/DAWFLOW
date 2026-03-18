@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Track, TrackType } from '../types/track';
 import { ipc, type EngineTrack } from '../services/ipc';
 import { useRegionStore } from './regions';
+import { useConnectionStore } from './connection';
 
 // ---------------------------------------------------------------------------
 // Engine → UI track conversion
@@ -69,6 +70,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   loading: true,
 
   fetchFromEngine: async () => {
+    if (!useConnectionStore.getState().wsConnected) return;
     try {
       const [engineTracks, sessionInfo] = await Promise.all([
         ipc.getTracks(),

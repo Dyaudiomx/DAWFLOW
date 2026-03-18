@@ -171,14 +171,23 @@ export async function ipcCall<T>(
     body.params = params;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 2000);
+
   let response: Response;
   try {
     response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
   } catch (err) {
+    clearTimeout(timeout);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`IPC call timed out calling ${method}`);
+    }
     throw new Error(
       `IPC network error calling ${method}: ${err instanceof Error ? err.message : String(err)}`,
     );

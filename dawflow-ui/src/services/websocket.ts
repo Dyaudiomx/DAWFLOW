@@ -25,6 +25,7 @@ interface ArdourMessage {
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let ipcEnabled = true;
 
 function getWsUrl(): string {
   // When served from Ardour's built-in HTTP server (port 3818),
@@ -48,6 +49,7 @@ export function connectToEngine(url?: string) {
 
   ws.onopen = () => {
     console.log('[DAWFLOW] Connected to engine at', wsUrl);
+    ipcEnabled = true;
     useConnectionStore.getState().setWsConnected(true);
 
     // Fetch real track data from engine via IPC
@@ -55,7 +57,9 @@ export function connectToEngine(url?: string) {
 
     // Poll for track list changes every 3 seconds
     pollTimer = setInterval(() => {
-      useSessionStore.getState().fetchFromEngine();
+      if (ipcEnabled) {
+        useSessionStore.getState().fetchFromEngine();
+      }
     }, 3000);
   };
 
@@ -77,6 +81,7 @@ export function connectToEngine(url?: string) {
 
   ws.onclose = () => {
     console.log('[DAWFLOW] Disconnected from engine');
+    ipcEnabled = false;
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     useConnectionStore.getState().setWsConnected(false);
     ws = null;
