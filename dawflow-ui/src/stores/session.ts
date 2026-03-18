@@ -3,6 +3,7 @@ import type { Track, TrackType } from '../types/track';
 import { ipc, type EngineTrack } from '../services/ipc';
 import { useRegionStore } from './regions';
 import { useConnectionStore } from './connection';
+import { engineSetStripGain, engineSetStripMute, engineSetStripPan } from '../services/websocket';
 
 // ---------------------------------------------------------------------------
 // Engine → UI track conversion
@@ -102,24 +103,32 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   },
 
   setSessionName: (name) => set({ sessionName: name }),
-  setTrackMute: (id, muted) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, muted } : t)
-  })),
-  setTrackSolo: (id, solo) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, solo } : t)
-  })),
+  setTrackMute: (id, muted) => set((s) => {
+    const idx = s.tracks.findIndex(t => t.id === id);
+    if (idx >= 0) engineSetStripMute(idx, muted);
+    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, muted } : t) };
+  }),
+  setTrackSolo: (id, solo) => set((s) => {
+    // Solo doesn't have a direct WebSocket command in Ardour's protocol yet.
+    // For now, just update local state.
+    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, solo } : t) };
+  }),
   setTrackRecord: (id, enabled) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, recordEnabled: enabled } : t)
   })),
   setTrackMonitor: (id, enabled) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, monitorEnabled: enabled } : t)
   })),
-  setTrackVolume: (id, volume) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, volume } : t)
-  })),
-  setTrackPan: (id, pan) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, pan } : t)
-  })),
+  setTrackVolume: (id, volume) => set((s) => {
+    const idx = s.tracks.findIndex(t => t.id === id);
+    if (idx >= 0) engineSetStripGain(idx, volume);
+    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, volume } : t) };
+  }),
+  setTrackPan: (id, pan) => set((s) => {
+    const idx = s.tracks.findIndex(t => t.id === id);
+    if (idx >= 0) engineSetStripPan(idx, (pan + 1) / 2); // Convert -1..1 to 0..1
+    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, pan } : t) };
+  }),
   setTrackName: (id, name) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, name } : t)
   })),

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { engineTransportRoll, engineTransportRecord, engineSetTempo } from '../services/websocket';
 
 interface TransportStore {
   playing: boolean;
@@ -28,7 +29,7 @@ interface TransportStore {
   audioInActivity: boolean;
   audioOutActivity: boolean;
 
-  // Actions
+  // User-initiated actions (send commands to engine + update local state)
   play: () => void;
   stop: () => void;
   record: () => void;
@@ -72,13 +73,35 @@ export const useTransportStore = create<TransportStore>((set) => ({
   audioInActivity: false,
   audioOutActivity: false,
 
-  play: () => set({ playing: true }),
-  stop: () => set({ playing: false, recording: false }),
-  record: () => set({ recording: true, playing: true }),
+  play: () => {
+    engineTransportRoll(true);
+    set({ playing: true });
+  },
+  stop: () => {
+    engineTransportRoll(false);
+    set({ playing: false, recording: false });
+  },
+  record: () => {
+    engineTransportRecord(true);
+    engineTransportRoll(true);
+    set({ recording: true, playing: true });
+  },
   toggleLoop: () => set((s) => ({ looping: !s.looping })),
   toggleMetronome: () => set((s) => ({ metronomeEnabled: !s.metronomeEnabled })),
-  setTempo: (tempo) => set({ tempo }),
-  setPosition: (pos) => set({ position: pos }),
+  setTempo: (tempo) => {
+    engineSetTempo(tempo);
+    set({ tempo });
+  },
+  setPosition: (pos) => set((s) => {
+    const totalBeats = (pos / 60) * s.tempo;
+    const bar = Math.floor(totalBeats / s.timeSignatureNumerator) + 1;
+    const beat = Math.floor(totalBeats % s.timeSignatureNumerator) + 1;
+    const tick = Math.floor((totalBeats % 1) * 480);
+    return {
+      position: pos,
+      positionDisplay: `${bar}.${beat}.${tick.toString().padStart(3, '0')}`,
+    };
+  }),
   setPositionDisplay: (display) => set({ positionDisplay: display }),
   setCpuLoad: (load) => set({ cpuLoad: load }),
   setDiskLoad: (load) => set({ diskLoad: load }),

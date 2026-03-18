@@ -295,10 +295,9 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #FF3B30;
+  background: #A0A0A0;
   z-index: 10;
   pointer-events: none;
-  box-shadow: 0 0 4px rgba(255, 59, 48, 0.5);
 }
 
 /* Context Menu */

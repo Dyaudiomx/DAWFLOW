@@ -158,24 +158,48 @@ function handleMessage(msg: ArdourMessage) {
   const { node, addr, val } = msg;
 
   switch (node) {
+    // ---------------------------------------------------------------
+    // IMPORTANT: Engine → UI handlers use updateFromEngine() or direct
+    // state setters that do NOT send commands back to the engine.
+    // This prevents infinite loops (engine event → store action →
+    // WebSocket command → engine event → ...).
+    // ---------------------------------------------------------------
+
     case 'transport_roll': {
-      const transport = useTransportStore.getState();
-      if (val[0]) transport.play(); else transport.stop();
+      if (val[0]) {
+        useTransportStore.getState().updateFromEngine({ playing: true });
+      } else {
+        useTransportStore.getState().updateFromEngine({ playing: false, recording: false });
+      }
       break;
     }
 
     case 'transport_record': {
-      if (val[0]) useTransportStore.getState().record();
+      if (val[0]) {
+        useTransportStore.getState().updateFromEngine({ recording: true, playing: true });
+      } else {
+        useTransportStore.getState().updateFromEngine({ recording: false });
+      }
       break;
     }
 
     case 'transport_tempo': {
-      useTransportStore.getState().setTempo(val[0] as number);
+      useTransportStore.getState().updateFromEngine({ tempo: val[0] as number });
       break;
     }
 
     case 'transport_time': {
-      useTransportStore.getState().setPosition(val[0] as number);
+      const pos = val[0] as number;
+      useTransportStore.getState().setPosition(pos);
+      break;
+    }
+
+    case 'transport_bbt': {
+      // BBT format from Ardour: bar|beat|tick
+      const bbt = val[0] as string;
+      if (bbt) {
+        useTransportStore.getState().setPositionDisplay(bbt.replace(/\|/g, '.'));
+      }
       break;
     }
 
@@ -196,7 +220,12 @@ function handleMessage(msg: ArdourMessage) {
       const gain = val[0] as number;
       const session = useSessionStore.getState();
       const track = session.tracks[stripId];
-      if (track) session.setTrackVolume(track.id, gain);
+      // Use updateTracks to avoid re-sending the command back to the engine
+      if (track) {
+        session.updateTracks(
+          session.tracks.map((t) => t.id === track.id ? { ...t, volume: gain } : t)
+        );
+      }
       break;
     }
 
@@ -205,7 +234,11 @@ function handleMessage(msg: ArdourMessage) {
       const pan = val[0] as number;
       const session = useSessionStore.getState();
       const track = session.tracks[stripId];
-      if (track) session.setTrackPan(track.id, pan);
+      if (track) {
+        session.updateTracks(
+          session.tracks.map((t) => t.id === track.id ? { ...t, pan } : t)
+        );
+      }
       break;
     }
 
@@ -214,7 +247,11 @@ function handleMessage(msg: ArdourMessage) {
       const muted = val[0] as boolean;
       const session = useSessionStore.getState();
       const track = session.tracks[stripId];
-      if (track) session.setTrackMute(track.id, muted);
+      if (track) {
+        session.updateTracks(
+          session.tracks.map((t) => t.id === track.id ? { ...t, muted } : t)
+        );
+      }
       break;
     }
 
