@@ -40,6 +40,9 @@ export const AddTrackDialog: React.FC = () => {
       setCount(1);
       setTrackType('audio');
       close();
+    } catch (e) {
+      console.error('[DAWFLOW] Failed to add track:', e);
+      alert('Failed to add track. Check console for details.');
     } finally {
       setCreating(false);
     }
