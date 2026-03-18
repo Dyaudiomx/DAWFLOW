@@ -8,6 +8,7 @@
 .headerBtn:hover { color: var(--text-1, #e0e0e0); }
 .messages {
   flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+  -webkit-user-select: text; user-select: text;
 }
 .message { display: flex; max-width: 90%; }
 .user { align-self: flex-end; }
@@ -27,6 +28,8 @@
 .input {
   flex: 1; background: var(--surface-3, #1e1e1e); border: 1px solid var(--border-1, #555);
   color: var(--text-1, #e0e0e0); padding: 8px 10px; font-size: 12px; border-radius: 6px;
+  position: relative; z-index: 1;
+  -webkit-user-select: text; user-select: text;
 }
 .input:focus { outline: none; border-color: var(--accent, #4A90D9); }
 .input:disabled { opacity: 0.5; }

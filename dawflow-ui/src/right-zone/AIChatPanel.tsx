@@ -20,6 +20,12 @@ export const AIChatPanel: React.FC = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    // Auto-focus input when panel mounts (delay for WKWebView)
+    const timer = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSend = async () => {
     const text = inputValue.trim();
     if (!text || isStreaming) return;
@@ -73,15 +79,21 @@ export const AIChatPanel: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className={styles.inputArea}>
+      <div className={styles.inputArea} onMouseDown={(e) => e.stopPropagation()}>
         <input
           ref={inputRef}
           className={styles.input}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onClick={() => inputRef.current?.focus()}
+          onMouseDown={(e) => e.stopPropagation()}
           placeholder="Type a message..."
           disabled={isStreaming}
+          tabIndex={0}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
         />
         <button className={styles.sendBtn} onClick={handleSend}
           disabled={isStreaming || !inputValue.trim()}>&#10148;</button>
