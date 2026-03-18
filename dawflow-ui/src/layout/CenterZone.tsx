@@ -35,6 +35,8 @@ export const CenterZone: React.FC = () => {
   const setTrackRecord = useSessionStore((s) => s.setTrackRecord);
   const regionsByTrack = useRegionStore((s) => s.regionsByTrack);
   const position = useTransportStore((s) => s.position);
+  const leftLocator = useTransportStore((s) => s.leftLocator);
+  const rightLocator = useTransportStore((s) => s.rightLocator);
 
   // Context menu state
   const [contextMenu, setContextMenu] = React.useState<{x: number; y: number; trackId?: string} | null>(null);
@@ -59,11 +61,19 @@ export const CenterZone: React.FC = () => {
           <span className={styles.rulerLabel}>Bars+Beats</span>
         </div>
         <div className={styles.rulerTimeline}>
-          {Array.from({ length: 64 }, (_, i) => (
-            <div key={i} className={`${styles.rulerMark} ${i % 4 === 0 ? styles.rulerMarkBar : ''}`}>
-              {i % 4 === 0 && <span className={styles.barNumber}>{Math.floor(i / 4) + 1}</span>}
-            </div>
-          ))}
+          {Array.from({ length: 200 }, (_, i) => {
+            const isBar = i % 4 === 0;
+            const isHalfBar = i % 2 === 0 && !isBar;
+            return (
+              <div
+                key={i}
+                className={`${styles.rulerMark} ${isBar ? styles.rulerMarkBar : ''} ${isHalfBar ? styles.rulerMarkHalfBar : ''}`}
+              >
+                {isBar && <span className={styles.barNumber}>{Math.floor(i / 4) + 1}</span>}
+                <span className={`${styles.beatTick} ${isBar ? styles.barTick : ''} ${isHalfBar ? styles.halfBarTick : ''}`} />
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -149,17 +159,28 @@ export const CenterZone: React.FC = () => {
                   );
                 })}
                 {/* Grid lines */}
-                {Array.from({ length: 64 }, (_, i) => (
+                {Array.from({ length: 200 }, (_, i) => (
                   <div
                     key={i}
                     className={`${styles.gridLine} ${i % 4 === 0 ? styles.gridLineBar : ''}`}
-                    style={{ left: `${(i / 64) * 100}%` }}
+                    style={{ left: `${i * 30}px` }}
                   />
                 ))}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Locator range overlay */}
+        {rightLocator > leftLocator && (
+          <div
+            className={styles.locatorRange}
+            style={{
+              left: `${250 + leftLocator * PIXELS_PER_SECOND}px`,
+              width: `${(rightLocator - leftLocator) * PIXELS_PER_SECOND}px`,
+            }}
+          />
+        )}
 
         {/* Playhead */}
         <div

@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1A1E22;
+  background: #141a20;
   overflow: hidden;
 }
 
@@ -11,8 +11,8 @@
   display: flex;
   height: 26px;
   flex-shrink: 0;
-  background: #252A2E;
-  border-bottom: 1px solid #1A1D20;
+  background: #1e2428;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
 }
 
 .rulerTrackHeader {
@@ -21,13 +21,13 @@
   display: flex;
   align-items: center;
   padding: 0 8px;
-  border-right: 1px solid #1A1D20;
-  background: #2A2D30;
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
+  background: #252830;
 }
 
 .rulerLabel {
   font-size: 10px;
-  color: var(--text-dim);
+  color: rgba(140, 180, 200, 0.6);
 }
 
 .rulerTimeline {
@@ -40,11 +40,15 @@
 .rulerMark {
   flex: 0 0 30px;
   position: relative;
-  border-left: 1px solid rgba(100, 140, 160, 0.12);
+  border-left: 1px solid rgba(80, 130, 160, 0.1);
 }
 
 .rulerMarkBar {
-  border-left: 1px solid rgba(100, 140, 160, 0.25);
+  border-left: 1px solid rgba(100, 150, 180, 0.3);
+}
+
+.rulerMarkHalfBar {
+  border-left: 1px solid rgba(90, 140, 170, 0.18);
 }
 
 .barNumber {
@@ -52,8 +56,27 @@
   top: 3px;
   left: 4px;
   font-size: 10px;
-  color: var(--text-secondary);
+  color: rgba(160, 200, 220, 0.7);
   font-family: var(--font-mono);
+}
+
+.beatTick {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 6px;
+  background: rgba(100, 150, 180, 0.25);
+}
+
+.barTick {
+  height: 12px;
+  background: rgba(120, 170, 200, 0.4);
+}
+
+.halfBarTick {
+  height: 9px;
+  background: rgba(110, 160, 190, 0.3);
 }
 
 /* Track area */
@@ -61,6 +84,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  position: relative;
 }
 
 .trackArea::-webkit-scrollbar {
@@ -68,31 +92,45 @@
 }
 
 .trackArea::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #111820;
 }
 
 .trackArea::-webkit-scrollbar-thumb {
-  background: #444;
+  background: rgba(80, 130, 160, 0.3);
   border-radius: 3px;
+}
+
+.trackArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(80, 130, 160, 0.45);
 }
 
 .trackList {
   min-height: 100%;
 }
 
+/* Locator range overlay */
+.locatorRange {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(100, 160, 200, 0.06);
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* Track row */
 .trackRow {
   display: flex;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
   cursor: default;
 }
 
 .trackRow:hover .trackHeader {
-  background: #333638;
+  background: #2d3138;
 }
 
 .trackSelected .trackHeader {
-  background: #363A3D;
+  background: #333840;
 }
 
 /* Track header - left panel with controls */
@@ -101,8 +139,8 @@
   min-width: 250px;
   display: flex;
   align-items: center;
-  background: #2A2D30;
-  border-right: 1px solid #1A1D20;
+  background: #252830;
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
   overflow: hidden;
   transition: background 80ms;
 }
@@ -202,11 +240,11 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #1E2830;
+  background: #1a2a35;
 }
 
 .trackRow:nth-child(even) .eventDisplay {
-  background: #1B2528;
+  background: #172530;
 }
 
 /* Region blocks (real data from engine) */
@@ -281,12 +319,12 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: rgba(100, 140, 160, 0.08);
+  background: rgba(80, 130, 160, 0.08);
   pointer-events: none;
 }
 
 .gridLineBar {
-  background: rgba(100, 140, 160, 0.18);
+  background: rgba(100, 150, 180, 0.22);
 }
 
 /* Playhead */
@@ -295,9 +333,10 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #A0A0A0;
+  background: rgba(200, 220, 240, 0.85);
   z-index: 10;
   pointer-events: none;
+  box-shadow: 0 0 4px rgba(120, 180, 220, 0.3);
 }
 
 /* Context Menu */
