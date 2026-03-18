@@ -43,6 +43,7 @@ interface UIState {
 
   // Dialogs
   addTrackDialogOpen: boolean;
+  addTrackDialogType: string | null;
 
   // Actions
   toggleLeftZone: () => void;
@@ -63,7 +64,7 @@ interface UIState {
   setGridType: (type: UIState['gridType']) => void;
   setQuantizeValue: (value: string) => void;
   setSelectedTrackId: (id: string | null) => void;
-  openAddTrackDialog: () => void;
+  openAddTrackDialog: (type?: string) => void;
   closeAddTrackDialog: () => void;
 }
 
@@ -99,6 +100,7 @@ export const useUIStore = create<UIState>((set) => ({
   selectedTrackId: null,
 
   addTrackDialogOpen: false,
+  addTrackDialogType: null,
 
   toggleLeftZone: () => set((s) => ({ leftZoneVisible: !s.leftZoneVisible })),
   toggleRightZone: () => set((s) => ({ rightZoneVisible: !s.rightZoneVisible })),
@@ -118,6 +120,6 @@ export const useUIStore = create<UIState>((set) => ({
   setGridType: (type) => set({ gridType: type }),
   setQuantizeValue: (value) => set({ quantizeValue: value }),
   setSelectedTrackId: (id) => set({ selectedTrackId: id }),
-  openAddTrackDialog: () => set({ addTrackDialogOpen: true }),
-  closeAddTrackDialog: () => set({ addTrackDialogOpen: false }),
+  openAddTrackDialog: (type?: string) => set({ addTrackDialogOpen: true, addTrackDialogType: type ?? null }),
+  closeAddTrackDialog: () => set({ addTrackDialogOpen: false, addTrackDialogType: null }),
 }));
