@@ -6,71 +6,144 @@ DAWFLOW is a fork of [Ardour](https://github.com/Ardour/ardour) (GPL-2.0-or-late
 
 ---
 
-## The Business Model: GPL Core + Proprietary Plugins
+## The Business Model: GPL Engine + Proprietary Product
 
 This is the most important thing to understand about this project.
 
-### What Is Open Source (GPL)
+### Two Repos, One Product
 
-The **core DAW** is open source and must remain GPL-compliant. This includes:
+| Repo | License | What | Visibility |
+|---|---|---|---|
+| `Dyaudiomx/dawflow-engine` (submodule at `engine/`) | GPL-2.0 | Ardour fork + plugin system | Private now, public at ship |
+| `Dyaudiomx/DAWFLOW` (this repo) | Proprietary | React UI, plugins, SDK, branding, installer | Private forever |
 
-- The original Ardour codebase (all of `libs/`, `gtk2_ardour/`, etc.)
-- The **plugin loading system** we built (`libs/dawflow_ipc/`, `DawflowPluginHost`, `DawflowPluginManagerDialog`, `WebViewPanel`)
-- Any bug fixes, performance improvements, or changes made directly to the Ardour core code
-- The build system (`wscript` files)
+The **product** (what users download) is a single installer that bundles the engine + React UI + pre-configured plugins. The **open source release** is just the bare engine repo with no UI, no plugins, no branding.
 
-The open source release will contain: Ardour's full functionality + the ability to discover, load, and run `.dawflow` plugins. That's it.
+### What Is Open Source (GPL) — Engine Repo
 
-### What Is Proprietary (Closed Source, Sellable)
+The engine is the API surface. It provides functionality but no premium experience:
 
-**ALL new features, UI improvements, AI tools, branding, and value-adds are proprietary.** This includes the React UI (`dawflow-ui/`) which communicates with the engine over WebSocket (port 3818), and `.dawflow` plugins which communicate over Unix domain sockets (IPC). These:
+- The original Ardour codebase (`engine/libs/`, `engine/gtk2_ardour/`, etc.)
+- The plugin loading system (`engine/libs/dawflow_ipc/`, `DawflowPluginHost`, `WebViewPanel`)
+- The WebSocket server (port 3818) — Ardour's existing protocol
+- Bug fixes, performance improvements, build system changes
+- A basic/minimal web surface (Ardour's mixer/transport surfaces)
 
-- Run as **separate processes** communicating via Unix domain sockets (IPC)
-- Are **NOT derivative works** of the GPL DAW — they are independent executables
-- Can be sold, licensed, and distributed without source code disclosure
-- Are built using the Plugin SDK (`sdk/dawflow_sdk.h`, MIT licensed)
+### What Is Proprietary (Closed Source) — This Repo
 
-This includes:
-- DAWFLOW React UI (`dawflow-ui/`) — the full Cubase-style interface
-- DAWFLOW branding (name, splash screen, icons, theme)
-- AI Chat Assistant (natural language DAW control)
-- AI Mixing/Mastering tools
-- MIDI generation and composition tools
-- Advanced audio analysis
-- Cloud collaboration features
-- Built-in instruments and effects
-- Any future premium features
+Everything that makes DAWFLOW special. Two delivery mechanisms:
 
-### Why This Works Legally
+**1. React UI (`dawflow-ui/`)** — Communicates over WebSocket (port 3818)
+- Full Cubase-style interface (zones, inspector, mixer, transport)
+- AI Chat panel (embedded directly in the React UI)
+- All visual design, theming, and UX
+- Served as a web surface at `http://localhost:3818/builtin/dawflow/`
+- Runs in the browser or in the engine's embedded WebView
 
-The GPL boundary is the **Unix domain socket** (process boundary):
+**2. `.dawflow` Plugins (`sdk/plugins/`)** — Communicate over Unix domain sockets (IPC)
+- Separate processes, spawned by the engine
+- Heavy compute (AI inference, audio analysis, cloud sync)
+- Each plugin has its own binary + web UI
+- Built with the Plugin SDK (`sdk/dawflow_sdk.h`, MIT licensed)
+
+### The GPL Boundaries
 
 ```
-┌─────────────────────────┐     Unix Socket     ┌──────────────────────────┐
-│  DAW Process (GPL)      │◄──── JSON-RPC ─────►│  Plugin Process          │
-│  - Ardour core          │     (IPC boundary)   │  (PROPRIETARY)           │
-│  - Plugin host/loader   │                      │  - Your features         │
-│  - WebView container    │                      │  - Your AI tools         │
-│  - Socket server        │                      │  - Your UI               │
-└─────────────────────────┘                      └──────────────────────────┘
+  Engine (GPL, public)              Product (Proprietary, private)
+  ┌─────────────────────┐           ┌─────────────────────────────┐
+  │ Ardour core          │ WebSocket │ React UI (dawflow-ui/)      │
+  │ WebSocket server     │◄─────────►│ - Cubase-style layout       │
+  │ (port 3818)          │ (browser  │ - AI Chat panel             │
+  │                      │  process) │ - All premium UX            │
+  │ Plugin host          │           └─────────────────────────────┘
+  │ IPC socket server    │ Unix IPC  ┌─────────────────────────────┐
+  │ WebView container    │◄─────────►│ .dawflow plugins            │
+  │ Plugin loader        │ (separate │ - AI mixing/mastering       │
+  └─────────────────────┘  process)  │ - Audio analysis            │
+                                     │ - Cloud features            │
+                                     └─────────────────────────────┘
 ```
 
-Separate processes communicating via sockets are definitively NOT derivative works under any interpretation of the GPL. This is the same pattern used by many commercial products built on GPL foundations.
+Both boundaries (WebSocket + Unix IPC) are process/network boundaries. No linking, no derivative work. The React UI runs in a browser or WebView (separate process). Plugins run as child processes.
 
 ---
 
-## Rule: NEVER Put New Features Directly in the Core
+## Rule: Where To Build New Features
 
-**When implementing ANY new feature, you MUST build it as a `.dawflow` plugin — NEVER modify the core DAW code to add features.**
+**The React UI (`dawflow-ui/`) is the PRIMARY place for new features.** It's fast to iterate (hot reload), proprietary, and directly controls the user experience.
 
-The ONLY acceptable reasons to modify core DAW code are:
-1. **Bug fixes** in existing Ardour functionality
-2. **Expanding the plugin API** (adding new commands/events the host exposes to plugins)
-3. **Build system fixes** (making it compile on more platforms)
-4. **Performance improvements** to existing core code
-5. **Plugin system infrastructure** (improving the IPC, loader, or host itself)
+**Use a `.dawflow` plugin when:**
+- The feature needs a native binary (audio processing, ML inference)
+- It should run as an independent background service
+- It needs its own lifecycle separate from the UI
 
-If you're tempted to add a feature directly to `engine/gtk2_ardour/` or `engine/libs/ardour/`, stop and ask: "Can this be a plugin or part of the React UI instead?" The answer is almost always yes.
+**Modify the engine (`engine/`) ONLY when:**
+1. Fixing bugs in existing Ardour functionality
+2. Expanding the plugin/WebSocket API (new commands or events)
+3. Build system fixes
+4. Performance improvements to existing core code
+5. Plugin system infrastructure improvements
+
+**In practice**: Most new features are React components in `dawflow-ui/src/`. AI chat, mixing tools, MIDI editors — all React. The engine just exposes data via WebSocket.
+
+---
+
+## React UI Architecture
+
+### Stack
+- **React 19** + **Vite 8** + **TypeScript** + **Zustand** (state management)
+- Cubase 15 Pro-inspired layout with resizable zones
+
+### Communication: Ardour WebSocket Protocol (port 3818)
+- Auto-connects on load (see `src/services/websocket.ts`)
+- Reconnects every 2 seconds on disconnect
+- Connection indicator in bottom-right corner
+
+### Available WebSocket Commands (UI → Engine)
+```typescript
+engineTransportRoll(roll: boolean)     // play/stop
+engineTransportRecord(record: boolean) // record arm
+engineSetTempo(bpm: number)            // tempo change
+engineSetStripGain(stripId, gain)      // fader
+engineSetStripPan(stripId, pan)        // pan
+engineSetStripMute(stripId, mute)      // mute
+engineSetPluginEnable(strip, plugin, enabled) // plugin bypass
+engineSetPluginParam(strip, plugin, param, value) // plugin param
+```
+
+### WebSocket Events (Engine → UI)
+- `transport_roll`, `transport_record`, `transport_tempo`, `transport_time`
+- `strip_description`, `strip_gain`, `strip_pan`, `strip_mute`, `strip_meter`
+- `strip_plugin_description`, `strip_plugin_enable`, `strip_plugin_param_value`
+
+### Layout Structure
+```
+ProjectWindow
+├── Toolbar              (top bar with zone toggles)
+├── StatusLine           (audio I/O status)
+├── InfoLine             (selected object properties)
+├── MainArea
+│   ├── LeftZone         (visibility, track list)
+│   ├── CenterZone       (timeline/arrangement — placeholder)
+│   ├── RightZone        (inspector, channel view)
+│   └── LowerZone        (mixer, editor, chord pads, MIDI remote)
+└── TransportBar         (play/stop/record, tempo, position)
+```
+
+### Zustand Stores
+- `stores/transport.ts` — play/stop/record state, tempo, position
+- `stores/session.ts` — tracks, track names, volumes, pans, mutes
+- `stores/connection.ts` — WebSocket/IPC connection status
+- `stores/mixer.ts` — mixer-specific state
+- `stores/ui.ts` — zone visibility, widths, heights
+
+### Quick Iteration
+```bash
+cd dawflow-ui
+./deploy.sh          # build + deploy, then refresh browser
+# OR for hot reload during development:
+npm run dev          # Vite dev server (port 5173), manually set wsUrl
+```
 
 ---
 
@@ -84,52 +157,27 @@ If you're tempted to add a feature directly to `engine/gtk2_ardour/` or `engine/
 4. DAW extracts plugin, spawns it as a child process, passes socket path
 5. Plugin connects to socket, registers itself, starts receiving events
 6. Plugin serves its web UI on localhost, DAW embeds it in a WebView panel
-7. Plugin sends commands to DAW (set gain, load plugins, control transport, etc.)
+7. Plugin sends commands to DAW via JSON-RPC 2.0 over IPC
 8. DAW sends events to plugin (transport changes, track additions, etc.)
 
-### Plugin Package Format (`.dawflow`)
+### Available IPC Commands (Plugin → DAW)
+- `daw.get_session_info`, `daw.get_tracks`, `daw.get_transport_state`
+- `daw.set_track_gain`, `daw.set_track_mute`, `daw.set_track_solo`
+- `daw.transport_play`, `daw.transport_stop`, `daw.transport_locate`
+- `daw.plugin.register`
 
-A ZIP archive containing:
-```
-my-plugin.dawflow
-├── manifest.json          # Plugin metadata, capabilities, UI panels
-├── bin/
-│   ├── macos-arm64/       # Platform-specific binary
-│   ├── linux-x86_64/
-│   └── windows-x86_64/
-├── ui/                    # Web UI files (HTML/CSS/JS)
-│   ├── index.html
-│   └── ...
-└── resources/             # Icons, images, etc.
-```
+### IPC Events (DAW → Plugin)
+- `daw.transport.changed`, `daw.routes.added`
+- `daw.session.dirty_changed`, `daw.record.changed`
 
-### Available DAW Commands (Plugin → DAW)
-- `daw.get_session_info` — session name, sample rate, transport state
-- `daw.get_tracks` — all tracks with gain, mute, solo status
-- `daw.set_track_gain` — set track gain in dB
-- `daw.set_track_mute` / `daw.set_track_solo` — toggle mute/solo
-- `daw.transport_play` / `daw.transport_stop` / `daw.transport_locate`
-- `daw.get_transport_state` — current playback state
-- `daw.plugin.register` — register plugin identity with host
+**When you need a new command or event:** Add it to `DawflowPluginHost::_register_commands()` or `_connect_session_signals()` in `engine/libs/ardour/`, then use it from the plugin or React UI. Expanding the API surface is an acceptable engine modification.
 
-### Available DAW Events (DAW → Plugin)
-- `daw.transport.changed` — transport state changed
-- `daw.routes.added` — new tracks/buses added
-- `daw.session.dirty_changed` — session save state changed
-- `daw.record.changed` — record arm state changed
-
-**When you need a new command or event:** Add it to `DawflowPluginHost::_register_commands()` or `_connect_session_signals()` in `engine/libs/ardour/`, then use it from the plugin. Expanding the API surface is an acceptable core modification.
+### Existing Plugins
+- `sdk/plugins/ai-chat/` — AI Assistant plugin (C++ backend + HTML/JS UI on port 19200)
 
 ---
 
 ## Repository Structure
-
-This is the **product repo** (proprietary). The GPL engine lives in a separate repo as a git submodule.
-
-| Repo | License | Visibility |
-|---|---|---|
-| `Dyaudiomx/DAWFLOW` (this repo) | Proprietary | Private forever |
-| `Dyaudiomx/dawflow-engine` (submodule at `engine/`) | GPL-2.0 | Private now, public at ship |
 
 ```
 /Users/davidyousefi/dev/DAW FLOW/          (PRODUCT REPO - proprietary)
@@ -145,6 +193,13 @@ This is the **product repo** (proprietary). The GPL engine lives in a separate r
 │   └── wscript                            # Engine build system
 ├── dawflow-ui/                            # React UI (PROPRIETARY)
 │   ├── src/                               # TypeScript source
+│   │   ├── layout/                        # Zone components (ProjectWindow, etc.)
+│   │   ├── inspector/                     # Inspector panel components
+│   │   ├── lower-zone/                    # Mixer, editor, chord pads
+│   │   ├── shared/                        # Reusable components (Fader, Knob, etc.)
+│   │   ├── stores/                        # Zustand state stores
+│   │   ├── services/websocket.ts          # WebSocket connection to engine
+│   │   └── tokens/cubase-theme.css        # CSS variables / design tokens
 │   ├── deploy.sh                          # Build + deploy to engine
 │   └── package.json
 ├── sdk/                                   # Plugin SDK (MIT licensed)
@@ -233,20 +288,22 @@ git add engine && git commit -m "chore: update engine submodule"
 
 ## Coding Standards
 
-- Follow Ardour's existing code style in core files (tabs in some files, spaces in others — match the file)
-- New plugin system code (`libs/dawflow_ipc/`) uses 4-space indentation, C++17
-- Plugin SDK uses standard modern C++ conventions
-- Always use `#ifdef __APPLE__` guards for macOS-specific code
-- Use `PBD::Signal` for event handling in core code
+- **Engine code**: Follow Ardour's existing code style (tabs in some files, spaces in others — match the file)
+- **Plugin system code** (`engine/libs/dawflow_ipc/`): 4-space indentation, C++17
+- **React UI** (`dawflow-ui/`): TypeScript, functional components, Zustand for state
+- **CSS**: CSS Modules (`.module.css`) with design tokens from `cubase-theme.css`
+- Always use `#ifdef __APPLE__` guards for macOS-specific code in engine
+- Use `PBD::Signal` for event handling in engine code
 - Use JSON-RPC 2.0 for all IPC communication
 
 ---
 
 ## What NOT To Do
 
-1. **Do NOT add features directly to the Ardour core** — build them as plugins
-2. **Do NOT modify the GPL license** — the core stays GPL
-3. **Do NOT include proprietary plugin source code in this repo** — plugins live in separate private repos
+1. **Do NOT add features directly to the engine** — build them in the React UI or as plugins
+2. **Do NOT modify the GPL license** — the engine stays GPL
+3. **Do NOT bundle proprietary code in the engine repo** — it only goes in this product repo
 4. **Do NOT break backward compatibility** with Ardour sessions (`.ardour` files must still load)
 5. **Do NOT remove Ardour functionality** — we add on top, we don't subtract
-6. **Do NOT commit API keys, secrets, or credentials** to this repo
+6. **Do NOT commit API keys, secrets, or credentials** to any repo
+7. **Do NOT deploy the React UI into the engine's git tracking** — it's deployed at build time only
