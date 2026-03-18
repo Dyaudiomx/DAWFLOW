@@ -72,7 +72,8 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
   fetchFromEngine: async () => {
     if (!useConnectionStore.getState().wsConnected) return;
-    try {
+
+    const attempt = async () => {
       const [engineTracks, sessionInfo] = await Promise.all([
         ipc.getTracks(),
         ipc.getSessionInfo(),
@@ -96,10 +97,20 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
           // Track may not have regions -- that's fine
         });
       }
+    };
+
+    try {
+      await attempt();
     } catch (e) {
-      console.error('[DAWFLOW] Failed to fetch session data:', e);
-      set({ loading: false });
+      // Retry once after 1 second
+      await new Promise(r => setTimeout(r, 1000));
+      try {
+        await attempt();
+      } catch (e2) {
+        console.error('[DAWFLOW] Failed to fetch session data:', e2);
+      }
     }
+    set({ loading: false });
   },
 
   setSessionName: (name) => set({ sessionName: name }),

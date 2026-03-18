@@ -172,7 +172,7 @@ export async function ipcCall<T>(
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2000);
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
   let response: Response;
   try {
@@ -186,11 +186,15 @@ export async function ipcCall<T>(
   } catch (err) {
     clearTimeout(timeout);
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error(`IPC call timed out calling ${method}`);
+      const error = new Error(`IPC call timed out calling ${method}`);
+      console.error('[DAWFLOW IPC]', method, 'failed:', error);
+      throw error;
     }
-    throw new Error(
+    const error = new Error(
       `IPC network error calling ${method}: ${err instanceof Error ? err.message : String(err)}`,
     );
+    console.error('[DAWFLOW IPC]', method, 'failed:', error);
+    throw error;
   }
 
   if (!response.ok) {
