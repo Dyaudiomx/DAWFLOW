@@ -4,6 +4,8 @@ import { useUIStore } from '../stores/ui';
 import { useTransportStore } from '../stores/transport';
 import { useRegionStore } from '../stores/regions';
 import { ipc } from '../services/ipc';
+import { ContextMenu } from '../shared/ContextMenu';
+import type { ContextMenuItem } from '../shared/ContextMenu';
 import styles from './CenterZone.module.css';
 
 const TRACK_TYPE_ICONS: Record<string, string> = {
@@ -41,14 +43,71 @@ export const CenterZone: React.FC = () => {
   // Context menu state
   const [contextMenu, setContextMenu] = React.useState<{x: number; y: number; trackId?: string} | null>(null);
 
-  // Close context menu on click or Escape
-  React.useEffect(() => {
-    const close = () => setContextMenu(null);
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    window.addEventListener('click', close);
-    window.addEventListener('keydown', esc);
-    return () => { window.removeEventListener('click', close); window.removeEventListener('keydown', esc); };
-  }, []);
+  const openAddTrack = useUIStore((s) => s.openAddTrackDialog);
+
+  // Build Cubase-style context menu items
+  const buildContextMenuItems = React.useCallback((): ContextMenuItem[] => {
+    const trackItems: ContextMenuItem[] = [
+      { label: 'Add Audio Track', icon: '\u266B', shortcut: 'Shift+A', onClick: () => openAddTrack() },
+      { label: 'Add Instrument Track', icon: '\u2161\u2161\u2161', shortcut: '\u21E7\u2318T', onClick: () => openAddTrack() },
+      { label: 'Add Sampler Track', icon: '\u266A', onClick: () => console.log('[DAWFLOW] Add Sampler Track') },
+      { label: 'Add Drum Track', icon: '\u7530', onClick: () => console.log('[DAWFLOW] Add Drum Track') },
+      { label: 'Add MIDI Track', icon: '\u25CF', dividerAfter: true, onClick: () => openAddTrack() },
+      { label: 'Add Effect Track', icon: 'FX', onClick: () => console.log('[DAWFLOW] Add Effect Track') },
+      { label: 'Add Group Track', icon: '\u03C8', onClick: () => console.log('[DAWFLOW] Add Group Track') },
+      { label: 'Add VCA Track', icon: '\u25B6\u25A0', dividerAfter: true, onClick: () => console.log('[DAWFLOW] Add VCA Track') },
+      { label: 'Add Folder Track', icon: '\uD83D\uDCC1', onClick: () => console.log('[DAWFLOW] Add Folder Track') },
+      { label: 'Add Marker Track', icon: '\u2193', onClick: () => console.log('[DAWFLOW] Add Marker Track') },
+      { label: 'Add Ruler Track', icon: '\uD83C\uDFB9', dividerAfter: true, onClick: () => console.log('[DAWFLOW] Add Ruler Track') },
+      { label: 'Using Track Preset...', icon: '\uD83C\uDF10', submenu: true, dividerAfter: true, onClick: () => console.log('[DAWFLOW] Track Preset') },
+      { label: 'Add Arranger Track', icon: '\u21BB', onClick: () => console.log('[DAWFLOW] Add Arranger Track') },
+      { label: 'Add Chord Track', icon: '\u2261', onClick: () => console.log('[DAWFLOW] Add Chord Track') },
+      { label: 'Add Signature Track', icon: '=', onClick: () => console.log('[DAWFLOW] Add Signature Track') },
+      { label: 'Add Tempo Track', icon: '\u2669', onClick: () => console.log('[DAWFLOW] Add Tempo Track') },
+      { label: 'Add Transpose Track', icon: '\u266A', onClick: () => console.log('[DAWFLOW] Add Transpose Track') },
+      { label: 'Add Video Track', icon: '\uD83C\uDFAC', dividerAfter: true, onClick: () => console.log('[DAWFLOW] Add Video Track') },
+      { label: 'Show All Used Automation', onClick: () => console.log('[DAWFLOW] Show All Used Automation') },
+      { label: 'Hide All Automation', onClick: () => console.log('[DAWFLOW] Hide All Automation') },
+    ];
+
+    // If right-clicked on a track, prepend track-specific items
+    if (contextMenu?.trackId) {
+      const tid = contextMenu.trackId;
+      const trackSpecificItems: ContextMenuItem[] = [
+        {
+          label: 'Duplicate Track',
+          onClick: () => {
+            ipc.call('daw.duplicate_track', { track_id: tid });
+            useSessionStore.getState().fetchFromEngine();
+          },
+        },
+        {
+          label: 'Remove Track',
+          danger: true,
+          dividerAfter: true,
+          onClick: () => {
+            ipc.removeTrack(tid).then(() => useSessionStore.getState().fetchFromEngine());
+          },
+        },
+        {
+          label: 'Toggle Mute',
+          onClick: () => {
+            setTrackMute(tid, !tracks.find(t => t.id === tid)?.muted);
+          },
+        },
+        {
+          label: 'Toggle Solo',
+          dividerAfter: true,
+          onClick: () => {
+            setTrackSolo(tid, !tracks.find(t => t.id === tid)?.solo);
+          },
+        },
+      ];
+      return [...trackSpecificItems, ...trackItems];
+    }
+
+    return trackItems;
+  }, [contextMenu, openAddTrack, setTrackMute, setTrackSolo, tracks]);
 
   // Timeline constants: show ~30 seconds of audio at default zoom
   const PIXELS_PER_SECOND = 20;
@@ -191,42 +250,12 @@ export const CenterZone: React.FC = () => {
 
       {/* Context Menu */}
       {contextMenu && (
-        <div className={styles.contextMenuOverlay} onClick={() => setContextMenu(null)}>
-          <div
-            className={styles.contextMenu}
-            style={{ left: contextMenu.x, top: contextMenu.y }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.menuItem} onClick={() => { useUIStore.getState().openAddTrackDialog(); setContextMenu(null); }}>
-              Add Track...
-            </div>
-            {contextMenu.trackId && (
-              <>
-                <div className={styles.menuDivider} />
-                <div className={styles.menuItem} onClick={() => {
-                  ipc.call('daw.duplicate_track', { track_id: contextMenu.trackId });
-                  useSessionStore.getState().fetchFromEngine();
-                  setContextMenu(null);
-                }}>Duplicate Track</div>
-                <div className={`${styles.menuItem} ${styles.menuItemDanger}`} onClick={() => {
-                  if (contextMenu.trackId) {
-                    ipc.removeTrack(contextMenu.trackId).then(() => useSessionStore.getState().fetchFromEngine());
-                  }
-                  setContextMenu(null);
-                }}>Remove Track</div>
-                <div className={styles.menuDivider} />
-                <div className={styles.menuItem} onClick={() => {
-                  setTrackMute(contextMenu.trackId!, !tracks.find(t => t.id === contextMenu.trackId)?.muted);
-                  setContextMenu(null);
-                }}>Toggle Mute</div>
-                <div className={styles.menuItem} onClick={() => {
-                  setTrackSolo(contextMenu.trackId!, !tracks.find(t => t.id === contextMenu.trackId)?.solo);
-                  setContextMenu(null);
-                }}>Toggle Solo</div>
-              </>
-            )}
-          </div>
-        </div>
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={buildContextMenuItems()}
+          onClose={() => setContextMenu(null)}
+        />
       )}
     </div>
   );

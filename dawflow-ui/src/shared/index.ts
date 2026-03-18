@@ -9,3 +9,5 @@ export { Toggle } from './Toggle';
 export { Icon } from './Icon';
 export { SvgIcon } from './SvgIcon';
 export { Tooltip } from './Tooltip';
+export { ContextMenu } from './ContextMenu';
+export type { ContextMenuItem } from './ContextMenu';
