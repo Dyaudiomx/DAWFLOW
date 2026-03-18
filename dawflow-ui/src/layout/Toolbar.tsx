@@ -98,6 +98,8 @@ export const Toolbar: React.FC = () => {
           onClick={() => ipc.redo().then(() => useSessionStore.getState().fetchFromEngine())}>
           <SvgIcon name="redo" size={16} />
         </button>
+        <button className={styles.btn} title="Add Track"
+          onClick={() => useUIStore.getState().openAddTrackDialog()}>+</button>
       </div>
 
       <div className={styles.separator} />

@@ -1,4 +1,5 @@
 import { ProjectWindow } from './layout/ProjectWindow';
+import { AddTrackDialog } from './dialogs/AddTrackDialog';
 import { useConnectionStore } from './stores/connection';
 import './tokens/cubase-theme.css';
 
@@ -11,6 +12,7 @@ function App() {
   return (
     <>
       <ProjectWindow />
+      <AddTrackDialog />
       {/* Connection indicator (bottom-right corner) */}
       <div style={{
         position: 'fixed',
