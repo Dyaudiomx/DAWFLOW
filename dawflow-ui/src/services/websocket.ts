@@ -67,7 +67,9 @@ export function connectToEngine(url?: string) {
     setInterval(() => {
       if (ipcEnabled) {
         ipc.getCpuLoad().then((info) => {
-          useTransportStore.getState().setCpuLoad(info.cpu_load);
+          const load = (info as { cpu_load_percent?: number; cpu_load?: number }).cpu_load_percent
+            ?? (info as { cpu_load?: number }).cpu_load ?? 0;
+          useTransportStore.getState().setCpuLoad(Math.min(100, load));
         }).catch((e) => console.warn('[IPC]', e));
       }
     }, 2000);

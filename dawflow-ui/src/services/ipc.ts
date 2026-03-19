@@ -350,7 +350,17 @@ async function addMarker(name: string, position?: number): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function getRegions(trackId: string): Promise<Region[]> {
-  return ipcCall<Region[]>('daw.get_regions', { track_id: trackId });
+  // Engine returns position_samples/length_samples/start_samples — map to our interface
+  const raw = await ipcCall<Array<Record<string, unknown>>>('daw.get_regions', { track_id: trackId });
+  if (!Array.isArray(raw)) return [];
+  return raw.map((r) => ({
+    id: String(r.id || ''),
+    name: String(r.name || ''),
+    position: Number(r.position_samples ?? r.position ?? 0),
+    length: Number(r.length_samples ?? r.length ?? 0),
+    start: Number(r.start_samples ?? r.start ?? 0),
+    muted: Boolean(r.muted),
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -374,11 +384,12 @@ async function getMidiNotes(regionId: string): Promise<MidiNote[]> {
 // ---------------------------------------------------------------------------
 
 async function getAvailablePlugins(): Promise<PluginInfo[]> {
-  return ipcCall<PluginInfo[]>('daw.get_available_plugins');
+  const data = await ipcCall<{ plugins: PluginInfo[]; count: number }>('daw.get_available_plugins');
+  return data.plugins || [];
 }
 
-async function loadPlugin(trackId: string, pluginId: string): Promise<void> {
-  await ipcCall<unknown>('daw.load_plugin', { track_id: trackId, plugin_id: pluginId });
+async function loadPlugin(trackId: string, pluginName: string): Promise<void> {
+  await ipcCall<unknown>('daw.load_plugin', { track_id: trackId, plugin_name: pluginName });
 }
 
 async function getPluginParameters(trackId: string, pluginIndex: number): Promise<PluginParameter[]> {

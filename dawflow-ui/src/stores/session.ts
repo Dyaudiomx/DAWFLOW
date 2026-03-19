@@ -97,8 +97,9 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         loading: false,
       });
 
-      // Fetch regions for each track (non-blocking, don't await all)
+      // Fetch regions for audio/midi tracks only (buses don't have playlists)
       for (const et of engineTracks) {
+        if (et.type === 'bus' || et.type === 'vca') continue;
         ipc.getRegions(et.id).then((regions) => {
           useRegionStore.getState().setRegions(et.id, regions.map((r) => ({
             ...r,

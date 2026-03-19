@@ -27,7 +27,7 @@ export const PluginBrowser: React.FC = () => {
 
   const handleLoadPlugin = (plugin: PluginInfo) => {
     if (!selectedTrackId) return;
-    ipc.loadPlugin(selectedTrackId, plugin.id)
+    ipc.loadPlugin(selectedTrackId, plugin.name)
       .then(() => useSessionStore.getState().fetchFromEngine())
       .catch((err) => console.error('[DAWFLOW] Plugin load failed:', err));
   };
