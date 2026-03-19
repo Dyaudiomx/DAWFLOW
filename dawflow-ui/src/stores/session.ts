@@ -9,29 +9,39 @@ import { engineSetStripGain, engineSetStripMute, engineSetStripPan } from '../se
 // Engine → UI track conversion
 // ---------------------------------------------------------------------------
 
-function engineTrackToTrack(et: EngineTrack, _index: number): Track {
-  const COLORS: Record<string, string> = {
-    audio: '#5B7FA5', midi: '#3A8C8C', instrument: '#B8963A',
-    bus: '#6A9FD4', vca: '#8A6AAE', fx: '#8A6AAE', group: '#6A9FD4',
-  };
+function engineColorToHex(c: string | undefined): string | null {
+  if (!c || c.length < 6) return null;
+  // Engine sends RGBA hex (e.g. "4090d0ff"). Take first 6 chars for RGB.
+  return '#' + c.substring(0, 6);
+}
+
+const DEFAULT_COLORS: Record<string, string> = {
+  audio: '#5B7FA5', midi: '#3A8C8C', instrument: '#B8963A',
+  bus: '#6A9FD4', vca: '#8A6AAE', fx: '#8A6AAE', group: '#6A9FD4',
+};
+
+function engineTrackToTrack(et: EngineTrack, _index: number, existing?: Track): Track {
   const type = (et.type || 'audio') as TrackType;
+  const engineColor = engineColorToHex(et.color);
+  // Prefer engine color (authoritative), then existing local, then default
+  const color = engineColor || existing?.color || DEFAULT_COLORS[type] || '#5B7FA5';
   return {
     id: et.id,
     name: et.name,
     type,
-    color: COLORS[type] || '#5B7FA5',
-    height: 65,
+    color,
+    height: existing?.height || 65,
     muted: et.muted,
     solo: et.soloed,
     recordEnabled: et.record_enabled || false,
-    monitorEnabled: false,
+    monitorEnabled: existing?.monitorEnabled || false,
     readAutomation: false,
     writeAutomation: false,
     frozen: false,
     locked: false,
     visible: true,
     volume: et.gain_db !== undefined ? Math.pow(10, et.gain_db / 20) * 0.75 : 0.75,
-    pan: 0,
+    pan: existing?.pan || 0,
     inputRouting: '',
     outputRouting: '',
   };
@@ -78,8 +88,10 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         ipc.getTracks(),
         ipc.getSessionInfo(),
       ]);
+      const existingTracks = get().tracks;
+      const existingMap = new Map(existingTracks.map(t => [t.id, t]));
       set({
-        tracks: engineTracks.map(engineTrackToTrack),
+        tracks: engineTracks.map((et, i) => engineTrackToTrack(et, i, existingMap.get(et.id))),
         sessionName: sessionInfo.name || 'Untitled',
         sampleRate: sessionInfo.sample_rate || 48000,
         loading: false,
@@ -119,17 +131,24 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     if (idx >= 0) engineSetStripMute(idx, muted);
     return { tracks: s.tracks.map((t) => t.id === id ? { ...t, muted } : t) };
   }),
-  setTrackSolo: (id, solo) => set((s) => {
-    // Solo doesn't have a direct WebSocket command in Ardour's protocol yet.
-    // For now, just update local state.
-    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, solo } : t) };
-  }),
-  setTrackRecord: (id, enabled) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, recordEnabled: enabled } : t)
-  })),
-  setTrackMonitor: (id, enabled) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, monitorEnabled: enabled } : t)
-  })),
+  setTrackSolo: (id, solo) => {
+    ipc.setTrackSolo(id, solo).catch((e) => console.warn('[IPC]', e));
+    set((s) => ({
+      tracks: s.tracks.map((t) => t.id === id ? { ...t, solo } : t),
+    }));
+  },
+  setTrackRecord: (id, enabled) => {
+    ipc.setTrackRecord(id, enabled).catch((e) => console.warn('[IPC]', e));
+    set((s) => ({
+      tracks: s.tracks.map((t) => t.id === id ? { ...t, recordEnabled: enabled } : t),
+    }));
+  },
+  setTrackMonitor: (id, enabled) => {
+    ipc.setTrackMonitor(id, enabled).catch((e) => console.warn('[IPC]', e));
+    set((s) => ({
+      tracks: s.tracks.map((t) => t.id === id ? { ...t, monitorEnabled: enabled } : t),
+    }));
+  },
   setTrackVolume: (id, volume) => set((s) => {
     const idx = s.tracks.findIndex(t => t.id === id);
     if (idx >= 0) engineSetStripGain(idx, volume);
@@ -146,9 +165,12 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   setTrackHeight: (id, height) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, height } : t)
   })),
-  setTrackColor: (id, color) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, color } : t)
-  })),
+  setTrackColor: (id, color) => {
+    ipc.setTrackColor(id, color.replace('#', '') + 'ff').catch((e) => console.warn('[IPC]', e));
+    set((s) => ({
+      tracks: s.tracks.map((t) => t.id === id ? { ...t, color } : t),
+    }));
+  },
   setTrackMeterLevel: (id, level) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, meterLevel: level } : t)
   })),

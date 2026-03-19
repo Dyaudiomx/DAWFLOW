@@ -13,6 +13,7 @@
 import { useTransportStore } from '../stores/transport';
 import { useSessionStore } from '../stores/session';
 import { useConnectionStore } from '../stores/connection';
+import { ipc } from './ipc';
 
 const JSON_INF = 1.0e+128;
 
@@ -61,6 +62,15 @@ export function connectToEngine(url?: string) {
         useSessionStore.getState().fetchFromEngine();
       }
     }, 3000);
+
+    // Poll CPU load every 2 seconds
+    setInterval(() => {
+      if (ipcEnabled) {
+        ipc.getCpuLoad().then((info) => {
+          useTransportStore.getState().setCpuLoad(info.cpu_load);
+        }).catch((e) => console.warn('[IPC]', e));
+      }
+    }, 2000);
   };
 
   ws.onmessage = (event) => {
@@ -170,6 +180,10 @@ function handleMessage(msg: ArdourMessage) {
         useTransportStore.getState().updateFromEngine({ playing: true });
       } else {
         useTransportStore.getState().updateFromEngine({ playing: false, recording: false });
+        // Refresh regions after recording stops (short delay for engine to finalize)
+        setTimeout(() => {
+          useSessionStore.getState().fetchFromEngine();
+        }, 500);
       }
       break;
     }

@@ -154,6 +154,9 @@
   font-family: var(--font-mono);
   color: #CCC;
   min-width: 76px;
+  background: transparent;
+  border: none;
+  outline: none;
 }
 
 /* ===========================================================================
@@ -338,6 +341,16 @@
   font-family: var(--font-mono);
   color: #DDD;
   font-weight: 600;
+  width: 52px;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: right;
+}
+.tempoVal::-webkit-outer-spin-button,
+.tempoVal::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .tempoUpDown {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { engineTransportRoll, engineTransportRecord, engineSetTempo } from '../services/websocket';
+import { ipc } from '../services/ipc';
 
 interface TransportStore {
   playing: boolean;
@@ -40,6 +41,8 @@ interface TransportStore {
   setPositionDisplay: (display: string) => void;
   setCpuLoad: (load: number) => void;
   setDiskLoad: (load: number) => void;
+  setLeftLocator: (seconds: number) => void;
+  setRightLocator: (seconds: number) => void;
   updateFromEngine: (data: Partial<TransportStore>) => void;
 }
 
@@ -63,7 +66,8 @@ function markUserAction() {
 
 /**
  * Client-side position interpolation for smooth 60fps playhead.
- * Between engine updates (10Hz), we interpolate based on tempo.
+ * Between engine updates (~10Hz), we linearly interpolate.
+ * Position is in seconds. The engine sends BBT display separately.
  */
 let lastEnginePositionTime = 0;
 let lastEnginePosition = 0;
@@ -80,19 +84,11 @@ function startInterpolation() {
     }
 
     const now = performance.now();
-    const elapsed = (now - lastEnginePositionTime) / 1000; // seconds
+    const elapsed = (now - lastEnginePositionTime) / 1000;
     const interpolatedPos = lastEnginePosition + elapsed;
 
-    // Update position and display without triggering engine commands
-    const totalBeats = (interpolatedPos / 60) * store.tempo;
-    const bar = Math.floor(totalBeats / store.timeSignatureNumerator) + 1;
-    const beat = Math.floor(totalBeats % store.timeSignatureNumerator) + 1;
-    const subtick = Math.floor((totalBeats % 1) * 480);
-
-    useTransportStore.setState({
-      position: interpolatedPos,
-      positionDisplay: `${bar}.${beat}.${subtick.toString().padStart(3, '0')}`,
-    });
+    // Only update position — BBT display comes from engine via transport_bbt
+    useTransportStore.setState({ position: interpolatedPos });
 
     interpolationFrame = requestAnimationFrame(tick);
   };
@@ -158,17 +154,34 @@ export const useTransportStore = create<TransportStore>((set) => ({
   toggleMetronome: () => set((s) => ({ metronomeEnabled: !s.metronomeEnabled })),
   setTempo: (tempo) => {
     engineSetTempo(tempo);
+    ipc.setTempo(tempo).catch((e) => console.warn('[IPC]', e));
     set({ tempo });
   },
   setPosition: (pos) => {
-    // Called from engine updates — anchor the interpolation
+    // Anchor interpolation and update state immediately
     lastEnginePosition = pos;
     lastEnginePositionTime = performance.now();
-    // Don't set state here — interpolation handles smooth updates
+    set({ position: pos });
   },
   setPositionDisplay: (display) => set({ positionDisplay: display }),
   setCpuLoad: (load) => set({ cpuLoad: load }),
   setDiskLoad: (load) => set({ diskLoad: load }),
+  setLeftLocator: (seconds) => {
+    set({ leftLocator: seconds });
+    const sr = 48000; // Use session sample rate when available
+    ipc.call('daw.set_loop_range', {
+      start_sample: Math.floor(seconds * sr),
+      end_sample: Math.floor(useTransportStore.getState().rightLocator * sr),
+    }).catch((e) => console.warn('[IPC]', e));
+  },
+  setRightLocator: (seconds) => {
+    set({ rightLocator: seconds });
+    const sr = 48000;
+    ipc.call('daw.set_loop_range', {
+      start_sample: Math.floor(useTransportStore.getState().leftLocator * sr),
+      end_sample: Math.floor(seconds * sr),
+    }).catch((e) => console.warn('[IPC]', e));
+  },
   updateFromEngine: (data) => {
     // Ignore play/stop/record state from engine during debounce period
     if (isUserActionDebounced()) {

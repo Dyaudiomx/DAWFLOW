@@ -1,29 +1,50 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { ipc } from '../services/ipc';
 import styles from './InsertSlots.module.css';
 
-interface InsertSlotData {
+interface TrackPlugin {
+  processor_id: string;
+  name: string;
+  enabled: boolean;
   index: number;
-  pluginName: string | null;
-  bypassed: boolean;
-  isPreFader: boolean;
 }
 
-const EMPTY_SLOTS: InsertSlotData[] = Array.from({ length: 8 }, (_, i) => ({
-  index: i + 1,
-  pluginName: null,
-  bypassed: false,
-  isPreFader: i < 6,
-}));
+interface Props {
+  trackId: string;
+}
 
-export const InsertSlots: React.FC = () => {
+export const InsertSlots: React.FC<Props> = ({ trackId }) => {
+  const [plugins, setPlugins] = useState<TrackPlugin[]>([]);
+
+  useEffect(() => {
+    if (!trackId) return;
+    ipc.call<{ plugins: TrackPlugin[] }>('daw.get_track_plugins', { track_id: trackId })
+      .then((data) => { if (data?.plugins) setPlugins(data.plugins); })
+      .catch((e) => console.warn('[IPC]', e));
+  }, [trackId]);
+
+  const handleToggleBypass = (procId: string, enabled: boolean) => {
+    ipc.call('daw.set_plugin_enabled', {
+      track_id: trackId,
+      processor_id: procId,
+      enabled: !enabled,
+    }).then(() => {
+      // Refresh plugin list
+      ipc.call<{ plugins: TrackPlugin[] }>('daw.get_track_plugins', { track_id: trackId })
+        .then((data) => { if (data?.plugins) setPlugins(data.plugins); });
+    }).catch((e) => console.warn('[IPC]', e));
+  };
+
+  // Merge real plugins with empty slots (8 total)
+  const slots = Array.from({ length: 8 }, (_, i) => plugins[i] || null);
+
   return (
     <div className={styles.insertSlots}>
       <span className={styles.sectionLabel}>Pre-Fader</span>
 
-      {EMPTY_SLOTS.map((slot) => (
-        <React.Fragment key={slot.index}>
-          {/* Separator between slot 6 (pre) and slot 7 (post) */}
-          {slot.index === 7 && (
+      {slots.map((slot, i) => (
+        <React.Fragment key={i}>
+          {i === 6 && (
             <>
               <div className={styles.separator} />
               <span className={styles.sectionLabel}>Post-Fader</span>
@@ -32,21 +53,16 @@ export const InsertSlots: React.FC = () => {
 
           <div className={styles.slot}>
             <span
-              className={`${styles.bypassDot} ${
-                slot.pluginName && !slot.bypassed ? styles.bypassDotActive : ''
-              }`}
+              className={`${styles.bypassDot} ${slot?.enabled ? styles.bypassDotActive : ''}`}
+              onClick={() => slot && handleToggleBypass(slot.processor_id, slot.enabled)}
+              style={{ cursor: slot ? 'pointer' : 'default' }}
             />
-            <span className={styles.slotIndex}>{slot.index}</span>
+            <span className={styles.slotIndex}>{i + 1}</span>
             <span
-              className={`${styles.pluginName} ${
-                slot.pluginName ? styles.pluginNameLoaded : ''
-              }`}
+              className={`${styles.pluginName} ${slot ? styles.pluginNameLoaded : ''}`}
             >
-              {slot.pluginName || 'empty'}
+              {slot?.name || 'empty'}
             </span>
-            <button className={styles.editBtn} title="Edit Plugin">
-              e
-            </button>
           </div>
         </React.Fragment>
       ))}

@@ -352,3 +352,32 @@
 }
 
 /* Context menu is now handled by shared/ContextMenu component */
+
+/* Tool cursors — use data-tool attribute (not CSS module classes) so
+   names aren't hashed. !important overrides child cursor styles. */
+.trackArea[data-tool="select"] .eventDisplay { cursor: default !important; }
+.trackArea[data-tool="range"] .eventDisplay { cursor: text !important; }
+.trackArea[data-tool="split"] .eventDisplay { cursor: crosshair !important; }
+.trackArea[data-tool="glue"] .eventDisplay { cursor: grab !important; }
+.trackArea[data-tool="erase"] .eventDisplay { cursor: not-allowed !important; }
+.trackArea[data-tool="zoom"] .eventDisplay { cursor: zoom-in !important; }
+.trackArea[data-tool="mute"] .eventDisplay { cursor: pointer !important; }
+.trackArea[data-tool="draw"] .eventDisplay { cursor: crosshair !important; }
+.trackArea[data-tool="line"] .eventDisplay { cursor: crosshair !important; }
+.trackArea[data-tool="play"] .eventDisplay { cursor: pointer !important; }
+.trackArea[data-tool="color"] .eventDisplay { cursor: copy !important; }
+.trackArea[data-tool="comp"] .eventDisplay { cursor: col-resize !important; }
+.trackArea[data-tool="timewarp"] .eventDisplay { cursor: ew-resize !important; }
+
+/* Track name inline edit */
+.trackNameInput {
+  background: #1e1e22;
+  border: 1px solid #5b9bd5;
+  border-radius: 2px;
+  color: #eee;
+  font-size: 11px;
+  font-family: inherit;
+  padding: 1px 4px;
+  width: 100px;
+  outline: none;
+}

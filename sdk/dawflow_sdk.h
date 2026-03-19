@@ -326,13 +326,16 @@ void Plugin::_http_loop(int port, const std::string& ui_dir)
         int client = accept(_http_fd, nullptr, nullptr);
         if (client < 0) continue;
 
-        // Read HTTP request
-        char buf[4096];
-        ssize_t n = read(client, buf, sizeof(buf) - 1);
-        if (n <= 0) { close(client); continue; }
-        buf[n] = '\0';
+        // Read HTTP request — may need multiple reads for POST body
+        std::string request;
+        {
+            char buf[8192];
+            ssize_t n = read(client, buf, sizeof(buf) - 1);
+            if (n <= 0) { close(client); continue; }
+            buf[n] = '\0';
+            request.assign(buf, n);
+        }
 
-        std::string request(buf);
         std::string method, path;
         size_t sp1 = request.find(' ');
         size_t sp2 = request.find(' ', sp1 + 1);
@@ -345,18 +348,60 @@ void Plugin::_http_loop(int port, const std::string& ui_dir)
         std::string content_type_str = "text/html";
         int status = 200;
 
+        // Handle CORS preflight (WKWebView may send OPTIONS for application/json)
+        if (method == "OPTIONS") {
+            std::string header = "HTTP/1.1 204 No Content\r\n"
+                "Access-Control-Allow-Origin: *\r\n"
+                "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+                "Access-Control-Allow-Headers: Content-Type\r\n"
+                "Access-Control-Max-Age: 86400\r\n"
+                "Content-Length: 0\r\n"
+                "Connection: close\r\n\r\n";
+            write(client, header.c_str(), header.size());
+            close(client);
+            continue;
+        }
+
         if (method == "POST" && path == "/api/command") {
-            // Proxy command to DAW via IPC
-            size_t body_start = request.find("\r\n\r\n");
-            if (body_start != std::string::npos) {
-                std::string body = request.substr(body_start + 4);
+            // Ensure we have the full POST body
+            size_t header_end = request.find("\r\n\r\n");
+            if (header_end != std::string::npos) {
+                // Parse Content-Length from headers
+                size_t content_length = 0;
+                std::string headers_str = request.substr(0, header_end);
+                size_t cl_pos = headers_str.find("Content-Length:");
+                if (cl_pos == std::string::npos)
+                    cl_pos = headers_str.find("content-length:");
+                if (cl_pos != std::string::npos) {
+                    content_length = std::stoul(headers_str.substr(cl_pos + 15));
+                }
+
+                size_t body_offset = header_end + 4;
+                // Read remaining body bytes if first read was incomplete
+                while (request.size() - body_offset < content_length) {
+                    char buf2[4096];
+                    ssize_t n2 = read(client, buf2, sizeof(buf2));
+                    if (n2 <= 0) break;
+                    request.append(buf2, n2);
+                }
+
+                std::string body = request.substr(body_offset);
                 try {
                     json cmd = json::parse(body);
-                    json result_data = call(cmd["method"].get<std::string>(),
-                                       cmd.value("params", json{}));
+                    std::string cmd_method = cmd["method"].get<std::string>();
+                    json cmd_params = cmd.value("params", json{});
+                    std::cout << "DAWFLOW UI Shell: IPC call " << cmd_method << std::endl;
+                    json result_data = call(cmd_method, cmd_params);
+                    std::cout << "DAWFLOW UI Shell: IPC result " << result_data.dump() << std::endl;
                     response_body = result_data.dump();
                     content_type_str = "application/json";
+                } catch (const std::exception& ex) {
+                    std::cerr << "DAWFLOW UI Shell: IPC error: " << ex.what() << std::endl;
+                    response_body = "{\"error\":\"invalid request\"}";
+                    content_type_str = "application/json";
+                    status = 400;
                 } catch (...) {
+                    std::cerr << "DAWFLOW UI Shell: IPC unknown error" << std::endl;
                     response_body = "{\"error\":\"invalid request\"}";
                     content_type_str = "application/json";
                     status = 400;
@@ -380,6 +425,7 @@ void Plugin::_http_loop(int port, const std::string& ui_dir)
             "Content-Type: " + content_type_str + "\r\n"
             "Content-Length: " + std::to_string(response_body.size()) + "\r\n"
             "Access-Control-Allow-Origin: *\r\n"
+            "Access-Control-Allow-Headers: Content-Type\r\n"
             "Connection: close\r\n\r\n";
         write(client, header.c_str(), header.size());
         write(client, response_body.c_str(), response_body.size());

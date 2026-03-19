@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTransportStore } from '../stores/transport';
+import { useSessionStore } from '../stores/session';
+import { ipc } from '../services/ipc';
 import styles from './TransportBar.module.css';
 
 export const TransportBar: React.FC = () => {
@@ -39,7 +41,7 @@ export const TransportBar: React.FC = () => {
         <div className={styles.sep} />
 
         {/* Record Mode */}
-        <select className={styles.select} value={transport.recordMode} onChange={() => {}}>
+        <select className={styles.select} value={transport.recordMode} onChange={(e) => useTransportStore.setState({ recordMode: e.target.value as 'normal' | 'merge' | 'replace' | 'punchOnLane' })}>
           <option value="normal">Normal</option>
           <option value="merge">Merge</option>
           <option value="replace">Replace</option>
@@ -51,26 +53,58 @@ export const TransportBar: React.FC = () => {
         {/* Left Locators */}
         <div className={styles.locatorField}>
           <span className={styles.locIcon}>L</span>
-          <span className={styles.locValue}>{transport.leftLocatorDisplay}</span>
+          <input
+            type="text"
+            className={styles.locValue}
+            defaultValue={transport.leftLocatorDisplay}
+            key={`L-${transport.leftLocator}`}
+            onBlur={(e) => {
+              const v = parseFloat(e.target.value);
+              if (!isNaN(v) && v >= 0) transport.setLeftLocator(v);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+          />
         </div>
         <div className={styles.locatorField}>
           <span className={styles.locIcon}>R</span>
-          <span className={styles.locValue}>{transport.rightLocatorDisplay}</span>
+          <input
+            type="text"
+            className={styles.locValue}
+            defaultValue={transport.rightLocatorDisplay}
+            key={`R-${transport.rightLocator}`}
+            onBlur={(e) => {
+              const v = parseFloat(e.target.value);
+              if (!isNaN(v) && v >= 0) transport.setRightLocator(v);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+          />
         </div>
       </div>
 
       {/* ===== CENTER: Transport Buttons (fixed, always centered) ===== */}
       <div className={styles.transportCluster}>
-        <button className={styles.tBtn} title="Go to Start" onClick={() => transport.setPosition(0)}>
+        <button className={styles.tBtn} title="Go to Start" onClick={() => { ipc.transportLocate(0).catch((e) => console.warn('[IPC]', e)); transport.setPosition(0); }}>
           <span className={styles.iconSkipBack}><span className={styles.iconLine}/><span className={styles.iconTriLeft}/></span>
         </button>
-        <button className={styles.tBtn} title="Rewind">
+        <button className={styles.tBtn} title="Rewind" onClick={() => {
+          const pos = useTransportStore.getState().position;
+          const sr = useSessionStore.getState().sampleRate || 48000;
+          const newPos = Math.max(0, pos - 5);
+          ipc.transportLocate(Math.floor(newPos * sr)).catch((e) => console.warn('[IPC]', e));
+          useTransportStore.getState().setPosition(newPos);
+        }}>
           <span className={styles.iconRewind}><span className={styles.iconTriLeft}/><span className={styles.iconTriLeft}/></span>
         </button>
         <button className={`${styles.tBtn} ${transport.looping ? styles.loopActive : ''}`} title="Cycle" onClick={transport.toggleLoop}>
           <span className={styles.iconLoop} />
         </button>
-        <button className={styles.tBtn} title="Return to Zero" onClick={() => transport.setPosition(0)}>
+        <button className={styles.tBtn} title="Return to Zero" onClick={() => { ipc.transportLocate(0).catch((e) => console.warn('[IPC]', e)); transport.setPosition(0); }}>
           <span className={styles.iconReturnZero}><span className={styles.iconTriLeft}/><span className={styles.iconLine}/></span>
         </button>
         <button className={`${styles.tBtnBig} ${!transport.playing ? styles.stopActive : ''}`} title="Stop" onClick={transport.stop}>
@@ -82,7 +116,13 @@ export const TransportBar: React.FC = () => {
         <button className={`${styles.tBtnBig} ${transport.recording ? styles.recordActive : ''}`} title="Record" onClick={transport.record}>
           <span className={styles.iconRecord} />
         </button>
-        <button className={styles.tBtn} title="Forward">
+        <button className={styles.tBtn} title="Forward" onClick={() => {
+          const pos = useTransportStore.getState().position;
+          const sr = useSessionStore.getState().sampleRate || 48000;
+          const newPos = pos + 5;
+          ipc.transportLocate(Math.floor(newPos * sr)).catch((e) => console.warn('[IPC]', e));
+          useTransportStore.getState().setPosition(newPos);
+        }}>
           <span className={styles.iconForward}><span className={styles.iconTriRight}/><span className={styles.iconTriRight}/></span>
         </button>
         <button className={styles.tBtn} title="Go to End">
@@ -94,12 +134,38 @@ export const TransportBar: React.FC = () => {
       <div className={styles.rightZone}>
         {/* Right Locators */}
         <div className={styles.locatorField}>
-          <span className={styles.locIcon}>♪</span>
-          <span className={styles.locValue}>{transport.leftLocatorDisplay}</span>
+          <span className={styles.locIcon}>&#9834;</span>
+          <input
+            type="text"
+            className={styles.locValue}
+            defaultValue={transport.leftLocatorDisplay}
+            key={`L2-${transport.leftLocator}`}
+            onBlur={(e) => {
+              const v = parseFloat(e.target.value);
+              if (!isNaN(v) && v >= 0) transport.setLeftLocator(v);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+          />
         </div>
         <div className={styles.locatorField}>
           <span className={styles.locIcon}>R</span>
-          <span className={styles.locValue}>{transport.rightLocatorDisplay}</span>
+          <input
+            type="text"
+            className={styles.locValue}
+            defaultValue={transport.rightLocatorDisplay}
+            key={`R2-${transport.rightLocator}`}
+            onBlur={(e) => {
+              const v = parseFloat(e.target.value);
+              if (!isNaN(v) && v >= 0) transport.setRightLocator(v);
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            }}
+          />
         </div>
 
         <div className={styles.sep} />
@@ -114,10 +180,23 @@ export const TransportBar: React.FC = () => {
         {/* Tempo + Tap + Time Sig + Click */}
         <div className={styles.section}>
           <div className={styles.tempoField}>
-            <span className={styles.tempoVal}>{transport.tempo.toFixed(3)}</span>
+            <input
+              type="text"
+              className={styles.tempoVal}
+              defaultValue={transport.tempo.toFixed(2)}
+              key={Math.round(transport.tempo * 100)}
+              onBlur={(e) => {
+                const v = parseFloat(e.target.value);
+                if (v >= 20 && v <= 300) transport.setTempo(v);
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              }}
+            />
             <span className={styles.tempoUpDown}>
-              <button className={styles.tempoArrow}>▲</button>
-              <button className={styles.tempoArrow}>▼</button>
+              <button className={styles.tempoArrow} onClick={() => transport.setTempo(Math.min(300, transport.tempo + 1))}>▲</button>
+              <button className={styles.tempoArrow} onClick={() => transport.setTempo(Math.max(20, transport.tempo - 1))}>▼</button>
             </span>
           </div>
           <button className={styles.tapBtn}>Tap</button>

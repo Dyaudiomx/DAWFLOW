@@ -441,7 +441,7 @@ export const TrackInspector: React.FC<TrackInspectorProps> = ({ track }) => {
           ================================================================ */}
       {(isAudioLike || isInstrument) && (
         <InspectorSection title="Inserts" icon={'\u26A1'}>
-          <InsertSlots />
+          <InsertSlots trackId={track.id} />
         </InspectorSection>
       )}
 
@@ -474,7 +474,7 @@ export const TrackInspector: React.FC<TrackInspectorProps> = ({ track }) => {
           </InspectorSection>
 
           <InspectorSection title="MIDI Inserts">
-            <InsertSlots />
+            <InsertSlots trackId={track.id} />
           </InspectorSection>
 
           <InspectorSection title="MIDI Sends">

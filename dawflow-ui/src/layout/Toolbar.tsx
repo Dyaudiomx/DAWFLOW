@@ -63,22 +63,50 @@ export const Toolbar: React.FC = () => {
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Don't intercept keys when typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
       const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
-      if (e.key === 'z' && !e.shiftKey) {
+
+      // Modifier shortcuts
+      if (mod) {
+        if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          ipc.undo().then(() => useSessionStore.getState().fetchFromEngine());
+        } else if (e.key === 'z' && e.shiftKey) {
+          e.preventDefault();
+          ipc.redo().then(() => useSessionStore.getState().fetchFromEngine());
+        } else if (e.key === 's') {
+          e.preventDefault();
+          ipc.saveSession();
+        }
+        return;
+      }
+
+      // Transport shortcuts (no modifier)
+      if (e.key === ' ') {
         e.preventDefault();
-        ipc.undo().then(() => useSessionStore.getState().fetchFromEngine());
-      } else if (e.key === 'z' && e.shiftKey) {
+        const t = useTransportStore.getState();
+        if (t.playing) { t.stop(); } else { t.play(); }
+      } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
-        ipc.redo().then(() => useSessionStore.getState().fetchFromEngine());
-      } else if (e.key === 's') {
+        const t = useTransportStore.getState();
+        if (t.recording) { t.stop(); } else { t.record(); }
+      } else if (e.key === 'Home' || e.key === ',') {
         e.preventDefault();
-        ipc.saveSession();
+        transport.setPosition(0);
+      } else if (e.key === 'l' && !e.shiftKey) {
+        e.preventDefault();
+        transport.toggleLoop();
+      } else if (e.key === 'A' && e.shiftKey) {
+        e.preventDefault();
+        useUIStore.getState().openAddTrackDialog('audio');
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [transport]);
 
   return (
     <div className={styles.toolbar}>
@@ -99,7 +127,7 @@ export const Toolbar: React.FC = () => {
           <SvgIcon name="redo" size={16} />
         </button>
         <button className={styles.btn} title="Add Track"
-          onClick={() => useUIStore.getState().openAddTrackDialog()}>+</button>
+          onClick={() => useUIStore.getState().openAddTrackDialog('audio')}>+</button>
       </div>
 
       <div className={styles.separator} />
@@ -124,8 +152,10 @@ export const Toolbar: React.FC = () => {
 
       {/* State Buttons */}
       <div className={styles.section}>
-        <button className={styles.stateBtn} title="Mute">M</button>
-        <button className={styles.stateBtn} title="Solo">S</button>
+        <button className={styles.stateBtn} title="Unmute All Tracks"
+          onClick={() => { const s = useSessionStore.getState(); s.tracks.forEach(t => { if (t.muted) s.setTrackMute(t.id, false); }); }}>M</button>
+        <button className={styles.stateBtn} title="Unsolo All Tracks"
+          onClick={() => { const s = useSessionStore.getState(); s.tracks.forEach(t => { if (t.solo) s.setTrackSolo(t.id, false); }); }}>S</button>
         <button className={styles.stateBtn} title="Listen">L</button>
         <button className={styles.stateBtn} title="Read">R</button>
         <button className={styles.stateBtn} title="Write">W</button>

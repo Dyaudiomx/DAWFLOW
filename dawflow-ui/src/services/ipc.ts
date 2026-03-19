@@ -282,6 +282,18 @@ async function setTrackSolo(trackId: string, soloed: boolean): Promise<void> {
   await ipcCall<unknown>('daw.set_track_solo', { track_id: trackId, soloed });
 }
 
+async function setTrackRecord(trackId: string, enabled: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_record', { track_id: trackId, enabled });
+}
+
+async function setTrackMonitor(trackId: string, enabled: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_monitoring', { track_id: trackId, enabled });
+}
+
+async function setTrackColor(trackId: string, color: string): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_color', { track_id: trackId, color });
+}
+
 // ---------------------------------------------------------------------------
 // Convenience wrappers — Transport
 // ---------------------------------------------------------------------------
@@ -296,6 +308,10 @@ async function stop(): Promise<void> {
 
 async function setTempo(bpm: number): Promise<void> {
   await ipcCall<unknown>('daw.set_tempo', { bpm });
+}
+
+async function transportLocate(samplePosition: number): Promise<void> {
+  await ipcCall<unknown>('daw.transport_locate', { sample_position: samplePosition });
 }
 
 // ---------------------------------------------------------------------------
@@ -411,11 +427,15 @@ export const ipc = {
   setTrackGain,
   setTrackMute,
   setTrackSolo,
+  setTrackRecord,
+  setTrackMonitor,
+  setTrackColor,
 
   // Transport
   play,
   stop,
   setTempo,
+  transportLocate,
 
   // Undo/Redo
   undo,

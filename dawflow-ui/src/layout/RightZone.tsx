@@ -1,6 +1,7 @@
 import React from 'react';
 import { useUIStore } from '../stores/ui';
 import { AIChatPanel } from '../right-zone/AIChatPanel';
+import { PluginBrowser } from '../right-zone/PluginBrowser';
 import styles from './RightZone.module.css';
 
 type RightZoneTab = 'vsti' | 'media' | 'cr' | 'meter' | 'ai';
@@ -21,48 +22,6 @@ const MEDIA_TILES = [
   { id: 'browser', label: 'File Browser', icon: '▸' },
 ];
 
-const VSTiTab: React.FC = () => (
-  <div className={styles.tabContent}>
-    <div className={styles.rackHeader}>
-      <span>VST Instruments</span>
-      <button className={styles.addBtn} title="Add Track Instrument">+</button>
-    </div>
-    <div className={styles.instrumentList}>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>1</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>2</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>3</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>4</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>5</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>6</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>7</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-      <div className={styles.instrumentSlot}>
-        <span className={styles.slotNumber}>8</span>
-        <span className={styles.slotEmpty}>empty</span>
-      </div>
-    </div>
-  </div>
-);
 
 const MediaTab: React.FC = () => (
   <div className={styles.tabContent}>
@@ -208,7 +167,7 @@ export const RightZone: React.FC = () => {
         ))}
       </div>
       <div className={styles.content}>
-        {rightZoneTab === 'vsti' && <VSTiTab />}
+        {rightZoneTab === 'vsti' && <PluginBrowser />}
         {rightZoneTab === 'media' && <MediaTab />}
         {rightZoneTab === 'cr' && <CRTab />}
         {rightZoneTab === 'meter' && <MeterTab />}

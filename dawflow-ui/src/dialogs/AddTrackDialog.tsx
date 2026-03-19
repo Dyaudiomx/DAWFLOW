@@ -68,6 +68,7 @@ export const AddTrackDialog: React.FC = () => {
   const [outputRouting, setOutputRouting] = useState('stereo-out');
   const [trackColor, setTrackColor] = useState(COLOR_PRESETS[5]); // blue default
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Sync default type from store when dialog opens
   useEffect(() => {
@@ -80,6 +81,7 @@ export const AddTrackDialog: React.FC = () => {
   const handleCreate = useCallback(async () => {
     if (creating) return;
     setCreating(true);
+    setError(null);
     try {
       // Determine which IPC call to use
       let addFn: (name?: string) => Promise<unknown>;
@@ -88,11 +90,11 @@ export const AddTrackDialog: React.FC = () => {
       } else if (trackType === 'midi') {
         addFn = ipc.addMidiTrack;
       } else if (trackType === 'instrument' || trackType === 'sampler' || trackType === 'drum') {
-        addFn = ipc.addMidiTrack; // Use MIDI for instrument types (for now)
+        addFn = ipc.addMidiTrack;
       } else if (trackType === 'effect' || trackType === 'group') {
         addFn = ipc.addBus;
       } else if (trackType === 'vca') {
-        addFn = ipc.addBus; // VCA uses bus for now
+        addFn = ipc.addBus;
       } else {
         addFn = ipc.addAudioTrack;
       }
@@ -113,7 +115,9 @@ export const AddTrackDialog: React.FC = () => {
       setTrackColor(COLOR_PRESETS[5]);
       close();
     } catch (e) {
-      console.error('[DAWFLOW] Failed to add track:', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('[DAWFLOW] Failed to add track:', msg);
+      setError(msg);
     } finally {
       setCreating(false);
     }
@@ -296,6 +300,9 @@ export const AddTrackDialog: React.FC = () => {
           </div>
 
           {/* Footer */}
+          {error && (
+            <div style={{ padding: '4px 20px', color: '#e04040', fontSize: 11 }}>{error}</div>
+          )}
           <div className={styles.footer}>
             <button className={styles.cancelBtn} onClick={close}>Cancel</button>
             <button className={styles.addBtn} onClick={handleCreate} disabled={creating}>
