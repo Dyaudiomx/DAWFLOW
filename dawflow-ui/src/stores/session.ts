@@ -153,9 +153,12 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     if (idx >= 0) engineSetStripPan(idx, (pan + 1) / 2); // Convert -1..1 to 0..1
     return { tracks: s.tracks.map((t) => t.id === id ? { ...t, pan } : t) };
   }),
-  setTrackName: (id, name) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, name } : t)
-  })),
+  setTrackName: (id, name) => {
+    ipc.renameTrack(id, name).catch((e) => console.warn('[IPC]', e));
+    set((s) => ({
+      tracks: s.tracks.map((t) => t.id === id ? { ...t, name } : t)
+    }));
+  },
   setTrackHeight: (id, height) => set((s) => ({
     tracks: s.tracks.map((t) => t.id === id ? { ...t, height } : t)
   })),

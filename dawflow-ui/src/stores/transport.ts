@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { engineTransportRoll, engineTransportRecord, engineSetTempo } from '../services/websocket';
+import { engineTransportRoll, engineTransportRecord } from '../services/websocket';
 import { ipc } from '../services/ipc';
+import { useSessionStore } from './session';
 
 interface TransportStore {
   playing: boolean;
@@ -150,10 +151,17 @@ export const useTransportStore = create<TransportStore>((set) => ({
     set({ recording: true, playing: true });
     startInterpolation();
   },
-  toggleLoop: () => set((s) => ({ looping: !s.looping })),
-  toggleMetronome: () => set((s) => ({ metronomeEnabled: !s.metronomeEnabled })),
+  toggleLoop: () => {
+    const newState = !useTransportStore.getState().looping;
+    ipc.call('daw.set_loop_enabled', { enabled: newState }).catch((e) => console.warn('[IPC]', e));
+    set({ looping: newState });
+  },
+  toggleMetronome: () => {
+    const newState = !useTransportStore.getState().metronomeEnabled;
+    ipc.call('daw.set_click_enabled', { enabled: newState }).catch((e) => console.warn('[IPC]', e));
+    set({ metronomeEnabled: newState });
+  },
   setTempo: (tempo) => {
-    engineSetTempo(tempo);
     ipc.setTempo(tempo).catch((e) => console.warn('[IPC]', e));
     set({ tempo });
   },
@@ -168,7 +176,7 @@ export const useTransportStore = create<TransportStore>((set) => ({
   setDiskLoad: (load) => set({ diskLoad: load }),
   setLeftLocator: (seconds) => {
     set({ leftLocator: seconds });
-    const sr = 48000; // Use session sample rate when available
+    const sr = useSessionStore?.getState?.()?.sampleRate || 48000;
     ipc.call('daw.set_loop_range', {
       start_sample: Math.floor(seconds * sr),
       end_sample: Math.floor(useTransportStore.getState().rightLocator * sr),
@@ -176,7 +184,7 @@ export const useTransportStore = create<TransportStore>((set) => ({
   },
   setRightLocator: (seconds) => {
     set({ rightLocator: seconds });
-    const sr = 48000;
+    const sr = useSessionStore?.getState?.()?.sampleRate || 48000;
     ipc.call('daw.set_loop_range', {
       start_sample: Math.floor(useTransportStore.getState().leftLocator * sr),
       end_sample: Math.floor(seconds * sr),

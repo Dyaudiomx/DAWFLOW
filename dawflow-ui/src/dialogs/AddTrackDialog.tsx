@@ -83,25 +83,21 @@ export const AddTrackDialog: React.FC = () => {
     setCreating(true);
     setError(null);
     try {
-      // Determine which IPC call to use
-      let addFn: (name?: string) => Promise<unknown>;
-      if (trackType === 'audio') {
-        addFn = ipc.addAudioTrack;
-      } else if (trackType === 'midi') {
-        addFn = ipc.addMidiTrack;
-      } else if (trackType === 'instrument' || trackType === 'sampler' || trackType === 'drum') {
-        addFn = ipc.addMidiTrack;
-      } else if (trackType === 'effect' || trackType === 'group') {
-        addFn = ipc.addBus;
-      } else if (trackType === 'vca') {
-        addFn = ipc.addBus;
-      } else {
-        addFn = ipc.addAudioTrack;
-      }
-
       const trackName = name.trim() || undefined;
       for (let i = 0; i < count; i++) {
-        await addFn(trackName);
+        const suffix = count > 1 ? ` ${i + 1}` : '';
+        const finalName = trackName ? trackName + suffix : undefined;
+
+        let type = 'audio';
+        if (trackType === 'midi' || trackType === 'instrument' || trackType === 'sampler' || trackType === 'drum') type = 'midi';
+        else if (trackType === 'effect' || trackType === 'group' || trackType === 'vca') type = 'bus';
+
+        await ipc.call('daw.add_track_with_color', {
+          type,
+          name: finalName || '',
+          color: trackColor.replace('#', '') + 'ff',
+          channels: configuration === 'mono' ? 1 : 2,
+        });
       }
       await useSessionStore.getState().fetchFromEngine();
 
@@ -121,7 +117,7 @@ export const AddTrackDialog: React.FC = () => {
     } finally {
       setCreating(false);
     }
-  }, [trackType, name, count, creating, close]);
+  }, [trackType, name, count, creating, close, configuration, trackColor]);
 
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) close();
