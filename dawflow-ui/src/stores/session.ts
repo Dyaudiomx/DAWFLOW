@@ -14,10 +14,20 @@ const DEFAULT_COLORS: Record<string, string> = {
   bus: '#6A9FD4', vca: '#8A6AAE', fx: '#8A6AAE', group: '#6A9FD4',
 };
 
+function engineColorToCSS(hex: string | undefined): string | null {
+  // Engine sends RRGGBBAA (e.g. "50b050ff"). Convert to CSS #RRGGBB.
+  if (!hex || hex.length < 6) return null;
+  const css = '#' + hex.substring(0, 6);
+  // Skip Ardour's ugly defaults (pinks/salmons like ffaaaa, aa3939)
+  if (css === '#ffaaaa' || css === '#aa3939' || css === '#000000') return null;
+  return css;
+}
+
 function engineTrackToTrack(et: EngineTrack, _index: number, existing?: Track): Track {
   const type = (et.type || 'audio') as TrackType;
-  // Use our Cubase-inspired color palette, not Ardour's default pinks
-  const color = existing?.color || DEFAULT_COLORS[type] || '#5B7FA5';
+  // Priority: engine color (if set by user) > existing local > default palette
+  const engineColor = engineColorToCSS(et.color);
+  const color = engineColor || existing?.color || DEFAULT_COLORS[type] || '#5B7FA5';
   return {
     id: et.id,
     name: et.name,

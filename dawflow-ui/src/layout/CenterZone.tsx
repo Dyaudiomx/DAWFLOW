@@ -40,8 +40,15 @@ export const CenterZone: React.FC = () => {
   const regionsByTrack = useRegionStore((s) => s.regionsByTrack);
   const activeTool = useUIStore((s) => s.activeTool);
   const position = useTransportStore((s) => s.position);
+  const recording = useTransportStore((s) => s.recording);
   const leftLocator = useTransportStore((s) => s.leftLocator);
   const rightLocator = useTransportStore((s) => s.rightLocator);
+
+  // Track where recording started (for the growing region visual)
+  const [recordStartPos, setRecordStartPos] = React.useState<number>(0);
+  React.useEffect(() => {
+    if (recording) setRecordStartPos(position);
+  }, [recording]);
 
   // Context menu state
   const [contextMenu, setContextMenu] = React.useState<{x: number; y: number; trackId?: string} | null>(null);
@@ -330,6 +337,22 @@ export const CenterZone: React.FC = () => {
 
               {/* Event display area (timeline) */}
               <div className={styles.eventDisplay}>
+                {/* Recording region visual (grows in real-time) */}
+                {recording && track.recordEnabled && (
+                  <div
+                    className={styles.regionBlock}
+                    style={{
+                      left: `${recordStartPos * PIXELS_PER_SECOND}px`,
+                      width: `${Math.max(4, (position - recordStartPos) * PIXELS_PER_SECOND)}px`,
+                      opacity: 0.7,
+                    }}
+                  >
+                    <div className={styles.eventTop} style={{ background: '#C43030' }}>
+                      <span className={styles.eventLabel}>Recording...</span>
+                    </div>
+                    <div className={styles.eventBody} style={{ background: '#C43030', opacity: 0.4 }} />
+                  </div>
+                )}
                 {/* Real regions from engine */}
                 {(regionsByTrack[track.id] || []).map((region) => {
                   const startSec = region.position / sampleRate;

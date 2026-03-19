@@ -56,6 +56,21 @@ export function connectToEngine(url?: string) {
     // Fetch real track data from engine via IPC
     useSessionStore.getState().fetchFromEngine();
 
+    // Fetch loop range for locator display (use setState to avoid sending IPC back)
+    ipc.getLoopRange().then((data: Record<string, unknown>) => {
+      const start = Number(data.start_samples ?? 0);
+      const end = Number(data.end_samples ?? 0);
+      const sr = useSessionStore.getState().sampleRate || 48000;
+      if (end > start) {
+        useTransportStore.setState({
+          leftLocator: start / sr,
+          rightLocator: end / sr,
+          leftLocatorDisplay: (start / sr).toFixed(1) + 's',
+          rightLocatorDisplay: (end / sr).toFixed(1) + 's',
+        });
+      }
+    }).catch(() => {});
+
     // Poll for track list changes every 3 seconds
     pollTimer = setInterval(() => {
       if (ipcEnabled) {
