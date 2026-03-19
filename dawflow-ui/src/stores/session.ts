@@ -9,12 +9,6 @@ import { engineSetStripGain, engineSetStripMute, engineSetStripPan } from '../se
 // Engine → UI track conversion
 // ---------------------------------------------------------------------------
 
-function engineColorToHex(c: string | undefined): string | null {
-  if (!c || c.length < 6) return null;
-  // Engine sends RGBA hex (e.g. "4090d0ff"). Take first 6 chars for RGB.
-  return '#' + c.substring(0, 6);
-}
-
 const DEFAULT_COLORS: Record<string, string> = {
   audio: '#5B7FA5', midi: '#3A8C8C', instrument: '#B8963A',
   bus: '#6A9FD4', vca: '#8A6AAE', fx: '#8A6AAE', group: '#6A9FD4',
@@ -22,9 +16,8 @@ const DEFAULT_COLORS: Record<string, string> = {
 
 function engineTrackToTrack(et: EngineTrack, _index: number, existing?: Track): Track {
   const type = (et.type || 'audio') as TrackType;
-  const engineColor = engineColorToHex(et.color);
-  // Prefer engine color (authoritative), then existing local, then default
-  const color = engineColor || existing?.color || DEFAULT_COLORS[type] || '#5B7FA5';
+  // Use our Cubase-inspired color palette, not Ardour's default pinks
+  const color = existing?.color || DEFAULT_COLORS[type] || '#5B7FA5';
   return {
     id: et.id,
     name: et.name,

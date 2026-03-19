@@ -25,11 +25,26 @@ export const PluginBrowser: React.FC = () => {
 
   const types = [...new Set(plugins.map(p => p.type))];
 
+  const [loadingPlugin, setLoadingPlugin] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const handleLoadPlugin = (plugin: PluginInfo) => {
-    if (!selectedTrackId) return;
+    if (!selectedTrackId) {
+      setLoadError('Select a track first');
+      setTimeout(() => setLoadError(null), 2000);
+      return;
+    }
+    setLoadingPlugin(plugin.name);
+    setLoadError(null);
     ipc.loadPlugin(selectedTrackId, plugin.name)
-      .then(() => useSessionStore.getState().fetchFromEngine())
-      .catch((err) => console.error('[DAWFLOW] Plugin load failed:', err));
+      .then(() => {
+        useSessionStore.getState().fetchFromEngine();
+        setLoadingPlugin(null);
+      })
+      .catch((err) => {
+        setLoadError(String(err));
+        setLoadingPlugin(null);
+      });
   };
 
   return (
@@ -65,7 +80,9 @@ export const PluginBrowser: React.FC = () => {
         ))}
         {filtered.length === 0 && <div className={styles.empty}>No plugins found</div>}
       </div>
-      {!selectedTrackId && <div className={styles.hint}>Select a track to load plugins</div>}
+      {loadingPlugin && <div className={styles.hint}>Loading {loadingPlugin}...</div>}
+      {loadError && <div className={styles.hint} style={{ color: '#e04040' }}>{loadError}</div>}
+      {!selectedTrackId && !loadError && <div className={styles.hint}>Select a track, then double-click a plugin to load it</div>}
     </div>
   );
 };

@@ -193,6 +193,14 @@ function handleMessage(msg: ArdourMessage) {
     case 'transport_record': {
       if (val[0]) {
         useTransportStore.getState().updateFromEngine({ recording: true, playing: true });
+        // Poll regions frequently during recording so user sees regions grow
+        const recPoll = setInterval(() => {
+          if (!useTransportStore.getState().recording) {
+            clearInterval(recPoll);
+            return;
+          }
+          useSessionStore.getState().fetchFromEngine();
+        }, 1000);
       } else {
         useTransportStore.getState().updateFromEngine({ recording: false });
       }
