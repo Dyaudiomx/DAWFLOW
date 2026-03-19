@@ -1,6 +1,6 @@
 # DAWFLOW IPC API Reference
 
-> **385 unique commands** registered across 8 source files, 0 duplicates. All commands use JSON-RPC 2.0 over Unix domain socket IPC.
+> **406 unique commands + 18 signal events** registered across 8 source files, 0 duplicates. All commands use JSON-RPC 2.0 over Unix domain socket IPC.
 >
 > **Request format:** `{"jsonrpc": "2.0", "id": 1, "method": "daw.xxx", "params": {...}}`
 >
@@ -47,8 +47,11 @@
 29. [View & Zoom](#view--zoom)
 30. [Metronome](#metronome)
 31. [Playlists](#playlists)
-32. [Batch & Utilities](#batch--utilities)
-33. [Events (DAW to Plugin)](#events-daw-to-plugin)
+32. [Audio Device & Backend](#audio-device--backend)
+33. [Monitor Section](#monitor-section)
+34. [Latency](#latency)
+35. [Batch & Utilities](#batch--utilities)
+36. [Events (DAW to Plugin)](#events-daw-to-plugin)
 
 ---
 
@@ -129,6 +132,7 @@
 | `daw.disarm_all_tracks` | none | `{success, disarmed_count}` | Disarm all tracks |
 | `daw.set_capture_mode` | none | `{status: "deprecated"}` | Destructive mode removed in Ardour 7+ |
 | `daw.get_last_capture_info` | none | `{status, description, recording}` | Info about last recording (limited) |
+| `daw.get_recording_state` | none | `{recording, tracks: [{track_id, capture_start_samples, captured_samples, peaks: [{min,max}]}], position_samples}` | Real-time recording data with live peaks |
 
 ## Track Management
 
@@ -260,6 +264,8 @@
 | `daw.get_region_rms` | `{track_id: string, region_id: string}` | `{rms, rms_db}` | Get RMS level of an audio region |
 | `daw.strip_silence` | `{track_id: string, region_id: string, threshold_db?: number, min_length_samples?: number}` | `[{start_samples, end_samples}]` | Find silent sections in a region |
 | `daw.detect_silence` | `{track_id: string, region_id: string, threshold_db?: number, min_length_samples?: number}` | `{silent_ranges: [{start_samples, end_samples}], count, threshold_db, min_length}` | Detect silent sections (alternate) |
+| `daw.get_region_rms_detailed` | `{track_id: string, region_id: string}` | `{peak_amplitude, rms_amplitude, length_samples}` | Detailed audio analysis |
+| `daw.is_freewheeling` | none | `{freewheeling}` | Check freewheel mode |
 
 ## MIDI Editing (Legacy)
 
@@ -498,6 +504,11 @@
 | `daw.deselect_all_tracks` | none | `{ok}` | Clear track selection |
 | `daw.get_selected_tracks` | none | `{tracks: [{id, name}], count}` | Get selected tracks |
 | `daw.select_all_tracks` | none | `{ok, count}` | Select all tracks |
+| `daw.set_loop_from_region` | `{track_id: string, region_id: string}` | `{success}` | Set loop range from region |
+| `daw.set_punch_from_region` | `{track_id: string, region_id: string}` | `{success}` | Set punch range from region |
+| `daw.region_fill_track` | `{track_id: string, region_id: string, end_samples?: number}` | `{success, copies_created}` | Fill track with region copies |
+| `daw.insert_silence` | `{position_samples: number, duration_samples: number}` | `{success}` | Insert blank time |
+| `daw.remove_time_ripple` | `{start_samples: number, end_samples: number}` | `{success}` | Remove time and ripple |
 
 ## Arrangement (Sections)
 
@@ -594,6 +605,34 @@ These commands require access to the Editor (gtk2_ardour) and are not fully avai
 | `daw.get_track_playlist_info` | `{track_id: string}` | playlist info | Get current playlist info |
 | `daw.get_available_playlists` | none | result | List all available playlists |
 
+## Audio Device & Backend
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.get_buffer_size` | none | `{buffer_size, sample_rate}` | Get current buffer size |
+| `daw.set_buffer_size` | `{buffer_size: number}` | `{success, buffer_size}` | Set buffer size |
+| `daw.get_available_buffer_sizes` | none | `{sizes: number[]}` | List supported buffer sizes |
+| `daw.get_available_sample_rates` | none | `{rates: number[]}` | List supported sample rates |
+| `daw.get_device_name` | none | `{device_name, backend_name}` | Get audio device and backend |
+
+## Monitor Section
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.monitor.get_state` | none | `{has_monitor, ...}` | Get monitor section state |
+| `daw.monitor.set_dim` | `{enabled: boolean}` | `{success, dim}` | Toggle monitor dim |
+| `daw.monitor.set_mono` | `{enabled: boolean}` | `{success, mono}` | Toggle mono fold-down |
+| `daw.monitor.set_mute` | `{enabled: boolean}` | `{success}` | Toggle monitor mute |
+
+## Latency
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.get_plugin_latency` | `{track_id: string, processor_id: string}` | `{latency_samples}` | Get plugin latency |
+| `daw.get_route_latency` | `{track_id: string}` | `{playback_latency, capture_latency}` | Get route latency |
+| `daw.get_total_latency` | none | `{tracks: [{id, name, playback_latency, signal_latency}]}` | All route latencies |
+| `daw.get_worst_latency` | none | `{worst_output_latency, worst_input_latency}` | Worst-case latency |
+
 ## Batch & Utilities
 
 | Command | Params | Returns | Description |
@@ -632,3 +671,51 @@ These events are broadcast as JSON-RPC notifications (no `id`) to all connected 
 | `daw.marker.changed` | `{name, start}` | Marker name/position changed |
 | `daw.tempo.changed` | `{bpm}` | Tempo map changed |
 | `daw.plugin.changed` | `{route_id, route_name}` | Plugin chain changed on a route |
+
+### Transport Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.transport.positioned` | `{position_samples, position_seconds}` | Playhead moved (scrub/locate) |
+| `daw.transport.looped` | `{position}` | Playhead wrapped at loop end |
+| `daw.transport.located` | `{position_samples}` | Transport located to new position |
+
+### Mix Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.mix.solo_active` | `{solo_active}` | Global solo state changed |
+| `daw.mix.solo_changed` | `{}` | A track's solo state changed |
+
+### Location Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.locations.added` | `{name, start_samples, is_mark}` | Location/marker added |
+| `daw.locations.removed` | `{name}` | Location/marker removed |
+| `daw.locations.changed` | `{}` | Any location changed |
+
+### Engine Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.engine.xrun` | `{xrun_count}` | Buffer underrun occurred |
+
+### Session Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.session.saved` | `{snapshot_name}` | Session saved |
+| `daw.session.audition` | `{active}` | Audition started/stopped |
+
+### Route Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.routes.removed_from_group` | `{route_id, route_name}` | Track removed from group |
+
+### Record Events
+
+| Event | Params | Description |
+|-------|--------|-------------|
+| `daw.record.armed_changed` | `{armed_tracks: [{id, name}]}` | Record arm state changed |
