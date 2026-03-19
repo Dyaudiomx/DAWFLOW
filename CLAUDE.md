@@ -94,10 +94,13 @@ Both boundaries (WebSocket + Unix IPC) are process/network boundaries. No linkin
 - **React 19** + **Vite 8** + **TypeScript** + **Zustand** (state management)
 - Cubase 15 Pro-inspired layout with resizable zones
 
-### Communication: Ardour WebSocket Protocol (port 3818)
-- Auto-connects on load (see `src/services/websocket.ts`)
-- Reconnects every 2 seconds on disconnect
-- Connection indicator in bottom-right corner
+### Communication: Two Channels
+1. **WebSocket (port 3818)** — Real-time streaming: transport state, strip gain/pan/mute, meter levels
+   - Auto-connects on load (see `src/services/websocket.ts`)
+   - Reconnects every 2 seconds on disconnect
+2. **IPC (port 19100)** — 385 commands for everything else: tracks, regions, MIDI, plugins, markers, automation, export
+   - See `src/services/ipc.ts` for TypeScript wrappers
+   - See `docs/api-reference.md` for complete command reference
 
 ### Available WebSocket Commands (UI → Engine)
 ```typescript
@@ -160,17 +163,39 @@ npm run dev          # Vite dev server (port 5173), manually set wsUrl
 7. Plugin sends commands to DAW via JSON-RPC 2.0 over IPC
 8. DAW sends events to plugin (transport changes, track additions, etc.)
 
-### Available IPC Commands (Plugin → DAW)
-- `daw.get_session_info`, `daw.get_tracks`, `daw.get_transport_state`
-- `daw.set_track_gain`, `daw.set_track_mute`, `daw.set_track_solo`
-- `daw.transport_play`, `daw.transport_stop`, `daw.transport_locate`
-- `daw.plugin.register`
+### IPC API — 385 Commands (IMPORTANT: Read This First)
 
-### IPC Events (DAW → Plugin)
-- `daw.transport.changed`, `daw.routes.added`
-- `daw.session.dirty_changed`, `daw.record.changed`
+The engine exposes **385 unique IPC commands** covering every major DAW function. Before building or wiring ANY feature, **read the API reference**:
 
-**When you need a new command or event:** Add it to `DawflowPluginHost::_register_commands()` or `_connect_session_signals()` in `engine/libs/ardour/`, then use it from the plugin or React UI. Expanding the API surface is an acceptable engine modification.
+**`docs/api-reference.md`** — Complete documentation of every IPC command:
+- Command name, input params (with JSON key names and types), return format, description
+- Organized into 34 categories (Session, Transport, Tracks, Regions, MIDI, Plugins, Automation, Metering, Markers, Routing, Groups, VCA, Export, Navigation, etc.)
+- 12 broadcast events (engine → plugins/UI)
+
+**`dawflow-ui/src/services/ipc.ts`** — TypeScript wrappers for IPC calls from the React UI.
+
+**How IPC works:**
+1. React UI sends `POST http://localhost:19100/api/command` with `{"method": "daw.xxx", "params": {...}}`
+2. The ui-shell plugin proxies this to the engine via Unix domain socket (JSON-RPC 2.0)
+3. The engine dispatches ALL commands to the GTK main thread via `signal_idle` (thread-safe)
+4. Response comes back as JSON
+
+**IPC command files in engine (GPL, open source):**
+- `engine/libs/ardour/dawflow_plugin_host.cc` — 35 commands (core session, tracks, plugins)
+- `engine/libs/ardour/dawflow_plugin_host_extended.cc` — 52 commands (transport, markers, groups, VCA, routing)
+- `engine/libs/ardour/dawflow_commands_editing.cc` — 58 commands (region editing, MIDI notes, waveforms)
+- `engine/libs/ardour/dawflow_commands_automation.cc` — 43 commands (automation, metering)
+- `engine/libs/ardour/dawflow_commands_critical.cc` — 23 commands (tempo, time sig, punch, sections)
+- `engine/libs/ardour/dawflow_commands_high.cc` — 73 commands (recording, session lifecycle, advanced editing)
+- `engine/libs/ardour/dawflow_commands_medium.cc` — 77 commands (navigation, export, selection, playlists)
+- `engine/libs/ardour/dawflow_commands_final.cc` — 47 commands (MIDI CC, utilities, batch ops)
+
+**IPC Events (DAW → Plugin/UI):**
+- `daw.transport.changed`, `daw.routes.added`, `daw.record.changed`
+- `daw.session.dirty_changed`, `daw.region.added`, `daw.marker.added`
+- `daw.tempo.changed`, `daw.plugin.changed`, and more
+
+**When you need a new command:** Add it to the appropriate `dawflow_commands_*.cc` file using the existing pattern. All commands auto-dispatch to the GTK main thread — no manual `signal_idle` wrapping needed.
 
 ### Existing Plugins
 - `sdk/plugins/ai-chat/` — AI Assistant plugin (C++ backend + HTML/JS UI on port 19200)
