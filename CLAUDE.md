@@ -68,6 +68,87 @@ Both boundaries (WebSocket + Unix IPC) are process/network boundaries. No linkin
 
 ---
 
+## GPL Compliance Rules (CRITICAL — Read Before Writing ANY Code)
+
+**Every agent working on DAWFLOW must understand and follow these rules.** Violations could jeopardize the entire project's legal structure.
+
+### The Two Repos
+
+| | Engine Repo (`engine/`) | Product Repo (this repo) |
+|---|---|---|
+| **GitHub** | `Dyaudiomx/dawflow-engine` | `Dyaudiomx/DAWFLOW` |
+| **License** | GPL-2.0-or-later | Proprietary |
+| **Visibility** | Private now, **public at ship** | **Private forever** |
+| **Git remotes** | `origin` (dawflow-engine) + `upstream` (Ardour) | `origin` (DAWFLOW) only |
+| **Contains** | Ardour fork, plugin host, WebSocket server, IPC commands | React UI, plugins, SDK, branding, installer, docs |
+
+### What NEVER Goes In The Engine Repo
+
+The engine repo will be **open source and publicly visible**. Never put any of these in `engine/`:
+
+1. **No proprietary product names** in comments or strings — use "web UI", "web surface", or "web client" instead of "React UI", "dawflow-ui", or product-specific names
+2. **No references to proprietary components** — don't mention specific React components, Zustand stores, CSS modules, or any `dawflow-ui/` file paths
+3. **No business logic or branding** — no pricing, company names, marketing copy, API keys
+4. **No proprietary file paths** — don't reference `dawflow-ui/src/...`, `sdk/plugins/...`, or anything outside `engine/`
+5. **No comments that reveal product architecture** — "the Cubase-style mixer panel calls this" is a leak; "web UI clients call this" is fine
+
+### What's OK In The Engine Repo
+
+- Generic references to "web UI", "web surface client", "connected clients"
+- WebSocket/IPC API documentation (these are the public API surface)
+- Cubase-compatible key bindings (these are just keyboard shortcuts, not proprietary)
+- Plugin system infrastructure (loading, IPC, lifecycle)
+- Bug fixes, performance improvements to Ardour code
+
+### Language Rules For Engine Code Comments
+
+| Instead of... | Write... |
+|---|---|
+| "React UI" | "web UI" or "web surface" |
+| "dawflow-ui" | "web UI client" |
+| "the Cubase-style mixer" | "the mixer web surface" |
+| "Zustand store" | "client-side state" |
+| "our proprietary UI" | "the web UI" |
+
+### Git Workflow & Submodule Boundary
+
+```
+Product repo (DAWFLOW — private forever)
+├── engine/              ← git submodule (dawflow-engine — will be public)
+├── dawflow-ui/          ← React UI (proprietary, never in engine)
+├── sdk/                 ← Plugin SDK (MIT, separate distribution)
+└── docs/, branding/, installer/  ← all proprietary
+```
+
+**When modifying engine code:**
+```bash
+cd engine
+# make changes
+python3 waf build -j$(sysctl -n hw.ncpu)
+git add . && git commit -m "fix: description"
+git push origin main
+cd ..
+git add engine && git commit -m "chore: update engine submodule"
+```
+
+**Product repo remotes** (CLEAN — no Ardour upstream):
+- `origin` → `https://github.com/Dyaudiomx/DAWFLOW.git`
+
+**Engine repo remotes**:
+- `origin` → `https://github.com/Dyaudiomx/dawflow-engine.git`
+- `upstream` → `https://github.com/Ardour/ardour.git` (for pulling Ardour updates)
+
+### Pre-Commit Checklist (For Agents)
+
+Before committing to `engine/`, verify:
+- [ ] No "React UI" or "dawflow-ui" in any added/modified lines
+- [ ] No proprietary file paths referenced in comments
+- [ ] No product branding or business logic
+- [ ] Comments use generic terms ("web UI", "web surface", "client")
+- [ ] No API keys, credentials, or secrets
+
+---
+
 ## Rule: Where To Build New Features
 
 **The React UI (`dawflow-ui/`) is the PRIMARY place for new features.** It's fast to iterate (hot reload), proprietary, and directly controls the user experience.
@@ -323,6 +404,40 @@ git add engine && git commit -m "chore: update engine submodule"
 
 ---
 
+## Rule: Reference Ardour's Implementation First
+
+**Before implementing ANY visual or interactive feature in the React UI, ALWAYS check how Ardour's GTK UI already does it.** The engine is a fork of Ardour — it already handles things like waveform rendering, region trimming, drag-drop import, peak caching, fade curves, meter ballistics, and hundreds of other DAW behaviors correctly. We are rebuilding the UI, not reinventing the logic.
+
+### What to do:
+
+1. **Search the engine source** (`engine/gtk2_ardour/`, `engine/libs/ardour/`) for the relevant Ardour implementation
+2. **Understand how Ardour handles it** — rendering, caching, data flow, edge cases
+3. **Mirror that approach** in the React UI — don't invent a new way if Ardour already has a proven one
+4. **Use the engine's existing API** — if Ardour already exposes the data you need (e.g., peaks per channel, region start offset, fade curves), use it instead of approximating in JS
+
+### Key files to reference:
+
+| Feature | Ardour source files |
+|---|---|
+| Waveform rendering | `engine/gtk2_ardour/audio_region_view.cc`, `engine/libs/ardour/audioregion.cc` |
+| Region trimming | `engine/gtk2_ardour/editor_drag.cc` (TrimDrag class) |
+| Region move/copy | `engine/gtk2_ardour/editor_drag.cc` (RegionMoveDrag) |
+| Fade curves | `engine/gtk2_ardour/audio_region_view.cc` (redraw_start_xfade, redraw_end_xfade) |
+| Peak caching | `engine/libs/ardour/audiosource.cc` (read_peaks, peak files) |
+| Meter ballistics | `engine/gtk2_ardour/level_meter.cc` |
+| Drag-drop import | `engine/gtk2_ardour/editor_drag.cc` (ExternalAudioDrag) |
+| Ruler/timeline | `engine/gtk2_ardour/editor_rulers.cc` |
+| Snap to grid | `engine/gtk2_ardour/editor_snap.cc` |
+
+### Why this matters:
+
+- Ardour has been refined over 20+ years by professional audio engineers
+- It handles edge cases we'd never think of (sample-accurate trimming, peak file caching, cross-fade overlap, undo/redo integration)
+- The engine already provides the data in the right format — we just need to display it correctly
+- **Don't guess, don't approximate, don't reinvent** — read the Ardour code first
+
+---
+
 ## What NOT To Do
 
 1. **Do NOT add features directly to the engine** — build them in the React UI or as plugins
@@ -332,3 +447,135 @@ git add engine && git commit -m "chore: update engine submodule"
 5. **Do NOT remove Ardour functionality** — we add on top, we don't subtract
 6. **Do NOT commit API keys, secrets, or credentials** to any repo
 7. **Do NOT deploy the React UI into the engine's git tracking** — it's deployed at build time only
+
+---
+
+## Linear Integration — Task Tracking Workflow
+
+**Linear is the single source of truth for ALL work on DAWFLOW.** Every agent session must follow this workflow. No exceptions.
+
+### Prerequisites
+
+- Linear MCP server must be connected: `claude mcp add --transport http linear https://mcp.linear.app/mcp`
+- Authenticate via `/mcp` in Claude Code if not already connected
+- Team: **DAWFLOW** (Linear workspace: Publisherflow)
+
+### The Golden Rules
+
+1. **Every session starts by checking Linear** — before writing any code
+2. **Self-assign before working** — move to "In Progress", assign to `"me"`
+3. **Never work without a Linear issue** — if the user asks for ad-hoc work, create a Linear issue first
+4. **Comment on progress** — at start, at blockers, and at completion
+5. **Create new issues for discoveries** — bugs, needed features, or refactors found during work get logged immediately as new Linear issues
+6. **Move to Done only when verified** — code committed, tested, working
+
+### Session Flow
+
+```
+SESSION START
+│
+├─ 1. List issues: team=DAWFLOW, assignee="me", state="In Progress"
+│     → If found: RESUME that work first
+│
+├─ 2. If nothing assigned: list issues: team=DAWFLOW, state="Todo", assignee=null
+│     → Pick highest priority unassigned issue
+│     → Assign to "me", move to "In Progress"
+│     → Comment: "Starting work on this"
+│
+├─ 3. If user gives direct instructions instead:
+│     → Create a new Linear issue (team=DAWFLOW)
+│     → Assign to "me", move to "In Progress"
+│     → Then do the work
+│
+DURING WORK
+│
+├─ 4. Comment on the issue at natural milestones (e.g., "Implemented X, moving to Y")
+├─ 5. If you discover a bug or needed feature:
+│     → Create a NEW Linear issue immediately with proper labels/priority
+│     → Do NOT just make a mental note — log it in Linear
+├─ 6. If blocked: comment on the issue explaining the blocker
+│
+TASK COMPLETE
+│
+├─ 7. Move issue to "Done" (or "In Review" if it needs human review)
+└─ 8. Comment with summary: what was done, files changed, commits made, any follow-up issues created
+```
+
+### Issue Status Flow
+
+```
+Backlog → Todo → In Progress → In Review → Done
+                  (agent self-    (needs       (verified
+                   assigns)       review)       working)
+```
+
+| Status | Meaning |
+|---|---|
+| **Backlog** | Ideas, future work, low priority — not ready to build |
+| **Todo** | Prioritized and ready — agents can pick these up |
+| **In Progress** | An agent or human is actively working on this |
+| **In Review** | Code written, needs testing or human review |
+| **Done** | Committed, tested, verified working |
+| **Canceled** | Won't do — document why in a comment |
+
+### Creating Issues
+
+When creating new Linear issues, follow these standards:
+
+```
+Title:       Imperative form — "Add X to Y", "Fix Z in W"
+Team:        DAWFLOW
+Labels:      Bug | Feature | Improvement | AI | Infrastructure | API
+Priority:    1=Urgent  2=High  3=Normal  4=Low
+Description: Include:
+             - What component/file this affects
+             - Why it's needed (context)
+             - Acceptance criteria (when is this "done"?)
+             - Related issues if any
+```
+
+### Conflict Prevention
+
+- **Before self-assigning**: Check if the issue already has an assignee
+- **If "In Progress" with someone else assigned**: Skip it, pick another issue
+- **If work overlaps another issue**: Comment on both issues and link them
+- **If the user asks for something already tracked**: Find the existing issue, assign it, work on that — don't create a duplicate
+
+### What to Track in Linear
+
+| Always create an issue for | Do NOT create issues for |
+|---|---|
+| New features or components | Quick typo fixes (< 1 min) |
+| Bug fixes | Reading/exploring code |
+| Refactors that touch 3+ files | Answering questions |
+| Engine API additions | Build/deploy commands |
+| Performance improvements | |
+| UI/UX changes | |
+
+### Linear API Quick Reference (for agents)
+
+```typescript
+// List my in-progress work
+list_issues({ team: "DAWFLOW", assignee: "me", state: "In Progress" })
+
+// List available work
+list_issues({ team: "DAWFLOW", state: "Todo", assignee: null })
+
+// Create an issue
+save_issue({ team: "DAWFLOW", title: "...", description: "...", priority: 3, label: "Feature" })
+
+// Assign to myself and start
+save_issue({ id: "ISSUE_ID", assignee: "me", state: "In Progress" })
+
+// Add progress comment
+save_comment({ issueId: "ISSUE_ID", body: "..." })
+
+// Mark done
+save_issue({ id: "ISSUE_ID", state: "Done" })
+
+// List projects
+list_projects({ team: "DAWFLOW" })
+
+// List milestones in a project
+list_milestones({ project: "PROJECT_NAME" })
+```
