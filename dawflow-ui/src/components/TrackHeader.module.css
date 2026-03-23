@@ -1,0 +1,420 @@
+/* ==========================================================================
+   TrackHeader — Cubase 15 Pro style track header
+   Full-height color square on LEFT, two rows of controls on RIGHT.
+
+   ┌──────┬───────────────────────────────────────────┐
+   │      │  M   S    Track Name                      │  Row 1
+   │ COLOR│                                           │
+   │ SQRE │  ●  🔊  e  ⊞  R   W   ≡                 │  Row 2
+   └──────┴───────────────────────────────────────────┘
+   ========================================================================== */
+
+/* ---- Track header outer container (horizontal: colorSquare | content) ---- */
+
+.trackHeader {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-width: 260px;
+  max-width: 360px;
+  min-height: 60px;
+  background: #252830;
+  border-bottom: 1px solid var(--divider);
+  cursor: default;
+  user-select: none;
+  transition: background var(--transition-fast);
+  position: relative;
+}
+
+.trackHeader:hover {
+  background: #2a2e36;
+}
+
+.trackHeader.selected {
+  background: #333840;
+}
+
+.trackHeader.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent-blue);
+  z-index: 1;
+}
+
+/* ---- Color square — FULL HEIGHT left column ---- */
+
+.colorSquare {
+  position: relative;
+  width: 44px;
+  min-width: 44px;
+  min-height: 60px;
+  height: 100%;
+  flex-shrink: 0;
+  /* stretch to fill the track header height */
+  align-self: stretch;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  overflow: hidden;
+}
+
+.colorSquare:active {
+  cursor: grabbing;
+}
+
+.trackNumber {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+.trackTypeIcon {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.automationArrow {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.colorSquare:hover .automationArrow {
+  opacity: 1;
+}
+
+/* ---- Right content column — holds the two rows ---- */
+
+.content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  padding: 3px 0;
+}
+
+/* ---- Row 1: M / S / Track name ---- */
+
+.row1 {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 6px 0 5px;
+  gap: 4px;
+}
+
+/* ---- M / S buttons (row 1) ---- */
+
+.msGroup {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.btnMute,
+.btnSolo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family);
+  cursor: pointer;
+  line-height: 1;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.btnMute:hover,
+.btnSolo:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.btnMute.active {
+  background: #E5A50A;
+  color: #fff;
+  border-color: #E5A50A;
+  box-shadow: 0 0 6px rgba(229, 165, 10, 0.4);
+}
+
+.btnSolo.active {
+  background: var(--color-solo);
+  color: #fff;
+  border-color: var(--color-solo);
+  box-shadow: 0 0 6px rgba(196, 48, 48, 0.4);
+}
+
+/* Implicit mute: M button shows dimmed when solo-muted by another track */
+.btnMute.implicitMute {
+  background: rgba(229, 165, 10, 0.35);
+  color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(229, 165, 10, 0.5);
+}
+
+/* Dimmed state: track header is muted by another track's solo */
+.dimmedBySolo {
+  opacity: 0.45;
+}
+
+/* Frozen state: subtle icy overlay on the track header */
+.frozen {
+  background: rgba(38, 198, 218, 0.08);
+}
+
+.frozen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(38, 198, 218, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- Track name ---- */
+
+.trackName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+  line-height: 26px;
+  cursor: text;
+}
+
+.trackNameInput {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  background: var(--bg-input);
+  border: 1px solid var(--accent-blue);
+  border-radius: var(--border-radius);
+  color: var(--text-bright);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family);
+  padding: 0 4px;
+  outline: none;
+}
+
+/* ---- Row 2: Small control buttons ---- */
+
+.row2 {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 6px 0 5px;
+  gap: 3px;
+}
+
+/* ---- Shared button base for row 2 ---- */
+
+.smallBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family);
+  cursor: pointer;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.smallBtn:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+/* ---- Record arm button (red circle) ---- */
+
+.btnRecord {
+  composes: smallBtn;
+}
+
+.btnRecord.active {
+  background: #C43030;
+  color: #fff;
+  border-color: #C43030;
+  box-shadow: 0 0 6px rgba(196, 48, 48, 0.55);
+}
+
+.btnRecord:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.recordDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: background var(--transition-fast);
+}
+
+.btnRecord.active .recordDot {
+  background: #fff;
+}
+
+/* ---- Monitor button ---- */
+
+.btnMonitor {
+  composes: smallBtn;
+  font-size: 12px;
+}
+
+.btnMonitor.active {
+  background: #26C6DA;
+  color: #fff;
+  border-color: #26C6DA;
+  box-shadow: 0 0 5px rgba(38, 198, 218, 0.4);
+}
+
+/* ---- Edit channel button ---- */
+
+.btnEdit {
+  composes: smallBtn;
+  font-style: italic;
+  font-size: 11px;
+}
+
+.btnEdit:hover {
+  color: var(--accent-blue);
+}
+
+/* ---- Stereo/Mono indicator ---- */
+
+.btnStereo {
+  composes: smallBtn;
+  font-size: 11px;
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---- Read automation (GREEN when active) ---- */
+
+.btnRead {
+  composes: smallBtn;
+}
+
+.btnRead.active {
+  background: #4CAF50;
+  color: #fff;
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.45);
+}
+
+/* ---- Write automation (RED when active) ---- */
+
+.btnWrite {
+  composes: smallBtn;
+}
+
+.btnWrite.active {
+  background: #f44336;
+  color: #fff;
+  border-color: #f44336;
+  box-shadow: 0 0 6px rgba(244, 67, 54, 0.45);
+}
+
+/* ---- Freeze button (ICY BLUE when active) ---- */
+
+.btnFreeze {
+  composes: smallBtn;
+  font-size: 12px;
+}
+
+.btnFreeze.active {
+  background: #26C6DA;
+  color: #fff;
+  border-color: #26C6DA;
+  box-shadow: 0 0 6px rgba(38, 198, 218, 0.45);
+}
+
+/* ---- Show lanes button ---- */
+
+.btnLanes {
+  composes: smallBtn;
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.btnLanes:hover {
+  color: var(--accent-blue);
+}
+
+/* ---- Spacer pushes lanes button to the right ---- */
+
+.spacer {
+  flex: 1;
+}
+
+/* ---- Output meter strip (far right edge) ---- */
+
+.outputMeter {
+  width: 18px;
+  align-self: stretch;
+  background: #0a0a0a;
+  border-left: 1px solid #1a1a1a;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.outputMeterFill {
+  width: 6px;
+  border-radius: 1px 1px 0 0;
+  transition: height 80ms linear;
+  min-height: 0;
+}

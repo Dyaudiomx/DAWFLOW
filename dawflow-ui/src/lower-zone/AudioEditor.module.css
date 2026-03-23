@@ -1,0 +1,290 @@
+/* ==========================================================================
+   AudioEditor — Cubase 15 Pro Sample Editor (Lower Zone)
+   Dark theme waveform editor with toolbar, ruler, canvas, and info bar.
+   ========================================================================== */
+
+/* ---- Root Container ---- */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  overflow: hidden;
+  font-family: var(--font-family);
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  height: 28px;
+  min-height: 28px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-right: 8px;
+}
+
+.toolBtn {
+  height: 22px;
+  min-width: 26px;
+  padding: 0 6px;
+  background: #3a3a3a;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #999;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 100ms ease, color 100ms ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.toolBtn:hover {
+  background: #454545;
+  color: #ccc;
+}
+
+.toolBtnActive {
+  background: #4A90D9;
+  color: #fff;
+  border-color: #3a78b8;
+}
+
+.toolBtnActive:hover {
+  background: #5BA0E9;
+}
+
+.separator {
+  width: 1px;
+  height: 16px;
+  background: #3a3a3a;
+  margin: 0 6px;
+}
+
+.selectDropdown {
+  height: 22px;
+  padding: 0 6px;
+  background: #333;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #aaa;
+  font-size: 10px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23888' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+}
+
+.selectDropdown:hover {
+  background-color: #3a3a3a;
+}
+
+.toolLabel {
+  font-size: 10px;
+  color: #666;
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.zoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+}
+
+.zoomBtn {
+  composes: toolBtn;
+  width: 22px;
+  min-width: 22px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: 8px;
+}
+
+/* ---- Analysis Bar ---- */
+.analysisBar {
+  height: 24px;
+  min-height: 24px;
+  background: #262626;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  font-size: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.analyzeBtn {
+  height: 18px;
+  padding: 0 8px;
+  background: #3a3a3a;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #aaa;
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.analyzeBtn:hover:not(:disabled) {
+  background: #4A90D9;
+  color: #fff;
+  border-color: #3a78b8;
+}
+
+.analyzeBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.analysisSeparator {
+  width: 1px;
+  height: 14px;
+  background: #3a3a3a;
+}
+
+.analysisStat {
+  color: #999;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.analysisLabel {
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.analysisDivider {
+  color: #444;
+  margin: 0 2px;
+}
+
+/* ---- Ruler ---- */
+.ruler {
+  height: 22px;
+  min-height: 22px;
+  background: #252525;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.rulerCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---- Waveform Area ---- */
+.waveformArea {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #1e1e1e;
+  min-height: 0;
+}
+
+.waveformCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---- Info Bar ---- */
+.infoBar {
+  height: 28px;
+  min-height: 28px;
+  background: #252525;
+  border-top: 1px solid #3a3a3a;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 16px;
+  font-size: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.infoLabel {
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.infoValue {
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+}
+
+.infoInput {
+  width: 60px;
+  height: 18px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 2px;
+  color: #ccc;
+  font-size: 10px;
+  padding: 0 4px;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+}
+
+.infoInput:focus {
+  border-color: #4A90D9;
+}
+
+/* ---- Empty State ---- */
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  color: #555;
+  pointer-events: none;
+  text-align: center;
+}

@@ -1,7 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './EditorHost.module.css';
+import MidiEditor from './MidiEditor';
+import AudioEditor from './AudioEditor';
+import DrumEditor from './DrumEditor';
+import { useUIStore } from '../stores/ui';
+import { useRegionStore } from '../stores/regions';
 
 export const EditorHost: React.FC = () => {
+  const selectedRegionId = useUIStore(s => s.selectedRegionId);
+  const selectedTrackId = useUIStore(s => s.selectedTrackId);
+  const regionsByTrack = useRegionStore(s => s.regionsByTrack);
+  const [drumMode, setDrumMode] = useState(false);
+
+  // Find the selected region
+  let selectedRegion = null;
+  if (selectedRegionId && selectedTrackId) {
+    const regions = regionsByTrack[selectedTrackId] || [];
+    selectedRegion = regions.find(r => r.id === selectedRegionId) ?? null;
+  }
+
+  // Resolve track color for the selected track
+  const trackColor = '#e05070'; // fallback; could be pulled from track store in the future
+
+  // MIDI region selected: show Piano Roll or Drum Editor
+  if (selectedRegion && selectedRegion.type === 'midi' && selectedTrackId) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className={styles.editorToggleBar}>
+          <button
+            className={`${styles.editorToggleBtn} ${!drumMode ? styles.editorToggleBtnActive : ''}`}
+            onClick={() => setDrumMode(false)}
+          >
+            Piano Roll
+          </button>
+          <button
+            className={`${styles.editorToggleBtn} ${drumMode ? styles.editorToggleBtnActive : ''}`}
+            onClick={() => setDrumMode(true)}
+          >
+            Drum Editor
+          </button>
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          {drumMode
+            ? <DrumEditor regionId={selectedRegion.id} trackId={selectedTrackId} trackColor={trackColor} />
+            : <MidiEditor regionId={selectedRegion.id} trackId={selectedTrackId} trackColor={trackColor} />
+          }
+        </div>
+      </div>
+    );
+  }
+
+  // Audio region selected: show the Sample Editor
+  if (selectedRegion && selectedRegion.type === 'audio' && selectedTrackId) {
+    return <AudioEditor regionId={selectedRegion.id} trackId={selectedTrackId} trackColor={trackColor} />;
+  }
+
+  // Placeholder: no selection
   return (
     <div className={styles.container}>
       <div className={styles.placeholder}>

@@ -1,0 +1,62 @@
+/* ==========================================================================
+   DawInput — Cubase 15 Pro numeric/text input field
+   Dark recessed field with mono font for numeric values.
+   ========================================================================== */
+
+.dawInput {
+  display: inline-flex;
+  align-items: center;
+  height: var(--button-height);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.dawInput:focus-within {
+  border-color: var(--accent-blue);
+}
+
+.dawInput:hover:not(:focus-within) {
+  border-color: var(--border-medium);
+}
+
+/* ---- The actual input element ---- */
+
+.field {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  outline: none;
+  text-align: right;
+}
+
+/* Number inputs: hide spinners */
+.field::-webkit-inner-spin-button,
+.field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* ---- Suffix label (dB, ms, Hz, etc.) ---- */
+
+.suffix {
+  flex-shrink: 0;
+  padding: 0 4px 0 1px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  color: var(--text-dim);
+  user-select: none;
+  pointer-events: none;
+}

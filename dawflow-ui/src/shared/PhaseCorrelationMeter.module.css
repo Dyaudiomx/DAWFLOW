@@ -1,0 +1,100 @@
+/* ==========================================================================
+   Phase Correlation Meter — horizontal bar from -1 (out of phase) to +1
+   ========================================================================== */
+
+.container {
+  position: relative;
+  width: 200px;
+  height: 20px;
+  background: #1a1a1e;
+  border-radius: 3px;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Gradient track showing the -1..0..+1 color map */
+.track {
+  position: absolute;
+  inset: 4px 20px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    #8a1a1a 0%,
+    #b83030 15%,
+    #c8a030 35%,
+    #a0a030 50%,
+    #50a040 70%,
+    #2a8a2a 100%
+  );
+  opacity: 0.35;
+}
+
+/* Active fill — colored portion up to the needle position */
+.fill {
+  position: absolute;
+  inset: 4px 20px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    #c03030 0%,
+    #e04040 15%,
+    #e0c040 35%,
+    #c8c840 50%,
+    #60c050 70%,
+    #30b030 100%
+  );
+  /* clip via width in JS */
+  transform-origin: left center;
+}
+
+/* Moving needle indicator */
+.needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  background: #e0e0e0;
+  border-radius: 1px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+  transform: translateX(-1px);
+  transition: left 80ms linear;
+}
+
+/* Scale labels */
+.labels {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+  pointer-events: none;
+}
+
+.label {
+  font-family: 'Inter', 'SF Mono', monospace;
+  font-size: 8px;
+  color: #707074;
+  line-height: 1;
+  min-width: 14px;
+  text-align: center;
+}
+
+.labelCenter {
+  composes: label;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Center tick mark */
+.centerTick {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: #505054;
+  transform: translateX(-0.5px);
+  pointer-events: none;
+}

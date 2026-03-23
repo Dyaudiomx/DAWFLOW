@@ -1,0 +1,444 @@
+/* ============================================================
+   Group Manager Panel — Cubase 15 Pro style floating panel
+   Draggable, dark theme, matches UndoHistoryPanel pattern
+   ============================================================ */
+
+/* ---- Overlay (non-blocking, allows clicks through) ---- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4400;
+  pointer-events: none;
+}
+
+/* ---- Panel container ---- */
+
+.panel {
+  position: fixed;
+  width: 300px;
+  height: 400px;
+  min-width: 260px;
+  min-height: 300px;
+  background: #1e1e22;
+  border: 1px solid #4a4a4e;
+  border-radius: 6px;
+  box-shadow: 0 12px 56px rgba(0, 0, 0, 0.7), 0 3px 10px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: all;
+  z-index: 4401;
+  resize: both;
+}
+
+/* ---- Title bar (draggable) ---- */
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 32px;
+  background: #161619;
+  border-bottom: 1px solid #333336;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  gap: 8px;
+}
+
+.titleBar:active {
+  cursor: grabbing;
+}
+
+.titleText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #d0d0d0;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.titleSpacer {
+  flex: 1;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 80ms ease;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  color: #ccc;
+}
+
+/* ---- Content area ---- */
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: #1a1a1e;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #3e3e42;
+  border-radius: 3px;
+}
+
+/* ---- Group row ---- */
+
+.groupRow {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 30px;
+  font-size: 11px;
+  color: #c8c8c8;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  gap: 8px;
+  transition: background 60ms ease;
+  flex-shrink: 0;
+  border-bottom: 1px solid #2a2a2e;
+}
+
+.groupRow:hover {
+  background: rgba(74, 144, 217, 0.12);
+}
+
+.groupRowExpanded {
+  background: #252528;
+  border-bottom-color: transparent;
+}
+
+.colorSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.groupName {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.memberBadge {
+  font-size: 9px;
+  color: #858588;
+  background: #2e2e32;
+  padding: 1px 5px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+}
+
+.expandIcon {
+  font-size: 8px;
+  color: #555;
+  flex-shrink: 0;
+  transition: transform 120ms ease;
+  width: 10px;
+  text-align: center;
+}
+
+.expandIconOpen {
+  transform: rotate(90deg);
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 80ms ease;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.groupRow:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  color: #C43030;
+}
+
+/* ---- Expanded detail panel ---- */
+
+.groupDetail {
+  background: #1a1a1e;
+  border-bottom: 1px solid #2a2a2e;
+  padding: 8px 10px 10px;
+}
+
+/* ---- Properties toggles ---- */
+
+.propsRow {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.propToggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #858588;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid #3e3e42;
+  background: transparent;
+  transition: background 80ms, color 80ms, border-color 80ms;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.propToggle:hover {
+  background: #2a2a2e;
+  color: #c8c8c8;
+}
+
+.propToggleActive {
+  background: rgba(74, 144, 217, 0.2);
+  border-color: rgba(74, 144, 217, 0.4);
+  color: #c8c8c8;
+}
+
+/* ---- Section label within detail ---- */
+
+.detailLabel {
+  font-size: 9px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+/* ---- Track checkbox list ---- */
+
+.trackList {
+  max-height: 140px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.trackList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.trackList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trackList::-webkit-scrollbar-thumb {
+  background: #3e3e42;
+  border-radius: 2px;
+}
+
+.trackCheckRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: 10px;
+  color: #b0b0b0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trackCheckRow:hover {
+  color: #d0d0d0;
+}
+
+.trackCheckbox {
+  width: 12px;
+  height: 12px;
+  accent-color: #4A90D9;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.trackCheckName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.trackCheckColor {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ---- Delete confirmation ---- */
+
+.confirmOverlay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+
+.confirmText {
+  font-size: 10px;
+  color: #C43030;
+  flex: 1;
+}
+
+.confirmBtn {
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid;
+  transition: background 80ms, color 80ms;
+}
+
+.confirmYes {
+  color: #fff;
+  background: #C43030;
+  border-color: #C43030;
+}
+
+.confirmYes:hover {
+  background: #d83838;
+}
+
+.confirmNo {
+  color: #858588;
+  background: transparent;
+  border-color: #3e3e42;
+}
+
+.confirmNo:hover {
+  background: #2a2a2e;
+  color: #c8c8c8;
+}
+
+/* ---- Bottom bar ---- */
+
+.bottomBar {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  height: 36px;
+  background: #1a1a1e;
+  border-top: 1px solid #2e2e32;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.newGroupBtn {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #c8c8c8;
+  background: transparent;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms, color 80ms;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+
+.newGroupBtn:hover {
+  background: #2a2a2e;
+  color: #fff;
+}
+
+.newGroupBtn:active {
+  background: #333338;
+}
+
+/* ---- Inline new group input ---- */
+
+.newGroupInput {
+  flex: 1;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: #d0d0d0;
+  background: #18181a;
+  border: 1px solid #4A90D9;
+  border-radius: 3px;
+  outline: none;
+  font-family: inherit;
+  caret-color: #4A90D9;
+}
+
+.newGroupInput::placeholder {
+  color: #555;
+  font-style: italic;
+}
+
+.cancelBtn {
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #858588;
+  background: transparent;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms, color 80ms;
+  font-family: inherit;
+}
+
+.cancelBtn:hover {
+  background: #2a2a2e;
+  color: #c8c8c8;
+}
+
+/* ---- Empty state ---- */
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: #4a4a4e;
+  font-size: 11px;
+  font-style: italic;
+  padding: 24px 16px;
+}

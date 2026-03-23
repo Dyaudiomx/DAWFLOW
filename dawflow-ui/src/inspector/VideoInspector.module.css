@@ -1,0 +1,384 @@
+/* ==========================================================================
+   VideoInspector — Cubase 15 Pro Video Inspector Panel
+   Dark theme, compact layout, monospace values, section headers.
+   ========================================================================== */
+
+.videoInspector {
+  display: flex;
+  flex-direction: column;
+  background: #2c2c30;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ---- Panel header ---- */
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 8px;
+  background: #383838;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.panelIcon {
+  font-size: 13px;
+  color: #888888;
+  flex-shrink: 0;
+}
+
+.panelTitle {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #cccccc;
+  font-family: var(--font-family);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Empty state ---- */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  gap: 16px;
+}
+
+.emptyIcon {
+  font-size: 28px;
+  color: #444448;
+  line-height: 1;
+}
+
+.emptyText {
+  font-size: 11px;
+  color: #555558;
+  font-family: var(--font-family);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ---- Section header (non-collapsible) ---- */
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  background: #353538;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888888;
+  font-family: var(--font-family);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Section body ---- */
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  gap: 4px;
+  border-bottom: 1px solid #222224;
+}
+
+/* ---- Info row — label + monospace value ---- */
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  gap: 6px;
+}
+
+.infoLabel {
+  font-size: 10px;
+  color: #888888;
+  font-family: var(--font-family);
+  width: 72px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.infoValue {
+  flex: 1;
+  font-size: 10px;
+  color: #cccccc;
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.infoFilename {
+  flex: 1;
+  font-size: 10px;
+  color: #cccccc;
+  font-family: var(--font-family);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ---- Control row — label + input/toggle ---- */
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  gap: 6px;
+}
+
+.controlLabel {
+  font-size: 10px;
+  color: #888888;
+  font-family: var(--font-family);
+  width: 72px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ---- Toggle switch ---- */
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 16px;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+  background: #1a1a1a;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.toggle:hover {
+  border-color: #505050;
+}
+
+.toggleActive {
+  background: #2c5a8c;
+  border-color: #4a90d9;
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #888888;
+  transition: left 150ms ease, background 150ms ease;
+}
+
+.toggleActive .toggleKnob {
+  left: 18px;
+  background: #ffffff;
+}
+
+.toggleLabel {
+  font-size: 10px;
+  color: #cccccc;
+  font-family: var(--font-family);
+  margin-left: 6px;
+}
+
+/* ---- Editable input field ---- */
+
+.inputField {
+  width: 64px;
+  height: 18px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 2px;
+  color: #cccccc;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-align: center;
+  outline: none;
+  padding: 0 4px;
+  flex-shrink: 0;
+  -moz-appearance: textfield;
+  transition: border-color 100ms ease;
+}
+
+.inputField::-webkit-inner-spin-button,
+.inputField::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inputField:focus {
+  border-color: #4a90d9;
+}
+
+.inputField:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inputWide {
+  width: 80px;
+}
+
+.inputUnit {
+  font-size: 9px;
+  color: #666666;
+  font-family: var(--font-family);
+  flex-shrink: 0;
+  user-select: none;
+  margin-left: 2px;
+}
+
+/* ---- Offset row with negative toggle + lock ---- */
+
+.offsetControls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.negBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #3a3a3a;
+  border-radius: 2px;
+  background: #1a1a1a;
+  color: #888888;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.negBtn:hover {
+  background: #333333;
+  color: #cccccc;
+  border-color: #505050;
+}
+
+.negBtnActive {
+  background: #6e3a3a;
+  color: #ffaaaa;
+  border-color: #8a4444;
+}
+
+.lockBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 18px;
+  border: 1px solid #3a3a3a;
+  border-radius: 2px;
+  background: transparent;
+  color: #666666;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.lockBtn:hover {
+  background: #333333;
+  color: #cccccc;
+}
+
+.lockBtnActive {
+  color: #d4a72e;
+  border-color: #d4a72e;
+}
+
+/* ---- Action buttons ---- */
+
+.actionsSection {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 4px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  border: 1px solid #3a3a3a;
+  border-radius: 3px;
+  background: #2a2a2e;
+  color: #cccccc;
+  font-family: var(--font-family);
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+  padding: 0 10px;
+  gap: 6px;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.actionBtn:hover {
+  background: #404044;
+  color: #ffffff;
+  border-color: #505050;
+}
+
+.actionBtn:active {
+  background: #4a90d9;
+  color: #ffffff;
+  border-color: #4a90d9;
+}
+
+.actionBtnDanger {
+  color: #cc6666;
+  border-color: #5a3030;
+}
+
+.actionBtnDanger:hover {
+  background: #4a2020;
+  color: #ffaaaa;
+  border-color: #8a4444;
+}
+
+.actionBtnDanger:active {
+  background: #c43030;
+  color: #ffffff;
+  border-color: #c43030;
+}
+
+.actionBtnIcon {
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+}

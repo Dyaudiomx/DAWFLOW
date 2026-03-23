@@ -129,16 +129,16 @@
   color: #bbb;
 }
 
-.stateBtn.muteActive {
+.stateBtn.muteActive, .stateBtn.activeMute {
   background: var(--color-mute);
   border-color: var(--color-mute);
   color: #fff;
 }
 
-.stateBtn.soloActive {
+.stateBtn.soloActive, .stateBtn.activeSolo {
   background: var(--color-solo);
   border-color: var(--color-solo);
-  color: #1a1a1a;
+  color: #fff;
 }
 
 .stateBtn.listenActive {
@@ -147,15 +147,27 @@
   color: #fff;
 }
 
-.stateBtn.readActive {
-  background: var(--color-read);
-  border-color: var(--color-read);
+.stateBtn.readActive, .stateBtn.activeRead {
+  background: var(--color-read, #4CAF50);
+  border-color: var(--color-read, #4CAF50);
   color: #fff;
 }
 
-.stateBtn.writeActive {
-  background: var(--color-write);
-  border-color: var(--color-write);
+.stateBtn.writeActive, .stateBtn.activeWrite {
+  background: var(--color-write, #f44336);
+  border-color: var(--color-write, #f44336);
+  color: #fff;
+}
+
+.stateBtn.activeTouch {
+  background: #FF9800;
+  border-color: #FF9800;
+  color: #fff;
+}
+
+.stateBtn.activeRipple {
+  background: #7E57C2;
+  border-color: #7E57C2;
   color: #fff;
 }
 

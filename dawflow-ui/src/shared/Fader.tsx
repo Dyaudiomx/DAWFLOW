@@ -155,6 +155,8 @@ export const Fader: React.FC<FaderProps> = ({
     (e: React.PointerEvent) => {
       if (disabled || !onChange) return;
       e.preventDefault();
+      // Cmd+click (Mac) / Ctrl+click (Win) = reset to default
+      if (e.metaKey || e.ctrlKey) { onChange(DEFAULT_VALUE); return; }
       dragging.current = true;
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
 

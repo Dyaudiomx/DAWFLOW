@@ -1,0 +1,392 @@
+/* ============================================================
+   Project Settings Dialog — Cubase 15 Pro style
+   ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  width: 560px;
+  max-height: 85vh;
+  background: #333338;
+  border: 1px solid #4a4a4e;
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header bar ---- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: #2a2a2e;
+  border-bottom: 1px solid #4a4a4e;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+  letter-spacing: 0.3px;
+}
+
+.closeBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 100ms ease;
+}
+
+.closeBtn:hover {
+  color: #ccc;
+}
+
+/* ---- Tab bar ---- */
+
+.tabBar {
+  display: flex;
+  background: #2a2a2e;
+  border-bottom: 1px solid #4a4a4e;
+  flex-shrink: 0;
+  padding: 0 16px;
+  gap: 0;
+}
+
+.tab {
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 80ms ease, border-color 80ms ease;
+  user-select: none;
+  font-family: inherit;
+}
+
+.tab:hover {
+  color: #ccc;
+}
+
+.tabActive {
+  color: #e0e0e0;
+  border-bottom-color: #5b9bd5;
+}
+
+/* ---- Scrollable body ---- */
+
+.body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 280px;
+}
+
+/* ---- Sections ---- */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionHeader {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #3e3e42;
+  user-select: none;
+}
+
+/* ---- Field rows ---- */
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  width: 120px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  text-align: right;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.fieldControl {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Read-only value display ---- */
+
+.readOnlyValue {
+  font-size: 12px;
+  color: #ccc;
+  padding: 5px 8px;
+  background: #2a2a2e;
+  border: 1px solid #444;
+  border-radius: 3px;
+  flex: 1;
+  user-select: text;
+  font-family: inherit;
+}
+
+/* ---- Dropdown / select ---- */
+
+.select {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+  font-family: inherit;
+}
+
+.select:focus {
+  border-color: #5b9bd5;
+}
+
+.select:hover {
+  border-color: #777;
+}
+
+/* ---- Text input ---- */
+
+.input {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  font-family: inherit;
+}
+
+.input:focus {
+  border-color: #5b9bd5;
+}
+
+.input::placeholder {
+  color: #666;
+}
+
+/* ---- Metadata 2-column grid ---- */
+
+.metadataGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+.metadataField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metadataLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #aaa;
+  user-select: none;
+}
+
+.metadataInput {
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.metadataInput:focus {
+  border-color: #5b9bd5;
+}
+
+.metadataInput::placeholder {
+  color: #555;
+}
+
+/* Full-width metadata field (e.g. Description) */
+.metadataFieldFull {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metadataTextarea {
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.metadataTextarea:focus {
+  border-color: #5b9bd5;
+}
+
+/* ---- Info table (Project Info tab) ---- */
+
+.infoTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.infoLabel {
+  width: 140px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  text-align: right;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.infoValue {
+  font-size: 12px;
+  color: #ddd;
+  font-family: var(--font-mono, monospace);
+  user-select: text;
+}
+
+/* ---- Unit suffix ---- */
+
+.unitSuffix {
+  font-size: 11px;
+  color: #888;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ---- Error message ---- */
+
+.error {
+  padding: 4px 20px;
+  color: #e04040;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ---- Footer ---- */
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #4a4a4e;
+  background: #2e2e32;
+  flex-shrink: 0;
+}
+
+.closeFooterBtn {
+  padding: 6px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ccc;
+  background: #4a4a4e;
+  border: 1px solid #5a5a5e;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease;
+  font-family: inherit;
+}
+
+.closeFooterBtn:hover {
+  background: #555558;
+}
+
+.saveBtn {
+  padding: 6px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #eee;
+  background: #555558;
+  border: 1px solid #666;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease;
+  font-family: inherit;
+}
+
+.saveBtn:hover {
+  background: #626266;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saveBtn:disabled:hover {
+  background: #555558;
+}

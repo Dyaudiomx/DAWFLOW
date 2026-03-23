@@ -36,7 +36,13 @@ export const PluginBrowser: React.FC = () => {
     }
     setLoadingPlugin(plugin.name);
     setLoadError(null);
-    ipc.loadPlugin(selectedTrackId, plugin.name)
+
+    // Prefer unique_id for reliable loading; fall back to name
+    const loadPromise = plugin.unique_id
+      ? ipc.loadPluginById(selectedTrackId, plugin.unique_id)
+      : ipc.loadPlugin(selectedTrackId, plugin.name);
+
+    loadPromise
       .then(() => {
         useSessionStore.getState().fetchFromEngine();
         setLoadingPlugin(null);
@@ -76,6 +82,11 @@ export const PluginBrowser: React.FC = () => {
             <span className={styles.pluginType}>{p.type}</span>
             <span className={styles.pluginName}>{p.name}</span>
             <span className={styles.pluginCreator}>{p.creator}</span>
+            <button
+              className={styles.addBtn}
+              onClick={(e) => { e.stopPropagation(); handleLoadPlugin(p); }}
+              title={`Add ${p.name} to selected track`}
+            >+</button>
           </div>
         ))}
         {filtered.length === 0 && <div className={styles.empty}>No plugins found</div>}

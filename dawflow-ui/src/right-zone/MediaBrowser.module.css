@@ -1,0 +1,348 @@
+/* ==========================================================================
+   MediaBrowser — Cubase-style audio/MIDI file browser with preview
+   ========================================================================== */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-zone);
+}
+
+/* --------------------------------------------------------------------------
+   Search
+   -------------------------------------------------------------------------- */
+
+.searchSection {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--accent-blue);
+}
+
+.searchInput::placeholder {
+  color: var(--text-dim);
+}
+
+/* --------------------------------------------------------------------------
+   Folder Tree
+   -------------------------------------------------------------------------- */
+
+.folderTree {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.folderItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.folderItem:last-child {
+  border-bottom: none;
+}
+
+.folderItem:hover {
+  background: var(--bg-hover);
+}
+
+.folderActive {
+  background: var(--bg-selected);
+  color: var(--text-bright);
+}
+
+.folderChevron {
+  width: 12px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.folderIcon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.folderLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   Sort Bar
+   -------------------------------------------------------------------------- */
+
+.sortBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.sortLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.sortSelect {
+  height: 18px;
+  padding: 0 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: 9px;
+  font-family: var(--font-family);
+  outline: none;
+  cursor: pointer;
+}
+
+.sortSelect:focus {
+  border-color: var(--accent-blue);
+}
+
+.fileCount {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+/* --------------------------------------------------------------------------
+   File List
+   -------------------------------------------------------------------------- */
+
+.fileList {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.fileList::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+}
+
+.fileList::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+.fileList::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  height: 22px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  user-select: none;
+}
+
+.fileRow:hover {
+  background: var(--bg-hover);
+}
+
+.fileRowAlt {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.fileRowAlt:hover {
+  background: var(--bg-hover);
+}
+
+.fileRowSelected {
+  background: var(--accent-blue-dim);
+  color: var(--text-bright);
+}
+
+.fileRowSelected:hover {
+  background: var(--accent-blue);
+}
+
+.fileName {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMeta {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: right;
+}
+
+.fileDuration {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   Empty / Loading states
+   -------------------------------------------------------------------------- */
+
+.loadingMessage,
+.emptyMessage {
+  padding: 16px 8px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Preview Bar (fixed at bottom)
+   -------------------------------------------------------------------------- */
+
+.previewBar {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px 8px;
+  background: var(--bg-toolbar);
+  min-height: 52px;
+}
+
+.previewInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.previewName {
+  font-size: var(--font-size-sm);
+  color: var(--text-bright);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-medium);
+}
+
+.previewDuration {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.previewSize {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.previewControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.previewBtn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-button);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-size: 10px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.previewBtn:hover {
+  background: var(--bg-button-hover);
+  border-color: var(--border-medium);
+}
+
+.previewBtnActive {
+  background: var(--accent-blue-dim);
+  border-color: var(--accent-blue);
+  color: var(--text-bright);
+}
+
+.autoLabel {
+  font-size: 9px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.autoCheck {
+  width: 10px;
+  height: 10px;
+  accent-color: var(--accent-blue);
+}
+
+.volumeSlider {
+  flex: 1;
+  height: 4px;
+  min-width: 40px;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+}
+
+.previewEmpty {
+  font-size: var(--font-size-sm);
+  color: var(--text-dim);
+  text-align: center;
+  padding: 8px 0;
+}

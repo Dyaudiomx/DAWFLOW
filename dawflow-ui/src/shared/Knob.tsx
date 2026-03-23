@@ -30,11 +30,13 @@ export const Knob: React.FC<KnobProps> = ({
     (e: React.PointerEvent) => {
       if (!onChange) return;
       e.preventDefault();
+      // Cmd+click (Mac) / Ctrl+click (Win) = reset to default
+      if (e.metaKey || e.ctrlKey) { onChange(bipolar ? 0 : 0.5); return; }
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
       dragStartY.current = e.clientY;
       dragStartValue.current = value;
     },
-    [onChange, value],
+    [onChange, value, bipolar],
   );
 
   const handlePointerMove = useCallback(

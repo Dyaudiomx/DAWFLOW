@@ -251,15 +251,17 @@
 }
 
 /* CR Tab */
-.placeholder {
+.crContainer {
   padding: 8px;
 }
 
-.placeholderTitle {
-  font-size: var(--font-size-lg);
+.crTitle {
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
   font-weight: var(--font-weight-medium);
   margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .crSection {
@@ -326,38 +328,184 @@
   background: var(--bg-button-hover);
 }
 
-.crFader {
+/* Active toggle states — Dim: orange, Ref: red, Mono: yellow */
+.crToggleDim {
+  background: #e65100;
+  border-color: #ff6d00;
+  color: #fff;
+}
+
+.crToggleDim:hover {
+  background: #bf360c;
+}
+
+.crToggleRef {
+  background: #c62828;
+  border-color: #e53935;
+  color: #fff;
+}
+
+.crToggleRef:hover {
+  background: #b71c1c;
+}
+
+.crToggleMono {
+  background: #f9a825;
+  border-color: #fdd835;
+  color: #1a1a1a;
+}
+
+.crToggleMono:hover {
+  background: #f57f17;
+}
+
+/* Vertical Monitor Fader */
+.crFaderVertical {
+  padding: 6px 4px;
+}
+
+.crFaderLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.crFaderColumn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 4px;
 }
 
-.crFaderTrack {
-  flex: 1;
-  height: 4px;
-  background: var(--bg-input);
+.crFaderTrackV {
+  width: 100%;
+  height: 80px;
+  background: var(--meter-background, #18181a);
   border-radius: 2px;
   position: relative;
+  touch-action: none;
+  cursor: pointer;
+  overflow: hidden;
 }
 
-.crFaderThumb {
+.crFaderFill {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background: var(--text-secondary);
-  border-radius: 2px;
-  left: 75%;
-  top: -3px;
-  cursor: pointer;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, var(--accent-blue-dim) 0%, var(--accent-blue) 100%);
+  border-radius: 0 0 2px 2px;
+  pointer-events: none;
+}
+
+.crFaderThumbV {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--text-bright, #fff);
+  transform: translateY(50%);
+  pointer-events: none;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
 .crFaderValue {
   font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   color: var(--text-secondary);
-  min-width: 48px;
+  min-width: 52px;
+  text-align: center;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Output Level Mini-Meters */
+.crMiniMeters {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0;
+}
+
+.crMiniMeterRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.crMiniLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  width: 10px;
+  text-align: center;
+}
+
+.crMiniBar {
+  flex: 1;
+  height: 4px;
+  background: var(--meter-background, #18181a);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.crMiniFill {
+  height: 100%;
+  background: linear-gradient(to right, var(--meter-green) 0%, var(--meter-green) 60%, var(--meter-yellow) 75%, var(--meter-orange) 85%, var(--meter-red) 95%);
+  border-radius: 2px;
+  transition: width 100ms;
+}
+
+.crMiniValue {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  min-width: 30px;
   text-align: right;
+}
+
+.crPeakRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 3px;
+}
+
+.crPeakLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.crPeakValue {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+/* Talkback / Click active states */
+.crToggleTalk {
+  background: #1565c0;
+  border-color: #1e88e5;
+  color: #fff;
+}
+
+.crToggleTalk:hover {
+  background: #0d47a1;
+}
+
+.crToggleClick {
+  background: #2e7d32;
+  border-color: #43a047;
+  color: #fff;
+}
+
+.crToggleClick:hover {
+  background: #1b5e20;
 }
 
 /* Meter Tab */
@@ -374,9 +522,22 @@
 
 .masterMeter {
   display: flex;
-  gap: 3px;
+  gap: 4px;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.meterScaleV {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 8px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  height: 200px;
+  padding-right: 4px;
+  text-align: right;
+  min-width: 20px;
 }
 
 .meterChannel {
@@ -387,7 +548,7 @@
 }
 
 .meterBar {
-  width: 12px;
+  width: 16px;
   height: 200px;
   background: var(--meter-background);
   border-radius: 1px;
@@ -397,8 +558,30 @@
   flex-direction: column-reverse;
 }
 
+.meterPeakHold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--meter-peak-hold, #fff);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .meterFillGreen {
   background: linear-gradient(to top, var(--meter-green) 0%, var(--meter-green) 70%, var(--meter-yellow) 70%, var(--meter-yellow) 85%, var(--meter-orange) 85%, var(--meter-orange) 95%, var(--meter-red) 95%);
+  border-radius: 1px;
+  transition: height 100ms;
+}
+
+.meterFillYellow {
+  background: linear-gradient(to top, var(--meter-yellow) 0%, var(--meter-yellow) 80%, var(--meter-orange) 80%, var(--meter-orange) 90%, var(--meter-red) 90%);
+  border-radius: 1px;
+  transition: height 100ms;
+}
+
+.meterFillRed {
+  background: var(--meter-red);
   border-radius: 1px;
   transition: height 100ms;
 }
@@ -408,18 +591,60 @@
   color: var(--text-dim);
 }
 
-.meterScale {
+/* dB readout below meters */
+.meterReadout {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  font-size: 8px;
+  justify-content: center;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.meterReadoutChannel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meterReadoutLabel {
+  font-size: 9px;
   color: var(--text-dim);
+  font-weight: bold;
+}
+
+.meterReadoutValue {
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
-  height: 200px;
+  color: var(--text-primary);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Peak hold display */
+.meterPeakDisplay {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 0 4px;
-  margin-left: 40px;
-  margin-top: -208px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.meterPeakDisplayLabel {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.meterPeakDisplayValues {
+  display: flex;
+  gap: 8px;
+}
+
+.meterPeakDisplayValue {
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
 }
 
 .loudnessSection {
@@ -452,5 +677,25 @@
 .loudnessValue {
   font-size: var(--font-size-xs);
   font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.loudnessReset {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 4px 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 150ms, color 150ms;
+}
+
+.loudnessReset:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.1));
   color: var(--text-primary);
 }

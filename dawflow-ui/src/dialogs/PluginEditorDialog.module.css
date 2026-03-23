@@ -1,0 +1,236 @@
+/* ============================================================
+   Plugin Editor Dialog — Floating parameter editor
+   Cubase 15 Pro style, draggable panel
+   ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  /* No backdrop color — floating panel, not modal */
+  pointer-events: none;
+}
+
+.dialog {
+  position: fixed;
+  width: 540px;
+  max-height: 80vh;
+  background: #2b2b30;
+  border: 1px solid #4a4a4e;
+  border-radius: 5px;
+  box-shadow: 0 10px 48px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: all;
+  z-index: 5001;
+}
+
+/* ---- Title bar (draggable) ---- */
+
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 32px;
+  background: #242428;
+  border-bottom: 1px solid #3e3e42;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.titleBar:active {
+  cursor: grabbing;
+}
+
+.pluginTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d8d8d8;
+  letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 100ms ease;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  color: #ccc;
+}
+
+/* ---- Preset bar ---- */
+
+.presetBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #2e2e33;
+  border-bottom: 1px solid #3a3a3e;
+  flex-shrink: 0;
+}
+
+.presetLabel {
+  font-size: 10px;
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.presetSelect {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 11px;
+  color: #ccc;
+  background: #1e1e22;
+  border: 1px solid #4a4a4e;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 20px;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.presetSelect:focus {
+  border-color: #5b9bd5;
+}
+
+.presetBtn {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #aaa;
+  background: #3a3a3e;
+  border: 1px solid #4a4a4e;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease, color 80ms ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.presetBtn:hover {
+  background: #48484e;
+  color: #ddd;
+}
+
+/* ---- Parameter grid ---- */
+
+.paramGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 2px;
+  padding: 12px 10px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.paramGrid::-webkit-scrollbar { width: 5px; }
+.paramGrid::-webkit-scrollbar-track { background: #1e1e22; }
+.paramGrid::-webkit-scrollbar-thumb { background: #4a4a4e; border-radius: 3px; }
+
+/* ---- Single parameter cell ---- */
+
+.paramCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: 3px;
+  transition: background 80ms ease;
+}
+
+.paramCell:hover {
+  background: #353538;
+}
+
+.paramName {
+  font-size: 9px;
+  color: #888;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+.paramValue {
+  font-size: 9px;
+  color: #aaa;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ---- Footer bar ---- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #262629;
+  border-top: 1px solid #3a3a3e;
+  flex-shrink: 0;
+}
+
+.footerBtn {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #aaa;
+  background: #3a3a3e;
+  border: 1px solid #4a4a4e;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease, color 80ms ease;
+  font-family: inherit;
+}
+
+.footerBtn:hover {
+  background: #48484e;
+  color: #ddd;
+}
+
+.footerSpacer {
+  flex: 1;
+}
+
+/* ---- Loading / empty state ---- */
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  color: #666;
+  font-size: 11px;
+  font-style: italic;
+  grid-column: 1 / -1;
+}

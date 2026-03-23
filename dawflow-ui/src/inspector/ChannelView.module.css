@@ -44,46 +44,15 @@
   color: #1a1a1a;
 }
 
-/* EQ Display */
-.eqDisplay {
-  height: 80px;
+/* EQ Section — contains the full interactive ChannelEQ component */
+.eqSection {
+  height: 280px;
+  min-height: 200px;
   background: #1A1A1A;
   border: 1px solid #333;
-  margin: 6px 6px 0;
+  margin: 4px 4px 0;
   border-radius: 3px;
   overflow: hidden;
-}
-
-/* Slot lists — scrollable when content exceeds available space */
-.slotList {
-  display: flex;
-  flex-direction: column;
-  max-height: 200px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.slotList::-webkit-scrollbar { width: 5px; }
-.slotList::-webkit-scrollbar-track { background: #1a1a1a; }
-.slotList::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-
-.slot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  height: 26px;
-  border-bottom: 1px solid #272727;
-  cursor: pointer;
-  transition: background 80ms;
-}
-
-.slot:hover { background: #383838; }
-
-.slotEmpty {
-  font-size: 11px;
-  color: #555;
-  width: 100%;
 }
 
 /* ===== RESIZABLE DIVIDER ===== */
@@ -188,7 +157,7 @@
 .stripBtnSm:hover { background: #4A4A4A; }
 
 .btnMuteActive { background: var(--color-mute) !important; color: #1a1a1a !important; border-color: var(--color-mute) !important; }
-.btnSoloActive { background: var(--color-solo) !important; color: #1a1a1a !important; border-color: var(--color-solo) !important; }
+.btnSoloActive { background: var(--color-solo) !important; color: #fff !important; border-color: var(--color-solo) !important; }
 .recActive { background: var(--color-record) !important; color: #fff !important; border-color: var(--color-record) !important; }
 .monActive { background: var(--color-monitor) !important; color: #1a1a1a !important; border-color: var(--color-monitor) !important; }
 

@@ -57,9 +57,19 @@ export const Toolbar: React.FC = () => {
     rightZoneVisible, toggleRightZone,
     lowerZoneVisible, toggleLowerZone,
     autoScrollEnabled,
+    setAutoScrollEnabled,
+    globalAutomationState,
+    setGlobalAutomationState,
+    rippleMode,
+    setRippleMode,
   } = useUIStore();
 
   const transport = useTransportStore();
+  const tracks = useSessionStore((s) => s.tracks);
+  const anyMuted = tracks.some(t => t.muted);
+  const anySoloed = tracks.some(t => t.solo);
+
+  const [cdcEnabled, setCdcEnabled] = React.useState(false);
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -112,7 +122,8 @@ export const Toolbar: React.FC = () => {
     <div className={styles.toolbar}>
 
       {/* Home */}
-      <button className={styles.btn} title="Home">
+      <button className={styles.btn} title="Home"
+        onClick={() => ipc.transportLocate(0)}>
         <SvgIcon name="home" size={16} />
       </button>
 
@@ -133,7 +144,8 @@ export const Toolbar: React.FC = () => {
       <div className={styles.separator} />
 
       {/* Configurations */}
-      <button className={`${styles.btn} ${styles.dropdownBtn}`} title="Configurations">
+      <button className={`${styles.btn} ${styles.dropdownBtn}`} title="Open Project Settings"
+        onClick={() => useUIStore.getState().setProjectSettingsDialogOpen(true)}>
         Configurations
         <span className={styles.dropdownArrow} />
       </button>
@@ -142,34 +154,88 @@ export const Toolbar: React.FC = () => {
 
       {/* Media & Windows icons */}
       <div className={styles.section}>
-        <button className={styles.btn} title="Open MediaBay (F5)"><SvgIcon name="mediabay" size={16} /></button>
-        <button className={styles.btn} title="Open Pool"><SvgIcon name="pool" size={16} /></button>
-        <button className={styles.btn} title="Open MixConsole (F3)"><SvgIcon name="mixconsole" size={16} /></button>
-        <button className={styles.btn} title="Open Control Room"><SvgIcon name="controlroom" size={16} /></button>
+        <button className={styles.btn} title="Open MediaBay (F5)"
+          onClick={() => { const ui = useUIStore.getState(); if (!ui.rightZoneVisible) ui.toggleRightZone(); ui.setRightZoneTab('media'); }}>
+          <SvgIcon name="mediabay" size={16} />
+        </button>
+        <button className={styles.btn} title="Open Pool"
+          onClick={() => { const ui = useUIStore.getState(); if (!ui.rightZoneVisible) ui.toggleRightZone(); ui.setRightZoneTab('media'); }}>
+          <SvgIcon name="pool" size={16} />
+        </button>
+        <button className={styles.btn} title="Open MixConsole (F3)"
+          onClick={() => { const ui = useUIStore.getState(); if (!ui.lowerZoneVisible) ui.toggleLowerZone(); ui.setLowerZoneTab('mixconsole'); }}>
+          <SvgIcon name="mixconsole" size={16} />
+        </button>
+        <button className={styles.btn} title="Export Audio Mixdown"
+          onClick={() => useUIStore.getState().setExportDialogOpen(true)}
+          style={{ fontWeight: 600, fontSize: 11, letterSpacing: '0.3px' }}>
+          Export
+        </button>
+        <button className={styles.btn} title="Open Control Room"
+          onClick={() => { const ui = useUIStore.getState(); if (!ui.rightZoneVisible) ui.toggleRightZone(); ui.setRightZoneTab('cr'); }}>
+          <SvgIcon name="controlroom" size={16} />
+        </button>
       </div>
 
       <div className={styles.separator} />
 
-      {/* State Buttons */}
+      {/* State Buttons — Cubase style: highlight when any track has state, click to clear all */}
       <div className={styles.section}>
-        <button className={styles.stateBtn} title="Unmute All Tracks"
-          onClick={() => { const s = useSessionStore.getState(); s.tracks.forEach(t => { if (t.muted) s.setTrackMute(t.id, false); }); }}>M</button>
-        <button className={styles.stateBtn} title="Unsolo All Tracks"
-          onClick={() => { const s = useSessionStore.getState(); s.tracks.forEach(t => { if (t.solo) s.setTrackSolo(t.id, false); }); }}>S</button>
-        <button className={styles.stateBtn} title="Listen">L</button>
-        <button className={styles.stateBtn} title="Read">R</button>
-        <button className={styles.stateBtn} title="Write">W</button>
-        <button className={styles.stateBtn} title="Automation">A</button>
+        <button
+          className={`${styles.stateBtn} ${anyMuted ? styles.activeMute : ''}`}
+          title="Unmute All Tracks (lit when any track is muted)"
+          onClick={() => { const s = useSessionStore.getState(); s.tracks.forEach(t => { if (t.muted) s.setTrackMute(t.id, false); }); }}
+        >M</button>
+        <button
+          className={`${styles.stateBtn} ${anySoloed ? styles.activeSolo : ''}`}
+          title="Unsolo All Tracks (lit when any track is soloed)"
+          onClick={() => { const s = useSessionStore.getState(); s.tracks.forEach(t => { if (t.solo) s.setTrackSolo(t.id, false); }); }}
+        >S</button>
+        <button className={styles.stateBtn} title="Deactivate Listen on All Tracks"
+          onClick={() => {
+            const s = useSessionStore.getState();
+            s.tracks.forEach(t => {
+              ipc.call('daw.set_track_listen', { track_id: t.id, listen: false }).catch(() => {});
+            });
+          }}>L</button>
+        <button className={`${styles.stateBtn} ${globalAutomationState === 'read' ? styles.activeRead : ''}`} title="Read Automation on All Tracks"
+          onClick={() => {
+            const newMode = globalAutomationState === 'read' ? 'off' : 'read';
+            setGlobalAutomationState(newMode);
+            const s = useSessionStore.getState();
+            s.tracks.forEach(t => { ipc.setAutomationMode(t.id, newMode).catch(() => {}); });
+          }}>R</button>
+        <button className={`${styles.stateBtn} ${globalAutomationState === 'write' ? styles.activeWrite : ''}`} title="Write Automation on All Tracks"
+          onClick={() => {
+            const newMode = globalAutomationState === 'write' ? 'off' : 'write';
+            setGlobalAutomationState(newMode);
+            const s = useSessionStore.getState();
+            s.tracks.forEach(t => { ipc.setAutomationMode(t.id, newMode).catch(() => {}); });
+          }}>W</button>
+        <button className={`${styles.stateBtn} ${globalAutomationState === 'touch' ? styles.activeTouch : ''}`} title="Touch Automation on All Tracks"
+          onClick={() => {
+            const newMode = globalAutomationState === 'touch' ? 'off' : 'touch';
+            setGlobalAutomationState(newMode);
+            const s = useSessionStore.getState();
+            s.tracks.forEach(t => { ipc.setAutomationMode(t.id, newMode).catch(() => {}); });
+          }}>A</button>
       </div>
 
       <div className={styles.separator} />
 
       {/* Auto-scroll, CDC */}
       <div className={styles.section}>
-        <button className={`${styles.btn} ${autoScrollEnabled ? styles.active : ''}`} title="Auto-Scroll">
+        <button className={`${styles.btn} ${autoScrollEnabled ? styles.active : ''}`} title="Auto-Scroll"
+          onClick={() => setAutoScrollEnabled(!autoScrollEnabled)}>
           <SvgIcon name="autoscroll" size={16} />
         </button>
-        <button className={styles.btn} title="Constrain Delay Compensation">
+        <button className={`${styles.btn} ${cdcEnabled ? styles.active : ''}`} title="Constrain Delay Compensation"
+          onClick={() => {
+            const next = !cdcEnabled;
+            setCdcEnabled(next);
+            ipc.call('daw.set_constrain_delay_compensation', { enabled: next })
+              .catch((e) => console.warn('[IPC] set_constrain_delay_compensation:', e));
+          }}>
           <SvgIcon name="cdc" size={16} />
         </button>
       </div>
@@ -236,6 +302,20 @@ export const Toolbar: React.FC = () => {
           ))}
         </select>
       </div>
+
+      <div className={styles.separator} />
+
+      {/* Ripple Edit Mode */}
+      <button
+        className={`${styles.stateBtn} ${rippleMode !== 'off' ? styles.activeRipple : ''}`}
+        title={`Ripple Edit: ${rippleMode === 'off' ? 'Off' : rippleMode === 'one' ? 'One Track' : 'All Tracks'}`}
+        onClick={() => {
+          const next = rippleMode === 'off' ? 'one' : rippleMode === 'one' ? 'all' : 'off';
+          setRippleMode(next);
+        }}
+      >
+        {rippleMode === 'off' ? 'R' : rippleMode === 'one' ? 'R1' : 'R*'}
+      </button>
 
       <div className={styles.separator} />
 

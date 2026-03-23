@@ -86,6 +86,36 @@
   white-space: nowrap;
 }
 
+/* ---- Add button (+) ---- */
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #666;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.pluginRow:hover .addBtn {
+  opacity: 1;
+}
+
+.addBtn:hover {
+  background: #4A90D9;
+  color: #fff;
+}
+
 .empty {
   padding: 20px;
   text-align: center;

@@ -1,6 +1,6 @@
 export type TimeFormat = 'barsBeats' | 'seconds' | 'timecode' | 'samples';
 
-export type RecordMode = 'normal' | 'merge' | 'replace' | 'punchOnLane';
+export type RecordMode = 'non_layered' | 'layered' | 'sound_on_sound';
 
 export type AutomationMode = 'touch' | 'autoLatch' | 'crossOver';
 

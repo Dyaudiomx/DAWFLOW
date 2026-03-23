@@ -114,11 +114,12 @@
 
 /* Active states */
 .btnMuteActive { background: var(--color-mute) !important; color: #1a1a1a !important; border-color: var(--color-mute) !important; }
-.btnSoloActive { background: var(--color-solo) !important; color: #1a1a1a !important; border-color: var(--color-solo) !important; }
+.btnSoloActive { background: var(--color-solo) !important; color: #fff !important; border-color: var(--color-solo) !important; }
 .btnReadActive { background: var(--color-read) !important; color: #fff !important; border-color: var(--color-read) !important; }
 .btnWriteActive { background: var(--color-write) !important; color: #fff !important; border-color: var(--color-write) !important; }
 .btnRecActive { background: var(--color-record) !important; color: #fff !important; border-color: var(--color-record) !important; }
 .btnMonActive { background: var(--color-monitor) !important; color: #1a1a1a !important; border-color: var(--color-monitor) !important; }
+.btnPhaseActive { background: #E57C23 !important; color: #fff !important; border-color: #E57C23 !important; }
 
 /* ---- PAN BAR with blue trail ---- */
 
@@ -176,6 +177,156 @@
   font-weight: 600;
   line-height: 1;
   margin-top: 2px;
+}
+
+/* ---- SENDS SECTION ---- */
+
+.sendsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 16px;
+  background: #262626;
+  border: none;
+  border-top: 1px solid #1E1E1E;
+  border-bottom: 1px solid #1E1E1E;
+  color: #777;
+  font-size: 9px;
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.04em;
+  transition: background 80ms, color 80ms;
+  flex-shrink: 0;
+}
+
+.sendsToggle:hover {
+  background: #2E2E2E;
+  color: #aaa;
+}
+
+.sendsToggleOpen {
+  color: #4A90D9;
+}
+
+.sendsToggleOpen:hover {
+  color: #6AB0F9;
+}
+
+.sendsBody {
+  display: flex;
+  flex-direction: column;
+  background: #222;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sendRow {
+  display: flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 4px;
+  gap: 3px;
+  border-bottom: 1px solid #1A1A1A;
+}
+
+.sendEnableDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #555;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 80ms;
+}
+
+.sendEnableDot:hover {
+  filter: brightness(1.3);
+}
+
+.sendEnabled {
+  background: #4CAF50;
+  box-shadow: 0 0 3px rgba(76, 175, 80, 0.5);
+}
+
+.sendPreDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sendPreFader {
+  background: #E57C23;
+  box-shadow: 0 0 2px rgba(229, 124, 35, 0.4);
+}
+
+.sendPostFader {
+  background: #4A90D9;
+  box-shadow: 0 0 2px rgba(74, 144, 217, 0.4);
+}
+
+.sendLabel {
+  font-size: 8px;
+  font-family: var(--font-family);
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  width: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.sendFaderWrap {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.sendsEmpty {
+  font-size: 8px;
+  font-family: var(--font-family);
+  color: #555;
+  text-align: center;
+  padding: 3px 0;
+  line-height: 1;
+}
+
+/* ---- TRIM KNOB ---- */
+
+.trimSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 4px 2px;
+  flex-shrink: 0;
+  background: #262626;
+  border-bottom: 1px solid #1E1E1E;
+  gap: 1px;
+}
+
+.trimLabel {
+  font-size: 8px;
+  font-family: var(--font-family);
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.trimValue {
+  font-size: 8px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: #999;
+  line-height: 1;
 }
 
 /* ---- FADER + METER ---- */
@@ -262,12 +413,40 @@
   flex-shrink: 0;
 }
 
+/* ---- MASTER SEPARATOR ---- */
+
+.masterSeparator {
+  width: 2px;
+  min-width: 2px;
+  background: #555;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+/* ---- MASTER STRIP ---- */
+
+.masterStrip {
+  width: 110px;
+  min-width: 110px;
+  background: #333;
+  border-left: none;
+}
+
+/* ---- dB PEAK clickable ---- */
+
+.dbPeak {
+  cursor: pointer;
+}
+.dbPeak:hover {
+  color: #aaa;
+}
+
 /* ---- REAL METER (driven by engine strip_meter events) ---- */
 
 .meterReal {
-  width: 4px;
+  width: 5px;
   height: 100%;
-  background: var(--surface-3, #1a1a1a);
+  background: #0c0c0c;
   border-radius: 1px;
   overflow: hidden;
   display: flex;
@@ -276,6 +455,17 @@
 
 .meterRealFill {
   width: 100%;
-  background: linear-gradient(to top, #4CAF50 0%, #4CAF50 70%, #FFC107 70%, #FFC107 85%, #FF5722 85%, #FF5722 100%);
-  transition: height 80ms linear;
+  background: linear-gradient(to top,
+    #2d8a3e 0%,
+    #3aaf4c 30%,
+    #5ec26a 55%,
+    #a8d44a 70%,
+    #d4c030 78%,
+    #e8a825 84%,
+    #e07020 90%,
+    #d63030 95%,
+    #cc2020 100%
+  );
+  transition: height 120ms ease-out;
+  will-change: height;
 }

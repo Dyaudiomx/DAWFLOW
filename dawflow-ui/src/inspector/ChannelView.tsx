@@ -3,6 +3,9 @@ import type { Track } from '../types/track';
 import { useSessionStore } from '../stores/session';
 import { useUIStore } from '../stores/ui';
 import { Fader } from '../shared/Fader';
+import { ChannelEQ } from '../components/ChannelEQ';
+import { InsertSlots } from './InsertSlots';
+import { SendSlots } from './SendSlots';
 import { InspectorSection } from './InspectorSection';
 import styles from './ChannelView.module.css';
 
@@ -93,41 +96,19 @@ const ChannelContent: React.FC<{ track: Track }> = ({ track }) => {
           {track.name}
         </div>
 
-        {/* EQ Curve display */}
-        <div className={styles.eqDisplay}>
-          <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4A90D9" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#4A90D9" stopOpacity="0.05" />
-              </linearGradient>
-            </defs>
-            <line x1="0" y1="40" x2="200" y2="40" stroke="#444" strokeWidth="0.5" />
-            <line x1="0" y1="20" x2="200" y2="20" stroke="#333" strokeWidth="0.3" strokeDasharray="2,4" />
-            <line x1="0" y1="60" x2="200" y2="60" stroke="#333" strokeWidth="0.3" strokeDasharray="2,4" />
-            <path
-              d="M0,40 C20,40 30,35 50,32 C70,29 80,28 100,30 C120,32 140,38 160,36 C180,34 190,38 200,40"
-              fill="url(#eqGrad)" stroke="#4A90D9" strokeWidth="1.5"
-            />
-          </svg>
+        {/* EQ — Real interactive 6-band parametric EQ */}
+        <div className={styles.eqSection}>
+          <ChannelEQ trackId={track.id} compact />
         </div>
 
-        {/* Inserts — show only first empty slot (Cubase behavior) */}
+        {/* Inserts — Real wired insert slots with plugin browser */}
         <InspectorSection title="Inserts" icon="⚡" defaultOpen>
-          <div className={styles.slotList}>
-            <div className={styles.slot}>
-              <span className={styles.slotEmpty}>—</span>
-            </div>
-          </div>
+          <InsertSlots trackId={track.id} />
         </InspectorSection>
 
-        {/* Sends — show only first empty slot */}
+        {/* Sends — Real wired send slots with routing */}
         <InspectorSection title="Sends" icon="↗" defaultOpen>
-          <div className={styles.slotList}>
-            <div className={styles.slot}>
-              <span className={styles.slotEmpty}>—</span>
-            </div>
-          </div>
+          <SendSlots trackId={track.id} />
         </InspectorSection>
       </div>
 

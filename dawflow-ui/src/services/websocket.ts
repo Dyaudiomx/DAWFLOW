@@ -13,6 +13,7 @@
 import { useTransportStore } from '../stores/transport';
 import { useSessionStore } from '../stores/session';
 import { useConnectionStore } from '../stores/connection';
+import { useMeterStore } from '../stores/meters';
 import { ipc } from './ipc';
 
 const JSON_INF = 1.0e+128;
@@ -61,33 +62,63 @@ export function connectToEngine(url?: string) {
       const start = Number(data.start_samples ?? 0);
       const end = Number(data.end_samples ?? 0);
       const sr = useSessionStore.getState().sampleRate || 48000;
+      const tempo = useTransportStore.getState().tempo || 120;
+      const bps = tempo / 60;
+      const toBBT = (sec: number) => {
+        const totalBeats = sec * bps;
+        const bar = Math.floor(totalBeats / 4) + 1;
+        const beat = Math.floor(totalBeats % 4) + 1;
+        const tick = Math.floor((totalBeats % 1) * 480);
+        return `${bar}.${beat}.${tick}`;
+      };
       if (end > start) {
+        const startSec = start / sr;
+        const endSec = end / sr;
         useTransportStore.setState({
-          leftLocator: start / sr,
-          rightLocator: end / sr,
-          leftLocatorDisplay: (start / sr).toFixed(1) + 's',
-          rightLocatorDisplay: (end / sr).toFixed(1) + 's',
+          leftLocator: startSec,
+          rightLocator: endSec,
+          leftLocatorDisplay: toBBT(startSec),
+          rightLocatorDisplay: toBBT(endSec),
         });
       }
     }).catch(() => {});
 
-    // Poll for track list changes every 3 seconds
-    pollTimer = setInterval(() => {
-      if (ipcEnabled) {
-        useSessionStore.getState().fetchFromEngine();
-      }
-    }, 3000);
+    // Sync metronome state — turn it off on startup (UI defaults to off)
+    ipc.call('daw.set_click_enabled', { enabled: false }).then(() => {
+      useTransportStore.setState({ metronomeEnabled: false });
+    }).catch(() => {});
 
-    // Poll CPU load every 2 seconds
-    setInterval(() => {
+    // Set preferred audio output device (Universal Audio if available)
+    ipc.call('daw.backend.enumerate_output_devices').then((raw: unknown) => {
+      const data = raw as Record<string, unknown>;
+      const devices = (data.devices || data.output_devices || []) as Array<{ name: string; id?: string }>;
+      const ua = devices.find(d => d.name && (
+        d.name.toLowerCase().includes('universal audio') ||
+        d.name.toLowerCase().includes('ua ') ||
+        d.name.toLowerCase().includes('apollo')
+      ));
+      if (ua) {
+        ipc.call('daw.backend.set_output_device', { device_name: ua.name })
+          .then(() => console.log('[DAWFLOW] Set output device:', ua.name))
+          .catch(() => {});
+      }
+    }).catch(() => {});
+
+    // Poll CPU load every 5 seconds (light query)
+    pollTimer = setInterval(() => {
       if (ipcEnabled) {
         ipc.getCpuLoad().then((info) => {
           const load = (info as { cpu_load_percent?: number; cpu_load?: number }).cpu_load_percent
             ?? (info as { cpu_load?: number }).cpu_load ?? 0;
           useTransportStore.getState().setCpuLoad(Math.min(100, load));
-        }).catch((e) => console.warn('[IPC]', e));
+        }).catch(() => {});
       }
-    }, 2000);
+    }, 5000);
+
+    // NOTE: We do NOT poll tracks/regions/session on a timer anymore.
+    // State is fetched once on connect and then on-demand after user actions
+    // (add track, delete, record stop, etc). This prevents the engine's
+    // responses from overwriting optimistic local state updates.
   };
 
   ws.onmessage = (event) => {
@@ -197,10 +228,12 @@ function handleMessage(msg: ArdourMessage) {
         useTransportStore.getState().updateFromEngine({ playing: true });
       } else {
         useTransportStore.getState().updateFromEngine({ playing: false, recording: false });
-        // Refresh regions after recording stops (short delay for engine to finalize)
-        setTimeout(() => {
-          useSessionStore.getState().fetchFromEngine();
-        }, 500);
+        // Refresh regions after playback/recording stops.
+        // Ardour needs time to commit recorded audio to disk and create regions.
+        // Two fetches: quick one for fast commits, delayed one for slow commits.
+        // The debounce in fetchFromEngine prevents redundant calls within 1s.
+        setTimeout(() => useSessionStore.getState().fetchFromEngine(), 300);
+        setTimeout(() => useSessionStore.getState().fetchFromEngine(), 2000);
       }
       break;
     }
@@ -208,14 +241,8 @@ function handleMessage(msg: ArdourMessage) {
     case 'transport_record': {
       if (val[0]) {
         useTransportStore.getState().updateFromEngine({ recording: true, playing: true });
-        // Poll regions frequently during recording so user sees regions grow
-        const recPoll = setInterval(() => {
-          if (!useTransportStore.getState().recording) {
-            clearInterval(recPoll);
-            return;
-          }
-          useSessionStore.getState().fetchFromEngine();
-        }, 1000);
+        // No polling during recording — CenterZone shows a fake "Recording..." visual.
+        // Regions are fetched on transport stop (transport_roll false handler above).
       } else {
         useTransportStore.getState().updateFromEngine({ recording: false });
       }
@@ -229,7 +256,9 @@ function handleMessage(msg: ArdourMessage) {
 
     case 'transport_time': {
       const pos = val[0] as number;
-      useTransportStore.getState().setPosition(pos);
+      // Use updateFromEngine (not setPosition) to respect the user-action debounce.
+      // This prevents the engine's old position from overwriting a user's seek.
+      useTransportStore.getState().updateFromEngine({ position: pos });
       break;
     }
 
@@ -301,8 +330,14 @@ function handleMessage(msg: ArdourMessage) {
       const track = session.tracks[stripId];
       if (track) {
         // Convert dB to 0-1 range: -60dB = 0, 0dB = 1, clamp
-        const normalized = Math.max(0, Math.min(1, (level + 60) / 60));
-        session.setTrackMeterLevel(track.id, normalized);
+        const newLevel = Math.max(0, Math.min(1, (level + 60) / 60));
+        const currentLevel = useMeterStore.getState().levels[track.id] ?? 0;
+        // Ballistic metering: instant attack, slow decay (~1.5s full falloff)
+        const displayLevel = newLevel >= currentLevel
+          ? newLevel
+          : currentLevel * 0.92 + newLevel * 0.08;
+        // Write to dedicated meter store — does NOT touch the tracks array
+        useMeterStore.getState().setLevel(track.id, displayLevel < 0.005 ? 0 : displayLevel);
       }
       break;
     }

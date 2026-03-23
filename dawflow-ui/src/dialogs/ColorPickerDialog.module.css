@@ -1,0 +1,110 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  background: #2d2d2d;
+  border: 1px solid #4a4a4a;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 420px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddd;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(16, 24px);
+  gap: 3px;
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.swatch:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.swatchSelected {
+  border-color: #4fc3f7;
+  box-shadow: 0 0 6px rgba(79, 195, 247, 0.6);
+}
+
+.customInput {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.customInput input {
+  background: #1e1e1e;
+  border: 1px solid #4a4a4a;
+  color: #ddd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: 100px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.customInput input:focus {
+  outline: none;
+  border-color: #5b9bd5;
+}
+
+.preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #4a4a4a;
+}
+
+.footer {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn {
+  padding: 4px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: opacity 0.15s ease;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+.btnCancel {
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+  color: #ccc;
+}
+
+.btnApply {
+  background: #5b9bd5;
+  border: none;
+  color: #fff;
+}

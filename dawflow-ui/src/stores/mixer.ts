@@ -18,12 +18,20 @@ interface MixerStore {
   eqCurvesVisible: boolean;
   channelOverviewVisible: boolean;
 
+  // Master bus metering (polled via IPC)
+  masterMeterL: number;
+  masterMeterR: number;
+  masterPeakL: number;
+  masterPeakR: number;
+
   setMeterLevel: (id: string, level: [number, number]) => void;
   setPeakLevel: (id: string, peak: [number, number]) => void;
   toggleRack: (rack: RackType) => void;
   setChannelWidth: (width: 'narrow' | 'wide') => void;
   toggleMeterBridge: () => void;
   updateChannels: (channels: MixerChannel[]) => void;
+  setMasterMeter: (l: number, r: number) => void;
+  resetMasterPeak: () => void;
 }
 
 export type { MixerStore };
@@ -35,6 +43,11 @@ export const useMixerStore = create<MixerStore>((set) => ({
   meterBridgeVisible: false,
   eqCurvesVisible: false,
   channelOverviewVisible: false,
+
+  masterMeterL: 0,
+  masterMeterR: 0,
+  masterPeakL: 0,
+  masterPeakR: 0,
 
   setMeterLevel: (id, level) => set((s) => ({
     channels: s.channels.map((c) => c.id === id ? { ...c, meterLevel: level } : c)
@@ -50,4 +63,11 @@ export const useMixerStore = create<MixerStore>((set) => ({
   setChannelWidth: (width) => set({ channelWidth: width }),
   toggleMeterBridge: () => set((s) => ({ meterBridgeVisible: !s.meterBridgeVisible })),
   updateChannels: (channels) => set({ channels }),
+  setMasterMeter: (l, r) => set((s) => ({
+    masterMeterL: l,
+    masterMeterR: r,
+    masterPeakL: Math.max(s.masterPeakL, l),
+    masterPeakR: Math.max(s.masterPeakR, r),
+  })),
+  resetMasterPeak: () => set({ masterPeakL: 0, masterPeakR: 0 }),
 }));

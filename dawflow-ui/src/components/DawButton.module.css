@@ -1,0 +1,125 @@
+/* ==========================================================================
+   DawButton — Cubase 15 Pro toggle/momentary button
+   Used for M/S/R/Monitor/Automation everywhere in the DAW.
+   ========================================================================== */
+
+.dawButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  line-height: 1;
+  outline: none;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.dawButton:hover:not(.disabled) {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.dawButton:active:not(.disabled) {
+  background: var(--bg-button-active);
+}
+
+/* ---- Sizes ---- */
+
+.xs {
+  height: 16px;
+  min-width: 16px;
+  padding: 0 3px;
+  font-size: 9px;
+}
+
+.sm {
+  height: var(--button-sm);
+  min-width: var(--button-sm);
+  padding: 0 4px;
+  font-size: var(--font-size-xs);
+}
+
+.md {
+  height: var(--button-height);
+  min-width: var(--button-height);
+  padding: 0 8px;
+  font-size: var(--font-size-sm);
+}
+
+/* ---- Disabled ---- */
+
+.disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---- Variant: default (active = accent blue) ---- */
+
+.default.active {
+  background: var(--accent-blue);
+  color: var(--text-bright);
+  border-color: var(--accent-blue);
+}
+
+/* ---- Variant: mute (active = orange) ---- */
+
+.mute.active {
+  background: var(--color-mute);
+  color: #fff;
+  border-color: var(--color-mute);
+  box-shadow: 0 0 4px rgba(212, 123, 46, 0.35);
+}
+
+/* ---- Variant: solo (active = yellow) ---- */
+
+.solo.active {
+  background: var(--color-solo);
+  color: #1a1a1a;
+  border-color: var(--color-solo);
+  box-shadow: 0 0 4px rgba(200, 184, 48, 0.35);
+}
+
+/* ---- Variant: record (active = red) ---- */
+
+.record.active {
+  background: var(--color-record);
+  color: #fff;
+  border-color: var(--color-record);
+  box-shadow: 0 0 4px rgba(196, 48, 48, 0.4);
+}
+
+/* ---- Variant: monitor (active = orange) ---- */
+
+.monitor.active {
+  background: var(--color-monitor);
+  color: #fff;
+  border-color: var(--color-monitor);
+  box-shadow: 0 0 4px rgba(212, 123, 46, 0.35);
+}
+
+/* ---- Variant: automation (R/W, active = green/red) ---- */
+
+.automation {
+  /* Default inactive styling same as base */
+}
+
+.automation.active {
+  background: var(--color-read);
+  color: #fff;
+  border-color: var(--color-read);
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.35);
+}

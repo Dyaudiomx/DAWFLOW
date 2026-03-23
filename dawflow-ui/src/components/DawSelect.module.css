@@ -1,0 +1,106 @@
+/* ==========================================================================
+   DawSelect — Cubase 15 Pro themed dropdown select
+   Dark recessed input with subtle border, matching the DAW chrome.
+   ========================================================================== */
+
+.dawSelect {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+/* ---- Trigger / display button ---- */
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+  height: var(--button-height);
+  padding: 0 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.trigger:hover {
+  border-color: var(--border-medium);
+}
+
+.trigger:focus {
+  border-color: var(--accent-blue);
+}
+
+.triggerLabel {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerArrow {
+  font-size: 8px;
+  line-height: 1;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.open .triggerArrow {
+  transform: rotate(180deg);
+}
+
+/* ---- Dropdown menu ---- */
+
+.menu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: var(--bg-zone);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  z-index: 200;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+/* ---- Individual option ---- */
+
+.option {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background var(--transition-fast);
+}
+
+.option:hover {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+
+.optionSelected {
+  background: var(--bg-selected);
+  color: var(--text-bright);
+}

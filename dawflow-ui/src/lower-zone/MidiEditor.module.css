@@ -1,0 +1,649 @@
+/* ==========================================================================
+   MidiEditor — Cubase 15 Pro Key Editor
+   Full dark theme with piano roll, stackable CC lanes, tool popup.
+   ========================================================================== */
+
+/* ---- Root Container ---- */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  overflow: hidden;
+  font-family: var(--font-family);
+  outline: none;
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  height: 28px;
+  min-height: 28px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.toolBtn {
+  height: 22px;
+  min-width: 26px;
+  padding: 0 5px;
+  background: #3a3a3a;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #999;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 100ms, color 100ms;
+  user-select: none;
+}
+
+.toolBtn:hover {
+  background: #454545;
+  color: #ccc;
+}
+
+.toolBtnActive {
+  background: #4A90D9;
+  color: #fff;
+  border-color: #3a78b8;
+}
+
+.toolBtnActive:hover {
+  background: #5BA0E9;
+}
+
+.separator {
+  width: 1px;
+  height: 16px;
+  background: #3a3a3a;
+  margin: 0 6px;
+}
+
+.selectDropdown {
+  height: 22px;
+  padding: 0 6px;
+  background: #333;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #aaa;
+  font-size: 10px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23888' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+}
+
+.selectDropdown:hover {
+  background-color: #3a3a3a;
+}
+
+.snapToggle {
+  composes: toolBtn;
+  font-size: 9px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.zoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+}
+
+.zoomBtn {
+  composes: toolBtn;
+  width: 22px;
+  min-width: 22px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toolLabel {
+  font-size: 10px;
+  color: #666;
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ---- Ruler ---- */
+.ruler {
+  height: 22px;
+  min-height: 22px;
+  background: #252525;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.rulerCorner {
+  width: 61px;
+  min-width: 61px;
+  background: #252525;
+  border-right: 1px solid #3a3a3a;
+}
+
+.rulerTrack {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.rulerBar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  color: #888;
+  border-left: 1px solid #4a4a4a;
+  padding-left: 4px;
+  pointer-events: none;
+}
+
+.rulerBeat {
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  border-left: 1px solid #333;
+}
+
+/* ---- Editor Area ---- */
+.editorArea {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---- Piano Keys ---- */
+.pianoKeys {
+  width: 60px;
+  min-width: 60px;
+  background: #2a2a2a;
+  border-right: 1px solid #3a3a3a;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pianoInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.whiteKey {
+  height: 14px;
+  background: #3a3a3a;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 9px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  padding-left: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: background 60ms;
+}
+
+.whiteKey:hover { background: #454545; }
+
+.blackKey {
+  height: 14px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #151515;
+  font-size: 9px;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  padding-left: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: background 60ms;
+}
+
+.blackKey:hover { background: #262626; }
+
+.blackKeyOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 36px;
+  height: 100%;
+  background: #1a1a1a;
+  border-radius: 0 2px 2px 0;
+  pointer-events: none;
+}
+
+.cLabel {
+  color: #aaa;
+  font-weight: 600;
+  font-size: 9px;
+}
+
+/* ---- Note Grid ---- */
+.noteGrid {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.noteGridInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.gridRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  border-bottom: 1px solid #222;
+}
+
+.gridRowWhite { background: #1e1e1e; }
+.gridRowBlack { background: #191919; }
+.gridRowC { border-bottom: 1px solid #333; }
+
+.gridLineBar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #333;
+  pointer-events: none;
+}
+
+.gridLineBeat {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #252525;
+  pointer-events: none;
+}
+
+.gridLineSub {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #1f1f1f;
+  pointer-events: none;
+}
+
+/* ---- Note Blocks ---- */
+.noteBlock {
+  position: absolute;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  transition: box-shadow 80ms;
+  z-index: 2;
+  min-width: 4px;
+}
+
+.noteBlock:hover {
+  z-index: 3;
+  filter: brightness(1.12);
+}
+
+.noteBlockSelected {
+  border: 1px solid #4fc3f7;
+  box-shadow: 0 0 6px rgba(79, 195, 247, 0.45);
+  z-index: 4;
+}
+
+.noteResizeHandle {
+  position: absolute;
+  top: 0;
+  right: -1px;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 5;
+}
+
+.noteLabel {
+  position: absolute;
+  left: 3px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* ---- Bottom Lanes (Velocity / CC) ---- */
+.velocityDivider {
+  height: 3px;
+  background: #3a3a3a;
+  cursor: ns-resize;
+  flex-shrink: 0;
+  transition: background 100ms;
+}
+
+.velocityDivider:hover {
+  background: #4A90D9;
+}
+
+.velocityLane {
+  display: flex;
+  background: #1a1a1a;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.velocityLabel {
+  width: 60px;
+  min-width: 60px;
+  background: #222;
+  border-right: 1px solid #3a3a3a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 2px;
+  font-size: 9px;
+  color: #888;
+}
+
+.laneTypeSelect {
+  width: 54px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 2px;
+  color: #aaa;
+  font-size: 8px;
+  padding: 2px 1px;
+  cursor: pointer;
+  outline: none;
+  text-align: center;
+}
+
+.laneTypeSelect:hover {
+  border-color: #666;
+}
+
+.velocityArea {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.velocityAreaInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.velBar {
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  border-radius: 1px 1px 0 0;
+  cursor: ns-resize;
+  transition: filter 60ms;
+  z-index: 1;
+  min-height: 2px;
+}
+
+.velBar:hover {
+  filter: brightness(1.25);
+  z-index: 2;
+}
+
+.velBarSelected {
+  box-shadow: 0 0 4px rgba(79, 195, 247, 0.5);
+}
+
+.velocityGrid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.velocityGridLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #222;
+}
+
+/* ---- Add Lane Bar ---- */
+.addLaneBar {
+  height: 24px;
+  min-height: 24px;
+  background: #222;
+  border-top: 1px solid #333;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.addLaneBtn {
+  height: 18px;
+  padding: 0 10px;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 2px;
+  color: #888;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 100ms;
+}
+
+.addLaneBtn:hover {
+  background: #444;
+  color: #ccc;
+  border-color: #555;
+}
+
+/* ---- CC Lane Close ---- */
+.ccLaneClose {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 100ms;
+}
+
+.ccLaneClose:hover {
+  color: #e05050;
+}
+
+/* ---- Empty state ---- */
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  color: #555;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* ---- Selection marquee ---- */
+.selectionRect {
+  position: absolute;
+  border: 1px solid rgba(74, 144, 217, 0.7);
+  background: rgba(74, 144, 217, 0.1);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ---- Line Tool Dropdown ---- */
+.lineDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background: rgba(40, 40, 45, 0.97);
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 110px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.lineDropdownItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 5px 12px;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lineDropdownItem:hover {
+  background: rgba(74, 144, 217, 0.25);
+  color: #fff;
+}
+
+.lineDropdownItemActive {
+  color: #fff;
+}
+
+/* ---- Transform Dropdown ---- */
+.transformWrapper {
+  position: relative;
+}
+
+.transformDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background: rgba(40, 40, 45, 0.97);
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 160px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.transformItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 12px;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.transformItem:hover {
+  background: rgba(74, 144, 217, 0.25);
+  color: #fff;
+}
+
+.transformHint {
+  color: #666;
+  font-size: 9px;
+  margin-left: 8px;
+}
+
+/* ---- Right-click Tool Popup ---- */
+.toolPopup {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  background: rgba(50, 50, 55, 0.95);
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 5px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.toolPopupItem {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #aaa;
+  transition: background 80ms, color 80ms;
+}
+
+.toolPopupItem:hover,
+.toolPopupItemHover {
+  background: rgba(74, 144, 217, 0.3);
+  color: #fff;
+}
+
+.toolPopupItemActive {
+  background: rgba(74, 144, 217, 0.15);
+  color: #4A90D9;
+}
+
+.toolPopupLabel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: rgba(30, 30, 35, 0.95);
+  border: 1px solid #555;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: #ccc;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -1,0 +1,35 @@
+/* ==========================================================================
+   DawToolbar — Cubase 15 Pro toolbar row
+   Horizontal strip with button groups separated by thin dividers.
+   ========================================================================== */
+
+.dawToolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--toolbar-height);
+  padding: 0 4px;
+  background: var(--bg-toolbar);
+  border-bottom: 1px solid var(--divider);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ---- Button group (clusters of related buttons) ---- */
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 2px;
+}
+
+/* ---- Thin vertical separator between groups ---- */
+
+.separator {
+  width: 1px;
+  height: 18px;
+  background: var(--border-subtle);
+  margin: 0 4px;
+  flex-shrink: 0;
+}

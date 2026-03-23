@@ -1,0 +1,288 @@
+/* ============================================================
+   Channel EQ — Cubase 15 Pro style 6-band parametric EQ
+   SVG curve display + band control strip below
+   ============================================================ */
+
+.eqContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---- SVG Curve Area ---- */
+
+.curveWrap {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 180px;
+  background: #111114;
+  border: 1px solid #2a2a2e;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.curveSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Grid lines */
+.gridLine {
+  stroke: #222226;
+  stroke-width: 0.5;
+}
+
+.gridLineZero {
+  stroke: #333338;
+  stroke-width: 0.8;
+}
+
+/* Frequency / dB labels in SVG */
+.freqLabel {
+  font-size: 9px;
+  fill: #444;
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+}
+
+.dbLabel {
+  font-size: 8px;
+  fill: #3a3a3e;
+  text-anchor: end;
+  pointer-events: none;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+}
+
+/* EQ curve path */
+.curvePath {
+  fill: none;
+  stroke: #5bc0de;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.curveFill {
+  stroke: none;
+  opacity: 0.08;
+}
+
+.curveFillPositive {
+  fill: #5bc0de;
+}
+
+.curveFillNegative {
+  fill: #5bc0de;
+}
+
+/* Individual band curves (dimmed) */
+.bandCurve {
+  fill: none;
+  stroke-width: 0.8;
+  stroke-dasharray: 3 4;
+  opacity: 0.3;
+}
+
+/* Draggable nodes */
+.node {
+  cursor: grab;
+  transition: r 80ms ease;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+}
+
+.node:hover {
+  r: 9;
+}
+
+.node:active {
+  cursor: grabbing;
+}
+
+.nodeDisabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.nodeLabel {
+  font-size: 9px;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+}
+
+.nodeSelected {
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+/* ---- Band Controls Strip (below SVG) ---- */
+
+.bandStrip {
+  display: flex;
+  gap: 2px;
+  padding: 6px 4px 4px;
+  flex-shrink: 0;
+  background: #1a1a1e;
+  border-top: 1px solid #2a2a2e;
+}
+
+.band {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 3px;
+  border-radius: 3px;
+  transition: background 80ms ease;
+  min-width: 0;
+}
+
+.bandSelected {
+  background: #252530;
+}
+
+.bandHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  justify-content: center;
+}
+
+.bandLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.bandLabelActive {
+  color: #5bc0de;
+}
+
+.bandLabelShelf {
+  color: #D4913A;
+}
+
+.bandEnable {
+  width: 18px;
+  height: 16px;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  background: #2a2a2e;
+  color: #555;
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  padding: 0;
+  transition: background 80ms, color 80ms;
+  flex-shrink: 0;
+}
+
+.bandEnable:hover {
+  background: #353538;
+  color: #888;
+}
+
+.bandEnableActive {
+  background: #5bc0de;
+  color: #fff;
+  border-color: #5bc0de;
+}
+
+.bandEnableShelfActive {
+  background: #D4913A;
+  color: #fff;
+  border-color: #D4913A;
+}
+
+/* Editable value fields */
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  justify-content: center;
+}
+
+.valueField {
+  width: 60px;
+  padding: 3px 4px;
+  font-size: 11px;
+  color: #aaa;
+  background: #141416;
+  border: 1px solid #2e2e32;
+  border-radius: 3px;
+  outline: none;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  text-align: center;
+  cursor: ns-resize;
+}
+
+.valueField:focus {
+  border-color: #4A90D9;
+  cursor: text;
+  color: #ddd;
+}
+
+.fieldLabel {
+  font-size: 8px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 0;
+}
+
+/* Master gain row */
+.masterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-top: 1px solid #2a2a2e;
+  flex-shrink: 0;
+}
+
+.masterLabel {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.globalBypass {
+  width: 34px;
+  height: 22px;
+  border: 1px solid #3e3e42;
+  border-radius: 3px;
+  background: #2a2a2e;
+  color: #555;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  padding: 0;
+  transition: background 80ms, color 80ms;
+}
+
+.globalBypassActive {
+  background: #4A90D9;
+  color: #fff;
+  border-color: #4A90D9;
+}

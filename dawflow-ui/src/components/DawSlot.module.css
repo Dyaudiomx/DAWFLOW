@@ -1,0 +1,112 @@
+/* ==========================================================================
+   DawSlot — Cubase 15 Pro insert/send slot
+   Dark recessed slot showing plugin/send name, bypass dot, remove button.
+   ========================================================================== */
+
+.dawSlot {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  gap: 3px;
+}
+
+.dawSlot:hover {
+  border-color: var(--border-medium);
+  background: #222222;
+}
+
+/* ---- Empty slot (dimmed) ---- */
+
+.empty {
+  cursor: default;
+}
+
+.empty:hover {
+  background: var(--bg-input);
+  border-color: var(--border-subtle);
+}
+
+/* ---- Bypass dot (left side) ---- */
+
+.bypassDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.bypassDot:hover {
+  background: var(--text-secondary);
+}
+
+.bypassDotActive {
+  background: var(--color-bypass);
+  box-shadow: 0 0 3px rgba(200, 184, 48, 0.4);
+}
+
+.bypassed .bypassDotActive {
+  background: var(--text-dim);
+  box-shadow: none;
+}
+
+/* ---- Slot label (plugin/send name) ---- */
+
+.slotLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.slotLabelLoaded {
+  color: var(--text-primary);
+}
+
+.emptyLabel {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ---- Remove button (right side, visible on hover) ---- */
+
+.removeBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.dawSlot:hover .removeBtn {
+  display: inline-flex;
+}
+
+.removeBtn:hover {
+  color: var(--color-record);
+  background: rgba(196, 48, 48, 0.15);
+}

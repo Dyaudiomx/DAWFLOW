@@ -1,0 +1,402 @@
+/* ============================================================
+   Export Dialog — Cubase 15 Pro style
+   ============================================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  width: 520px;
+  max-height: 85vh;
+  background: #333338;
+  border: 1px solid #4a4a4e;
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header bar ---- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: #2a2a2e;
+  border-bottom: 1px solid #4a4a4e;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0e0e0;
+  letter-spacing: 0.3px;
+}
+
+.closeBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 100ms ease;
+}
+
+.closeBtn:hover {
+  color: #ccc;
+}
+
+/* ---- Scrollable body ---- */
+
+.body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ---- Sections ---- */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionHeader {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #3e3e42;
+  user-select: none;
+}
+
+/* ---- Field rows ---- */
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  width: 120px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  text-align: right;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.fieldControl {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Dropdown / select ---- */
+
+.select {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+  font-family: inherit;
+}
+
+.select:focus {
+  border-color: #5b9bd5;
+}
+
+.select:hover {
+  border-color: #777;
+}
+
+/* ---- Text input ---- */
+
+.input {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  font-family: inherit;
+}
+
+.input:focus {
+  border-color: #5b9bd5;
+}
+
+.input::placeholder {
+  color: #666;
+}
+
+/* ---- Number input ---- */
+
+.numberInput {
+  width: 80px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #ddd;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+
+.numberInput::-webkit-outer-spin-button,
+.numberInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numberInput:focus {
+  border-color: #5b9bd5;
+}
+
+/* ---- Checkbox ---- */
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #5b9bd5;
+  cursor: pointer;
+}
+
+/* ---- Radio group ---- */
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  color: #ccc;
+}
+
+.radio input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #5b9bd5;
+  cursor: pointer;
+}
+
+.radioDetail {
+  font-size: 11px;
+  color: #777;
+  margin-left: 22px;
+}
+
+/* ---- Unit suffix ---- */
+
+.unitSuffix {
+  font-size: 11px;
+  color: #888;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ---- Folder path display ---- */
+
+.pathDisplay {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: #999;
+  background: #1e1e22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+}
+
+.browseBtn {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #ccc;
+  background: #4a4a4e;
+  border: 1px solid #5a5a5e;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.browseBtn:hover {
+  background: #555558;
+}
+
+/* ---- Video export section ---- */
+
+.videoSection {
+  background: #2c2c30;
+  border-radius: 4px;
+  padding: 12px 14px;
+  border: 1px solid #3e3e42;
+}
+
+.videoHint {
+  font-size: 10px;
+  color: #666;
+  font-style: italic;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.disabledLabel {
+  opacity: 0.5;
+}
+
+/* ---- Progress bar ---- */
+
+.progressContainer {
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+}
+
+.progressLabel {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 6px;
+  background: #1e1e22;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.progressFill {
+  height: 100%;
+  background: #5b9bd5;
+  border-radius: 2px;
+  transition: width 200ms ease;
+}
+
+/* ---- Error message ---- */
+
+.error {
+  padding: 4px 20px;
+  color: #e04040;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ---- Footer ---- */
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #4a4a4e;
+  background: #2e2e32;
+  flex-shrink: 0;
+}
+
+.cancelBtn {
+  padding: 6px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ccc;
+  background: #4a4a4e;
+  border: 1px solid #5a5a5e;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease;
+  font-family: inherit;
+}
+
+.cancelBtn:hover {
+  background: #555558;
+}
+
+.exportBtn {
+  padding: 6px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #eee;
+  background: #555558;
+  border: 1px solid #666;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 80ms ease;
+  font-family: inherit;
+}
+
+.exportBtn:hover {
+  background: #626266;
+}
+
+.exportBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exportBtn:disabled:hover {
+  background: #555558;
+}

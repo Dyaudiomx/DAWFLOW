@@ -1,0 +1,125 @@
+/* ==========================================================================
+   TrackColorPicker — Cubase 15 Pro style floating color picker popup
+   Dark floating panel with color swatch grid and default-reset button.
+   ========================================================================== */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+}
+
+.picker {
+  position: fixed;
+  z-index: 9999;
+  width: 220px;
+  background: #2b2d30;
+  border: 1px solid var(--border-medium);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.title {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  letter-spacing: 0.2px;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.closeBtn:hover {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+
+/* ---- Color grid ---- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 8px;
+}
+
+/* ---- Individual swatch ---- */
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border: 2px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition: border-color var(--transition-fast), filter var(--transition-fast);
+}
+
+.swatch:hover {
+  filter: brightness(1.2);
+}
+
+.swatchSelected {
+  border-color: #ffffff;
+}
+
+/* ---- Footer ---- */
+
+.footer {
+  padding: 4px 8px 8px;
+}
+
+.defaultBtn {
+  display: block;
+  width: 100%;
+  height: var(--button-height);
+  padding: 0 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  outline: none;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.defaultBtn:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.defaultBtn:active {
+  background: var(--bg-button-active);
+}

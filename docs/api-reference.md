@@ -1,6 +1,6 @@
 # DAWFLOW IPC API Reference
 
-> **1163 unique commands + 124 signal events = 1287 total** registered across 16 source files, 0 duplicates. All commands use JSON-RPC 2.0 over Unix domain socket IPC.
+> **2110 unique commands + 122 signal events = 2232 total** registered across 29 source files, 0 duplicates. All commands use JSON-RPC 2.0 over Unix domain socket IPC.
 >
 > **Request format:** `{"jsonrpc": "2.0", "id": 1, "method": "daw.xxx", "params": {...}}`
 >
@@ -10,7 +10,7 @@
 >
 > **Async commands** (marked "queued") return `{"success": true, "status": "queued"}` immediately; the operation executes on the GTK main thread.
 >
-> **Source files:** `dawflow_plugin_host.cc`, `dawflow_plugin_host_extended.cc`, `dawflow_commands_editing.cc`, `dawflow_commands_automation.cc`, `dawflow_commands_critical.cc`, `dawflow_commands_high.cc`, `dawflow_commands_medium.cc`, `dawflow_commands_final.cc`, `dawflow_commands_engine_deep.cc`, `dawflow_commands_analysis.cc`, `dawflow_commands_advanced_editing.cc`, `dawflow_commands_session_deep.cc`, `dawflow_commands_safety.cc`, `dawflow_commands_simulate.cc`, `dawflow_commands_triggers.cc`, `dawflow_commands_complete.cc`
+> **Source files:** `dawflow_plugin_host.cc`, `dawflow_plugin_host_extended.cc`, `dawflow_commands_editing.cc`, `dawflow_commands_automation.cc`, `dawflow_commands_critical.cc`, `dawflow_commands_high.cc`, `dawflow_commands_medium.cc`, `dawflow_commands_final.cc`, `dawflow_commands_engine_deep.cc`, `dawflow_commands_analysis.cc`, `dawflow_commands_advanced_editing.cc`, `dawflow_commands_session_deep.cc`, `dawflow_commands_safety.cc`, `dawflow_commands_simulate.cc`, `dawflow_commands_triggers.cc`, `dawflow_commands_complete.cc`, `dawflow_commands_sidechain.cc`, `dawflow_commands_routing_ext.cc`, `dawflow_commands_mastering.cc`, `dawflow_commands_tier1.cc`, `dawflow_commands_tier2.cc`, `dawflow_commands_tier3.cc`, `dawflow_commands_tier4.cc`, `dawflow_commands_final_coverage.cc`
 
 ---
 
@@ -106,7 +106,66 @@
 88. [Route Configuration](#route-configuration)
 89. [Session Lifecycle](#session-lifecycle)
 90. [Video Sync](#video-sync)
-91. [Events (DAW to Plugin)](#events-daw-to-plugin)
+91. [Sidechain Routing](#sidechain-routing)
+92. [Input Monitoring](#input-monitoring)
+93. [Rec-Safe](#rec-safe)
+94. [Processor Ordering](#processor-ordering)
+95. [Trim Control](#trim-control)
+96. [Phase Control](#phase-control)
+97. [Pan Azimuth/Elevation/Width](#pan-azimuth-elevation-width)
+98. [Plugin Latency Override](#plugin-latency-override)
+99. [Send Configuration](#send-configuration)
+100. [Aux Bus Management](#aux-bus-management)
+101. [MIDI Clock](#midi-clock)
+102. [MTC](#mtc)
+103. [LTC](#ltc)
+104. [Direct Outputs](#direct-outputs)
+105. [Solo Isolate/Safe Extended](#solo-isolatesafe-extended)
+106. [Track Templates](#track-templates)
+107. [Loop/Range Editing](#looprange-editing)
+108. [Internal Routing](#internal-routing)
+109. [Auto-Connect](#auto-connect)
+110. [Click Track Extended](#click-track-extended)
+111. [CD Markers](#cd-markers)
+112. [Plugin Macros](#plugin-macros)
+113. [Video Sync Extended](#video-sync-extended)
+114. [Session Lifecycle (Tier 1)](#session-lifecycle-tier-1)
+115. [Track Freeze/Bounce (Tier 1)](#track-freezebounce-tier-1)
+116. [Playlist Management (Tier 1)](#playlist-management-tier-1)
+117. [Advanced Region Editing (Tier 1)](#advanced-region-editing-tier-1)
+118. [MIDI Model (Tier 1)](#midi-model-tier-1)
+119. [Plugin Config Advanced (Tier 1)](#plugin-config-advanced-tier-1)
+120. [Audio Engine/Backend (Tier 2)](#audio-enginebackend-tier-2)
+121. [Port Management Advanced (Tier 2)](#port-management-advanced-tier-2)
+122. [Transport Masters (Tier 2)](#transport-masters-tier-2)
+123. [Monitor Processor Extended (Tier 2)](#monitor-processor-extended-tier-2)
+124. [Location Flags (Tier 2)](#location-flags-tier-2)
+125. [Automation Write Passes (Tier 2)](#automation-write-passes-tier-2)
+126. [VCA Advanced (Tier 2)](#vca-advanced-tier-2)
+127. [Export System (Tier 3)](#export-system-tier-3)
+128. [Plugin Manager (Tier 3)](#plugin-manager-tier-3)
+129. [Track Advanced Controls (Tier 3)](#track-advanced-controls-tier-3)
+130. [Send/Return Config (Tier 3)](#sendreturn-config-tier-3)
+131. [Trigger/Clip Advanced (Tier 3)](#triggerclip-advanced-tier-3)
+132. [Surround/Atmos (Tier 4)](#surroundatmos-tier-4)
+133. [Source/Cue Markers (Tier 4)](#sourcecue-markers-tier-4)
+134. [Bundle/IO Routing (Tier 4)](#bundleio-routing-tier-4)
+135. [Selection System (Tier 4)](#selection-system-tier-4)
+136. [Lua Scripts Extended (Tier 4)](#lua-scripts-extended-tier-4)
+137. [Playlist Analysis (Tier 4)](#playlist-analysis-tier-4)
+138. [Phase/Polarity Extended (Tier 4)](#phasepolarity-extended-tier-4)
+139. [Butler/Disk I/O (Tier 4)](#butlerdisk-io-tier-4)
+140. [Editor Operations (Tier 4)](#editor-operations-tier-4)
+141. [Editor View Operations (Final)](#editor-view-operations-final)
+142. [Editor Data Operations (Final)](#editor-data-operations-final)
+143. [Bulk Playlist Operations (Final)](#bulk-playlist-operations-final)
+144. [Step Sequencer Final](#step-sequencer-final)
+145. [Panner Extended (Final)](#panner-extended-final)
+146. [MIDI Patches Extended (Final)](#midi-patches-extended-final)
+147. [Analysis Extended (Final)](#analysis-extended-final)
+148. [Control Protocol Extended (Final)](#control-protocol-extended-final)
+149. [Audiographer Extended (Final)](#audiographer-extended-final)
+150. [Events (DAW to Plugin)](#events-daw-to-plugin)
 
 ---
 
@@ -1794,6 +1853,1073 @@ Video pullup/pulldown configuration for film and broadcast workflows.
 |---------|--------|---------|-------------|
 | `daw.set_video_pullup` | `{pullup: number}` | `{ok, video_pullup}` | Set video pullup value |
 | `daw.get_video_pullup` | none | `{video_pullup}` | Get video pullup value |
+
+## Sidechain Routing
+
+Sidechain management for plugin inserts. Add, remove, connect, and inspect sidechain inputs on any plugin.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.sidechain.add` | `{track_id: string, processor_id: string, n_audio?: number, n_midi?: number}` | `{success, has_sidechain}` | Add a sidechain to a plugin |
+| `daw.sidechain.remove` | `{track_id: string, processor_id: string}` | `{success, has_sidechain}` | Remove a sidechain from a plugin |
+| `daw.sidechain.has` | `{track_id: string, processor_id: string}` | `{has_sidechain}` | Check if a plugin has a sidechain |
+| `daw.sidechain.get_input` | `{track_id: string, processor_id: string}` | `{has_sidechain, connections: [{port, connected_to}]}` | Get sidechain input port connections |
+| `daw.sidechain.connect` | `{track_id: string, processor_id: string, source_port: string, port_index?: number}` | `{success}` | Connect a source port to sidechain input |
+| `daw.sidechain.disconnect` | `{track_id: string, processor_id: string}` | `{success, disconnected}` | Disconnect all sidechain inputs |
+| `daw.sidechain.get_info` | `{track_id: string, processor_id: string}` | `{has_sidechain, n_audio, n_midi, n_total, sidechain_pins_audio, sidechain_ports_audio, connections}` | Get sidechain channel count and connections |
+| `daw.sidechain.list_available_sources` | `{track_id: string, processor_id: string}` | `{has_sidechain, audio_sources, midi_sources, audio_count, midi_count}` | List ports that could feed sidechain |
+| `daw.sidechain.get_all` | `{track_id: string}` | `{track_id, plugins: [{processor_id, name, index, n_audio, n_midi}], count}` | List all plugins with sidechains on a track |
+
+## Input Monitoring
+
+Control monitoring mode (auto, input, disk, cue) for individual tracks or all tracks.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.monitoring.get_mode` | `{track_id: string}` | `{track_id, mode, value}` | Get monitoring mode for a track |
+| `daw.monitoring.set_mode` | `{track_id: string, mode: string}` | `{success, track_id, mode}` | Set monitoring mode (auto/input/disk/cue) |
+| `daw.monitoring.get_all` | none | `{tracks: [{track_id, name, mode, value}], count}` | List monitoring modes for all tracks |
+| `daw.monitoring.set_all` | `{mode: string}` | `{success, mode, tracks_updated}` | Set monitoring mode for all tracks |
+| `daw.monitoring.get_available_modes` | none | `{modes: [{name, value, description}]}` | List available monitoring modes |
+| `daw.monitoring.is_monitoring_input` | `{track_id: string}` | `{track_id, monitoring_input}` | Check if a track is monitoring input |
+| `daw.monitoring.is_monitoring_disk` | `{track_id: string}` | `{track_id, monitoring_disk}` | Check if a track is monitoring disk |
+
+## Rec-Safe
+
+Prevent accidental recording on protected tracks. Rec-safe locks out the record-arm button.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.rec_safe.set` | `{track_id: string, safe: boolean}` | `{success, track_id, safe}` | Set rec-safe state for a track |
+| `daw.rec_safe.get` | `{track_id: string}` | `{track_id, safe}` | Get rec-safe state for a track |
+| `daw.rec_safe.set_all` | `{safe: boolean}` | `{success, safe, tracks_updated}` | Set rec-safe state for all tracks |
+| `daw.rec_safe.get_all` | none | `{tracks: [{track_id, name, safe}], count}` | List rec-safe state for all tracks |
+| `daw.rec_safe.toggle` | `{track_id: string}` | `{success, track_id, safe}` | Toggle rec-safe state for a track |
+
+## Processor Ordering
+
+Inspect and reorder the processor (plugin/insert) chain on any track or bus.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.processor.get_at_index` | `{track_id: string, index: number}` | `{id, name, active, type, index}` | Get processor info at a position |
+| `daw.processor.get_count` | `{track_id: string}` | `{track_id, count}` | Count processors on a track |
+| `daw.processor.move_to_index` | `{track_id: string, processor_id: string, new_index: number}` | `{success, old_index, new_index}` | Move a processor to a new index position |
+| `daw.processor.insert_at_index` | `{track_id: string, plugin_uri: string, index: number}` | `{success, processor_id, index}` | Insert a plugin at a specific position |
+| `daw.processor.replace` | `{track_id: string, processor_id: string, new_plugin_uri: string}` | `{success, old_processor_id, new_processor_id}` | Replace a processor with a new plugin |
+| `daw.processor.get_all_ordered` | `{track_id: string}` | `{track_id, processors: [{id, name, active, type, index}], count}` | Full ordered list with types/names/active |
+| `daw.processor.swap` | `{track_id: string, index_a: number, index_b: number}` | `{success, index_a, index_b}` | Swap two processors by index |
+| `daw.processor.get_type` | `{track_id: string, processor_id: string}` | `{processor_id, name, type, active}` | Get type of a processor |
+
+## Trim Control
+
+Pre-fader trim (input gain) in dB. Applied before the signal reaches the fader and plugin chain.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.trim.get` | `{track_id: string}` | `{track_id, trim_gain, trim_db}` | Get trim value for a track in dB |
+| `daw.trim.set` | `{track_id: string, trim_db: number}` | `{success, track_id, trim_db, trim_gain}` | Set trim value for a track |
+| `daw.trim.get_all` | none | `{tracks: [{track_id, name, trim_gain, trim_db}], count}` | Get trim values for all tracks |
+| `daw.trim.reset` | `{track_id: string}` | `{success, track_id, trim_db}` | Reset trim to 0 dB for a track |
+| `daw.trim.reset_all` | none | `{success, tracks_reset}` | Reset trim to 0 dB for all tracks |
+
+## Phase Control
+
+Per-channel phase inversion (polarity flip). Essential for multi-mic setups and fixing phase cancellation.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.phase.get` | `{track_id: string}` | `{track_id, channels: [{channel, inverted}], channel_count, any_inverted}` | Get phase inversion state for a track |
+| `daw.phase.set` | `{track_id: string, channel: number, inverted: boolean}` | `{success, track_id, channel, inverted}` | Set phase inversion per channel |
+| `daw.phase.invert_all` | `{track_id: string}` | `{success, track_id, channels_inverted}` | Invert all channels on a track |
+| `daw.phase.reset` | `{track_id: string}` | `{success, track_id, channels_reset}` | Reset phase to normal (no inversion) for a track |
+
+## Pan Azimuth/Elevation/Width
+
+Extended panning controls including azimuth (L-R), elevation (surround), width (stereo spread), and a combined full-state query.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.pan.get_azimuth` | `{track_id: string}` | `{track_id, azimuth}` | Get pan azimuth (L-R position, 0.0-1.0) |
+| `daw.pan.set_azimuth` | `{track_id: string, value: number}` | `{success, track_id, azimuth}` | Set pan azimuth |
+| `daw.pan.get_elevation` | `{track_id: string}` | `{track_id, elevation}` | Get pan elevation (surround/VBAP panner) |
+| `daw.pan.set_elevation` | `{track_id: string, value: number}` | `{success, track_id, elevation}` | Set pan elevation |
+| `daw.pan.get_width` | `{track_id: string}` | `{track_id, width}` | Get pan width (stereo spread) |
+| `daw.pan.set_width` | `{track_id: string, value: number}` | `{success, track_id, width}` | Set pan width |
+| `daw.pan.get_full_state` | `{track_id: string}` | `{track_id, azimuth, elevation, width, frontback, has_azimuth, has_elevation, has_width, has_frontback}` | Get all pan parameters at once |
+| `daw.pan.reset` | `{track_id: string}` | `{success, track_id, controls_reset}` | Reset pan to center/default |
+
+## Plugin Latency Override
+
+Inspect and override per-plugin latency compensation. View the full chain latency breakdown.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.plugin_latency.get` | `{track_id: string, processor_id: string}` | `{processor_id, signal_latency, effective_latency, user_latency}` | Get a plugin's reported latency |
+| `daw.plugin_latency.get_user_override` | `{track_id: string, processor_id: string}` | `{processor_id, user_latency, has_override}` | Get manual latency override |
+| `daw.plugin_latency.set_user_override` | `{track_id: string, processor_id: string, samples: number}` | `{success, processor_id, user_latency}` | Set manual latency override |
+| `daw.plugin_latency.clear_override` | `{track_id: string, processor_id: string}` | `{success, processor_id, signal_latency, effective_latency}` | Clear manual latency override |
+| `daw.plugin_latency.get_signal_latency` | `{track_id: string}` | `{track_id, signal_latency}` | Total signal latency of a route |
+| `daw.plugin_latency.get_chain_latency` | `{track_id: string}` | `{track_id, chain: [{index, id, name, type, signal_latency, effective_latency, user_latency, cumulative_latency}], processor_count, total_chain_latency, route_signal_latency}` | Per-processor latency chain breakdown |
+
+## Send Configuration
+
+Extended send controls: pre/post fader, target, level, and pan for external and internal sends.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.send.get_pre_fader` | `{track_id: string, send_index: number}` | `{track_id, send_index, pre_fader}` | Check if a send is pre-fader |
+| `daw.send.set_pre_fader` | `{track_id: string, send_index: number, pre_fader: boolean}` | `{status, pre_fader}` | Set send pre/post fader |
+| `daw.send.get_target` | `{track_id: string, send_index: number}` | `{track_id, send_index, target_id, target_name}` | Get internal send target route |
+| `daw.send.get_all_details` | `{track_id: string}` | `{track_id, sends: [{index, name, id, enabled, role, level_db, pre_fader, target_id?, target_name?}], count}` | Get full details of all sends on a track |
+| `daw.send.create_aux` | `{track_id: string, bus_id: string, pre_fader?: boolean}` | `{status, track_id, bus_id, pre_fader}` | Create an aux send to a bus |
+| `daw.send.get_level_db` | `{track_id: string, send_index: number}` | `{track_id, send_index, level_db}` | Get send level in dB |
+| `daw.send.set_level_db` | `{track_id: string, send_index: number, level_db: number}` | `{status, level_db}` | Set send level in dB |
+| `daw.send.get_pan` | `{track_id: string, send_index: number}` | `{track_id, send_index, has_panner, panner_linked?}` | Get send panner state |
+| `daw.send.set_pan` | `{track_id: string, send_index: number, pan: number}` | `{status, send_index, pan}` | Set send pan position (unlinks from route) |
+
+## Aux Bus Management
+
+Create, delete, inspect, and control auxiliary buses and their send routing.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.aux.create_bus` | `{name: string, channels?: number}` | `{status, bus_id, name, channels}` | Create an audio bus |
+| `daw.aux.delete_bus` | `{bus_id: string}` | `{status}` | Delete a bus (not master/monitor) |
+| `daw.aux.list_buses` | none | `{buses: [{id, name, inputs, outputs, muted, soloed}], count}` | List all buses |
+| `daw.aux.get_sends_to` | `{bus_id: string}` | `{bus_id, bus_name, senders: [{track_id, track_name, send_index, send_id, level_db, enabled}], count}` | List all tracks sending to a bus |
+| `daw.aux.add_send_from` | `{bus_id: string, track_id: string, pre_fader?: boolean}` | `{status, bus_id, track_id}` | Add a send from a track to a bus |
+| `daw.aux.remove_send_from` | `{bus_id: string, track_id: string}` | `{status}` | Remove a send from a track to a bus |
+| `daw.aux.get_bus_info` | `{bus_id: string}` | `{id, name, inputs, outputs, muted, soloed, gain_db, sends, send_count, plugin_count}` | Full bus info with sends and plugins |
+| `daw.aux.set_bus_gain` | `{bus_id: string, gain_db: number}` | `{status, gain_db}` | Set bus gain in dB |
+| `daw.aux.set_bus_mute` | `{bus_id: string, mute: boolean}` | `{status, mute}` | Mute/unmute an aux bus |
+| `daw.aux.set_bus_solo` | `{bus_id: string, solo: boolean}` | `{status, solo}` | Solo/unsolo an aux bus |
+
+## MIDI Clock
+
+Control MIDI clock output: enable/disable, inspect port, check sync state.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.midi_clock.get_enabled` | none | `{enabled}` | Check if MIDI clock send is enabled |
+| `daw.midi_clock.set_enabled` | `{enabled: boolean}` | `{status, enabled}` | Enable/disable MIDI clock output |
+| `daw.midi_clock.get_port` | none | `{port_name, pretty_name, connected}` | Get MIDI clock output port |
+| `daw.midi_clock.set_port` | `{port_name: string}` | `{status, port_name}` | Set MIDI clock output port |
+| `daw.midi_clock.get_state` | none | `{enabled, sets_tempo, resolution, port_name, port_connected}` | Full MIDI clock state |
+| `daw.midi_clock.is_synced` | none | `{synced, master_type, master_name, locked}` | Check if synced to external MIDI clock |
+| `daw.midi_clock.set_tempo_from_clock` | `{enabled: boolean}` | `{status, enabled}` | Toggle whether MIDI clock sets tempo |
+| `daw.midi_clock.get_resolution` | none | `{resolution}` | Get MIDI clock resolution |
+
+## MTC
+
+MIDI Timecode output controls for synchronization with external gear.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.mtc.get_enabled` | none | `{enabled}` | Check if MTC send is enabled |
+| `daw.mtc.set_enabled` | `{enabled: boolean}` | `{status, enabled}` | Enable/disable MTC output |
+| `daw.mtc.get_port` | none | `{port_name, pretty_name, connected}` | Get MTC output port |
+| `daw.mtc.set_port` | `{port_name: string}` | `{status, port_name}` | Set MTC output port |
+| `daw.mtc.get_state` | none | `{enabled, port_name, port_connected}` | Full MTC state |
+| `daw.mtc.get_offset` | none | `{enabled, timecode_offset, timecode_offset_negative}` | Get MTC timecode offset |
+
+## LTC
+
+Linear Timecode output controls for audio-based synchronization. Includes volume, port, and generator state.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.ltc.get_send_enabled` | none | `{enabled}` | Check if LTC send is enabled |
+| `daw.ltc.set_send_enabled` | `{enabled: boolean}` | `{status, enabled}` | Enable/disable LTC output |
+| `daw.ltc.get_volume` | none | `{volume, volume_db}` | Get LTC output volume |
+| `daw.ltc.set_volume` | `{volume: number}` | `{status, volume}` | Set LTC output volume |
+| `daw.ltc.get_port` | none | `{port_name}` | Get LTC output port name |
+| `daw.ltc.set_port` | `{port_name: string}` | `{status, port_name}` | Set LTC output port and reconnect |
+| `daw.ltc.get_state` | none | `{enabled, volume, volume_db, port_name, port_connected}` | Full LTC state |
+| `daw.ltc.get_generator_state` | none | `{enabled, port_name, port_exists, port_connected, volume, running}` | LTC generator runtime state |
+| `daw.ltc.set_send_continuously` | `{enabled: boolean}` | `{status, enabled}` | Enable continuous LTC send |
+
+## Direct Outputs
+
+Control direct output routing for tracks and buses.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.direct_out.get` | `{track_id: string}` | `{track_id, has_direct_out, connections: [{port, connected}]}` | Get direct output state and connections |
+| `daw.direct_out.enable` | `{track_id: string}` | `{status}` | Enable (activate) direct outputs |
+| `daw.direct_out.disable` | `{track_id: string}` | `{status}` | Disable (deactivate) direct outputs |
+| `daw.direct_out.is_enabled` | `{track_id: string}` | `{track_id, exists, enabled}` | Check if direct outputs are enabled |
+| `daw.direct_out.set_pre_fader` | `{track_id: string, pre_fader: boolean}` | `{status, track_id, pre_fader}` | Set direct output position relative to fader |
+| `daw.direct_out.get_connection` | `{track_id: string}` | `{track_id, connections}` | Get direct output port connections |
+| `daw.direct_out.set_connection` | `{track_id: string, port_name: string}` | `{status, port_name}` | Set direct output connection to a port |
+
+## Solo Isolate/Safe Extended
+
+Solo isolate prevents a track from being affected by solo on other tracks. Solo safe prevents a track's solo from being cleared by "clear all solos".
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.solo_isolate.get` | `{track_id: string}` | `{track_id, isolated}` | Get solo isolate state |
+| `daw.solo_isolate.set` | `{track_id: string, isolated: boolean}` | `{status, isolated}` | Set solo isolate state |
+| `daw.solo_isolate.toggle` | `{track_id: string}` | `{status, isolated}` | Toggle solo isolate |
+| `daw.solo_isolate.get_all` | none | `{tracks: [{id, name, isolated}], count}` | Get solo isolate state for all tracks |
+| `daw.solo_safe.get` | `{track_id: string}` | `{track_id, safe}` | Get solo safe state |
+| `daw.solo_safe.set` | `{track_id: string, safe: boolean}` | `{status, safe}` | Set solo safe state |
+| `daw.solo_safe.toggle` | `{track_id: string}` | `{status, safe}` | Toggle solo safe |
+| `daw.solo_safe.get_all` | none | `{tracks: [{id, name, safe}], count}` | Get solo safe state for all tracks |
+
+## Track Templates
+
+Save, load, list, rename, and inspect route templates.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.track_template.list` | none | `{templates: [{name, path}], count}` | List available track templates |
+| `daw.track_template.save` | `{track_id: string, name: string, description?: string}` | `{status, name, path}` | Save a track as a template |
+| `daw.track_template.load` | `{template_name: string}` | `{status, track_id, track_name}` | Create a new track from a template |
+| `daw.track_template.delete` | `{template_name: string}` | `{status, deleted}` | Delete a track template |
+| `daw.track_template.rename` | `{old_name: string, new_name: string}` | `{status, old_name, new_name, new_path}` | Rename a track template |
+| `daw.track_template.get_info` | `{template_name: string}` | `{name, path, description, modified_with}` | Get template details |
+| `daw.track_template.get_path` | `{template_name: string}` | `{name, path}` | Get template file path |
+| `daw.track_template.list_with_details` | none | `{templates: [{name, path, description, modified_with}], count}` | List templates with full metadata |
+
+## Loop/Range Editing
+
+Create, play, bounce, select, and inspect time ranges and loop regions.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.range.get_active` | none | `{loop_start?, loop_end?, loop_enabled?, punch_start?, punch_end?, session_start?, session_end?}` | Get active loop, punch, and session ranges |
+| `daw.range.set` | `{start: number, end: number}` | `{status, name, start, end}` | Create a range marker |
+| `daw.range.play` | `{start?: number, end?: number}` | `{status}` | Play a range (or the loop range if omitted) |
+| `daw.range.export` | `{start: number, end: number, format?: string}` | `{status, start, end, format}` | Export a range (requires export dialog) |
+| `daw.range.bounce` | `{track_id: string, start: number, end: number}` | `{status, region_name?, region_id?}` | Bounce a range to a new region |
+| `daw.range.select` | `{start: number, end: number}` | `{status, start, end}` | Set the selection range (via loop location) |
+| `daw.range.get_selection` | none | `{has_selection, start?, end?, length?}` | Get current selection range |
+| `daw.range.clear_selection` | none | `{status}` | Clear the selection (disable loop) |
+
+## Internal Routing
+
+Add, remove, and inspect internal sends between tracks/buses within the session.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.internal_send.add` | `{source_track_id: string, dest_track_id: string, pre_fader?: boolean}` | `{status, source_track_id, dest_track_id, pre_fader}` | Add an internal send between tracks |
+| `daw.internal_send.remove` | `{source_track_id: string, send_id: string}` | `{status}` | Remove an internal send |
+| `daw.internal_send.list` | `{track_id: string}` | `{track_id, internal_sends: [{index, id, name, active, target_id, target_name, level_db, role, pre_fader}], count}` | List internal sends on a track |
+| `daw.internal_send.get_target` | `{track_id: string, send_id: string}` | `{status, target_id, target_name}` | Get the target route of an internal send |
+| `daw.internal_send.set_level` | `{track_id: string, send_id: string, level_db: number}` | `{status, level_db}` | Set internal send level in dB |
+| `daw.internal_send.set_enable` | `{track_id: string, send_id: string, enabled: boolean}` | `{status, enabled}` | Enable/disable an internal send |
+| `daw.internal_send.get_latency` | `{track_id: string, send_id: string}` | `{status, delay_in, delay_out, signal_latency}` | Get latency info for an internal send |
+| `daw.internal_send.get_all_routes` | none | `{connections: [{source_id, source_name, send_id, send_index, target_id, target_name, active, role, level_db}], count}` | List all internal send connections in session |
+| `daw.internal_send.set_pan` | `{track_id: string, send_id: string, pan: number}` | `{status, pan}` | Set internal send pan (unlinks from route) |
+
+## Auto-Connect
+
+Control automatic input/output connection policies for new tracks.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.auto_connect.get_input_policy` | none | `{policy, policy_name}` | Get input auto-connect policy |
+| `daw.auto_connect.set_input_policy` | `{policy: string}` | `{status, policy}` | Set input auto-connect (manual/physical/master) |
+| `daw.auto_connect.get_output_policy` | none | `{policy, policy_name}` | Get output auto-connect policy |
+| `daw.auto_connect.set_output_policy` | `{policy: string}` | `{status, policy}` | Set output auto-connect (manual/physical/master) |
+| `daw.auto_connect.trigger_reconnect` | none | `{status}` | Wake auto-connect thread to reconnect routes |
+| `daw.auto_connect.get_state` | none | `{input_policy, output_policy, input_policy_name, output_policy_name}` | Get full auto-connect state |
+
+## Click Track Extended
+
+Extended click track (metronome) controls: emphasis/regular gain, record-only mode, and full state query.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.click.get_emphasis_gain` | none | `{gain, gain_db, use_emphasis}` | Get click emphasis gain |
+| `daw.click.set_emphasis_gain` | `{gain_db: number}` | `{status, gain, gain_db}` | Set click emphasis gain in dB |
+| `daw.click.get_regular_gain` | none | `{gain, gain_db}` | Get regular click gain |
+| `daw.click.set_regular_gain` | `{gain_db: number}` | `{status, gain, gain_db}` | Set regular click gain in dB |
+| `daw.click.get_record_only` | none | `{record_only}` | Check if click is record-only |
+| `daw.click.set_record_only` | `{record_only: boolean}` | `{status, record_only}` | Set click to record-only mode |
+| `daw.click.get_full_state` | none | `{gain, gain_db, record_only, use_emphasis, emphasis_sound, session_click_gain?, session_click_gain_db?}` | Full click track state |
+| `daw.click.set_emphasis_enabled` | `{enabled: boolean}` | `{status, enabled}` | Enable/disable click emphasis |
+
+## CD Markers
+
+Create and manage CD markers with CD-Text metadata for mastering. Validate Red Book compliance.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.cd_marker.add` | `{position: number, name: string, isrc?: string, performer?: string, composer?: string}` | `{ok, name, position}` | Add a CD track marker with optional metadata |
+| `daw.cd_marker.remove` | `{name: string}` | `{ok, name}` | Remove a CD marker by name |
+| `daw.cd_marker.list` | none | `{markers: [{name, start, end, length, cd_info}], count}` | List all CD markers |
+| `daw.cd_marker.get_info` | `{name: string}` | `{name, start, end, length, cd_info}` | Get details for a named CD marker |
+| `daw.cd_marker.set_info` | `{name: string, isrc?: string, performer?: string, composer?: string}` | `{ok, name, cd_info}` | Update CD-Text metadata on a marker |
+| `daw.cd_marker.add_index` | `{position: number, name: string}` | `{ok, name, position, type}` | Add a CD index point (mark, not range) |
+| `daw.cd_marker.get_toc` | none | `{tracks: [{track_number, name, start_sample, end_sample, start_msf, end_msf, duration_seconds, cd_info}], track_count, sample_rate}` | Generate CD Table-of-Contents data |
+| `daw.cd_marker.validate` | none | `{valid, track_count, errors, warnings}` | Validate CD markers for Red Book compliance |
+
+## Plugin Macros
+
+Create virtual macro controls that map a single knob to multiple plugin/strip parameters simultaneously.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.macro.create` | `{name: string, controls?: [{track_id, control_uri, min?, max?}]}` | `{ok, macro_id, name, controls}` | Create a macro with optional initial controls |
+| `daw.macro.delete` | `{macro_id: string}` | `{ok, macro_id}` | Delete a macro |
+| `daw.macro.list` | none | `{macros: [{macro_id, name, value, controls}], count}` | List all macros |
+| `daw.macro.get_info` | `{macro_id: string}` | `{macro_id, name, value, controls}` | Get details for a macro |
+| `daw.macro.set_value` | `{macro_id: string, value: number}` | `{ok, macro_id, value, controls_updated}` | Set macro position (0.0-1.0) and update all controls |
+| `daw.macro.get_value` | `{macro_id: string}` | `{macro_id, value, name}` | Get current macro position |
+| `daw.macro.add_control` | `{macro_id: string, track_id: string, control_uri: string, min?: number, max?: number}` | `{ok, macro_id, control_index, total_controls}` | Add a control mapping to an existing macro |
+| `daw.macro.remove_control` | `{macro_id: string, control_index: number}` | `{ok, macro_id, removed_index, total_controls}` | Remove a control from a macro by index |
+
+## Video Sync Extended
+
+Video pullup/pulldown, sync enable, and offset controls for film and broadcast workflows.
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.video.get_pullup` | none | `{pullup}` | Get video pullup/pulldown value |
+| `daw.video.set_pullup` | `{pullup: number}` | `{ok, pullup}` | Set video pullup/pulldown |
+| `daw.video.get_sync_enabled` | none | `{enabled}` | Check if video sync is enabled |
+| `daw.video.set_sync_enabled` | `{enabled: boolean}` | `{ok, enabled}` | Enable/disable video sync |
+| `daw.video.get_offset` | none | `{offset_samples, offset_negative}` | Get video offset in samples |
+| `daw.video.set_offset` | `{offset_samples: number, negative?: boolean}` | `{ok, offset_samples, offset_negative}` | Set video offset in samples |
+
+## Session Lifecycle (Tier 1)
+
+Session file operations, cleanup, freeze-all, MIDI panic, section editing, and mixer scene application. Source: `dawflow_commands_tier1.cc` section 1.1 (22 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.session.save_as` | `{snapshot_name: string, switch_to?: boolean}` | `{ok, snapshot_name}` | Save session snapshot with a name |
+| `daw.session.save_template` | `{name: string, description?: string}` | `{ok, template_name}` | Save session as a reusable template |
+| `daw.session.wipe` | none | `{ok}` | Reset session to empty state (destructive) |
+| `daw.session.import_files` | params | `{ok, note}` | Import audio/MIDI files (stub -- use daw.import_audio) |
+| `daw.session.remove_last_capture` | none | `{ok}` | Delete the last recording capture |
+| `daw.session.cleanup_sources` | none | `{ok, removed_files, removed_count, space_freed_bytes}` | Remove unused source files from disk |
+| `daw.session.cleanup_regions` | none | `{ok}` | Remove unused regions |
+| `daw.session.freeze_all` | none | `{ok, frozen_count}` | Freeze all tracks to audio |
+| `daw.session.midi_panic` | none | `{ok}` | Send all-notes-off to all MIDI outputs |
+| `daw.session.set_all_tracks_record_enabled` | `{enabled: boolean}` | `{ok, record_enabled}` | Arm or disarm all tracks at once |
+| `daw.session.request_count_in_record` | none | `{ok}` | Start recording with count-in |
+| `daw.session.request_play_range` | `{start: number, end: number, loop?: boolean}` | `{ok, start, end}` | Play a specific time range |
+| `daw.session.cancel_play_range` | none | `{ok}` | Cancel active play range |
+| `daw.session.set_session_extents` | `{start: number, end: number}` | `{ok}` | Set session start/end boundaries |
+| `daw.session.set_range_selection` | `{start: number, end: number}` | `{ok, note}` | Select a time range (session extents proxy) |
+| `daw.session.cut_copy_section` | `{start: number, end: number, to?: number, op?: string}` | `{ok, operation}` | Cut/copy/insert/delete a time section (op: cut/copy/insert/delete) |
+| `daw.session.deinterlace_midi_region` | `{region_id: string}` | `{ok}` | Split interleaved MIDI region by channel |
+| `daw.session.globally_add_internal_sends` | `{route_id: string, placement?: string}` | `{ok}` | Add internal sends from all routes to a destination |
+| `daw.session.globally_set_send_gains_to_zero` | `{bus_id: string}` | `{ok}` | Mute all sends to a bus |
+| `daw.session.globally_set_send_gains_to_unity` | `{bus_id: string}` | `{ok}` | Set all sends to a bus to 0 dB |
+| `daw.session.apply_mixer_scene` | `{index: number}` | `{ok, index, error?}` | Apply a stored mixer scene by index |
+| `daw.session.cleanup_peakfiles_v2` | none | `{ok, cleaned_files, count, space_freed_bytes}` | Delete orphaned peak files (enhanced) |
+
+## Track Freeze/Bounce (Tier 1)
+
+Freeze, unfreeze, bounce, and bounce-range operations on tracks. Source: `dawflow_commands_tier1.cc` section 1.2 (6 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.track.freeze` | `{track_id: string}` | `{ok, track_id}` | Freeze a track (render to audio) |
+| `daw.track.unfreeze` | `{track_id: string}` | `{ok, track_id}` | Unfreeze a frozen track |
+| `daw.track.get_freeze_state` | `{track_id: string}` | `{track_id, freeze_state, is_frozen}` | Check freeze status (no_freeze/frozen/unfrozen) |
+| `daw.track.bounce` | `{track_id: string, name?: string}` | `{ok, region_id, region_name, length}` | Bounce entire track to a new audio region |
+| `daw.track.bounce_range` | `{track_id: string, start: number, end: number, name?: string}` | `{ok, region_id, region_name, length}` | Bounce a specific time range of a track |
+| `daw.track.bounceable` | `{track_id: string}` | `{track_id, bounceable}` | Check if a track can be bounced |
+
+## Playlist Management (Tier 1)
+
+Switch, copy, and create playlists for tracks. Source: `dawflow_commands_tier1.cc` section 1.3 (6 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.track.use_playlist` | `{track_id: string, playlist_id: string}` | `{ok, track_id, playlist_id}` | Switch track to a specific playlist by ID |
+| `daw.track.use_copy_playlist` | `{track_id: string}` | `{ok, track_id, new_playlist_id, new_playlist_name}` | Duplicate current playlist for track |
+| `daw.track.use_new_playlist` | `{track_id: string}` | `{ok, track_id, new_playlist_id, new_playlist_name}` | Create fresh empty playlist for track |
+| `daw.track.find_and_use_playlist` | `{track_id: string, playlist_id: string}` | `{ok, track_id, playlist_id}` | Load a saved playlist by its ID |
+| `daw.playlist.get_extent` | `{track_id: string}` | `{start_samples, end_samples, duration_samples, region_count}` | Get total duration of a track's playlist |
+| `daw.playlist.remove_gaps` | `{track_id: string, threshold?: number, leave_gap?: number}` | `{ok, gaps_removed}` | Remove silence gaps from playlist |
+
+## Advanced Region Editing (Tier 1)
+
+Low-level region operations: trim, cut, nudge, layer, fade, normalize, and amplitude control. Source: `dawflow_commands_tier1.cc` section 1.4 (25 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.region.trim_front` | `{region_id: string, new_position: number}` | `{ok, position, length}` | Trim region start boundary |
+| `daw.region.trim_end` | `{region_id: string, new_position: number}` | `{ok, position, length}` | Trim region end boundary |
+| `daw.region.trim_to` | `{region_id: string, position: number, length: number}` | `{ok, position, length}` | Set exact region bounds |
+| `daw.region.cut_front` | `{region_id: string, new_position: number}` | `{ok, position, length}` | Cut region from the start |
+| `daw.region.cut_end` | `{region_id: string, new_position: number}` | `{ok, position, length}` | Cut region from the end |
+| `daw.region.nudge_position` | `{region_id: string, distance: number}` | `{ok, new_position}` | Nudge region position by a distance |
+| `daw.region.move_to_natural_position` | `{region_id: string}` | `{ok, new_position}` | Move region to its original/natural position |
+| `daw.region.set_sync_position` | `{region_id: string, position: number}` | `{ok}` | Set the sync point of a region |
+| `daw.region.clear_sync_position` | `{region_id: string}` | `{ok}` | Remove sync point from region |
+| `daw.region.set_muted` | `{region_id: string, muted: boolean}` | `{ok, muted}` | Mute or unmute a region |
+| `daw.region.set_locked` | `{region_id: string, locked: boolean}` | `{ok, locked}` | Lock or unlock a region |
+| `daw.region.set_opaque` | `{region_id: string, opaque: boolean}` | `{ok, opaque}` | Set region opacity (transparent vs opaque) |
+| `daw.region.raise` | `{region_id: string}` | `{ok}` | Move region up one layer |
+| `daw.region.lower` | `{region_id: string}` | `{ok}` | Move region down one layer |
+| `daw.region.raise_to_top` | `{region_id: string}` | `{ok}` | Move region to top layer |
+| `daw.region.lower_to_bottom` | `{region_id: string}` | `{ok}` | Move region to bottom layer |
+| `daw.audio_region.normalize` | `{region_id: string, target_db?: number}` | `{ok, max_amplitude, target_db}` | Normalize audio region to target dB (default 0) |
+| `daw.audio_region.set_scale_amplitude` | `{region_id: string, gain: number}` | `{ok, gain}` | Set region gain/amplitude scaling |
+| `daw.audio_region.set_fade_in` | `{region_id: string, length: number, shape?: string}` | `{ok, shape, length}` | Configure fade-in shape and length |
+| `daw.audio_region.set_fade_out` | `{region_id: string, length: number, shape?: string}` | `{ok, shape, length}` | Configure fade-out shape and length |
+| `daw.audio_region.set_fade_in_active` | `{region_id: string, active: boolean}` | `{ok, active}` | Enable/disable fade-in |
+| `daw.audio_region.set_fade_out_active` | `{region_id: string, active: boolean}` | `{ok, active}` | Enable/disable fade-out |
+| `daw.audio_region.set_envelope_active` | `{region_id: string, active: boolean}` | `{ok, active}` | Enable/disable volume envelope |
+| `daw.audio_region.get_rms` | `{region_id: string}` | `{region_id, rms, rms_db}` | Get RMS signal level of audio region |
+| `daw.audio_region.get_loudness` | `{region_id: string}` | `{region_id, maximum_amplitude, peak_db, rms, rms_db}` | Get loudness/amplitude metrics |
+
+## MIDI Model (Tier 1)
+
+Low-level MIDI model editing: diff commands, note/patch lookup, silence insertion, region merge/split, CC automation state, and note mode. Source: `dawflow_commands_tier1.cc` section 1.5 (14 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.midi.new_note_diff_command` | `{region_id: string, name?: string}` | `{ok, command_ptr, note}` | Create a note edit batch command |
+| `daw.midi.apply_diff_command` | `{region_id: string}` | `{ok, note}` | Apply a batch MIDI edit command (prefer atomic ops over IPC) |
+| `daw.midi.new_sysex_diff_command` | `{region_id: string, name?: string}` | `{ok, command_ptr}` | Create a SysEx edit batch command |
+| `daw.midi.new_patch_change_diff_command` | `{region_id: string, name?: string}` | `{ok, command_ptr}` | Create a patch change edit batch |
+| `daw.midi.find_note` | `{region_id: string, note_id: number}` | `{found, note?, channel?, velocity?, time_beats?, length_beats?}` | Locate a note in a MIDI model by event ID |
+| `daw.midi.find_patch_change` | `{region_id: string}` | `{patch_changes: [{id, time, channel, program, bank}], count}` | Find/list patch change events |
+| `daw.midi.insert_silence_at_start` | `{region_id: string, duration_beats: number}` | `{ok, duration_beats}` | Insert silence at the beginning of a MIDI region |
+| `daw.midi_region.merge` | `{region_id: string, other_id: string}` | `{ok}` | Merge another MIDI region into this one |
+| `daw.midi_region.separate_by_channel` | `{region_id: string}` | `{ok, regions: [{id, name}], count}` | Split MIDI region by channel |
+| `daw.midi_source.set_automation_state` | `{region_id: string, cc_number: number, state: string, channel?: number}` | `{ok}` | Set CC automation mode (off/play/write/touch/latch) |
+| `daw.midi_source.get_automation_state` | `{region_id: string, cc_number: number, channel?: number}` | `{state, cc_number, channel}` | Get CC automation mode |
+| `daw.midi_source.set_interpolation` | `{region_id: string, cc_number: number, style: string, channel?: number}` | `{ok}` | Set CC interpolation style (discrete/linear/curved/logarithmic) |
+| `daw.midi_source.get_interpolation` | `{region_id: string, cc_number: number, channel?: number}` | `{style, cc_number, channel}` | Get CC interpolation style |
+| `daw.midi_track.set_note_mode` | `{track_id: string, mode: string}` | `{ok, mode}` | Set sustained vs percussive note mode |
+
+## Plugin Config Advanced (Tier 1)
+
+Plugin parameter reset, strict I/O, custom config, instance count, channel mapping, timing stats, presets (v2), and documentation access. Source: `dawflow_commands_tier1.cc` section 1.6 (16 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.plugin.reset_parameters_to_default` | `{track_id: string, plugin_id: string}` | `{ok}` | Reset all plugin parameters to defaults |
+| `daw.plugin.set_strict_io` | `{track_id: string, plugin_id: string, strict: boolean}` | `{ok, strict_io}` | Enable/disable strict I/O channel matching |
+| `daw.plugin.set_custom_cfg` | `{track_id: string, plugin_id: string, custom: boolean}` | `{ok, custom_cfg}` | Enable/disable custom I/O configuration |
+| `daw.plugin.set_count` | `{track_id: string, plugin_id: string, count: number}` | `{ok, count}` | Set number of parallel plugin instances |
+| `daw.plugin.set_input_map` | `{track_id: string, plugin_id: string, instance?: number, mapping?: [{from, to}]}` | `{ok}` | Set plugin input channel mapping |
+| `daw.plugin.set_output_map` | `{track_id: string, plugin_id: string, instance?: number, mapping?: [{from, to}]}` | `{ok}` | Set plugin output channel mapping |
+| `daw.plugin.get_timing_stats` | `{track_id: string, plugin_id: string}` | `{has_stats, min_us?, max_us?, avg_us?, stddev_us?, latency?}` | Get CPU timing statistics for a plugin |
+| `daw.plugin.clear_timing_stats` | `{track_id: string, plugin_id: string}` | `{ok}` | Clear accumulated timing statistics |
+| `daw.plugin.save_preset_v2` | `{track_id: string, plugin_id: string, name: string}` | `{ok, preset_uri, label}` | Save current state as a named preset (enhanced) |
+| `daw.plugin.remove_preset` | `{track_id: string, plugin_id: string, name: string}` | `{ok}` | Delete a saved preset |
+| `daw.plugin.clear_preset` | `{track_id: string, plugin_id: string}` | `{ok}` | Clear/deselect the active preset |
+| `daw.plugin.get_parameter_descriptor` | `{track_id: string, plugin_id: string, param_index: number}` | `{label, lower, upper, normal, step, smallstep, largestep, toggled, logarithmic, sr_dependent, integer_step, enumeration, unit}` | Get detailed info about a plugin parameter |
+| `daw.plugin.get_scale_points` | `{track_id: string, plugin_id: string, param_index: number}` | `{scale_points: [{label, value}], count}` | Get enumerated scale points for a parameter |
+| `daw.plugin.get_docs` | `{track_id: string, plugin_id: string}` | `{docs, name, maker}` | Get plugin documentation string |
+| `daw.route.customize_plugin_io` | `{track_id: string, plugin_id: string, audio_out?: number, audio_sinks?: number}` | `{ok}` | Configure custom I/O for a plugin insert |
+| `daw.route.reset_plugin_io` | `{track_id: string, plugin_id: string}` | `{ok}` | Reset plugin I/O to defaults |
+
+## Audio Engine/Backend (Tier 2)
+
+Audio engine discovery, backend selection, device enumeration, latency detection, and buffered I/O. Source: `dawflow_commands_tier2.cc` section 2.1 (25 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.engine.discover_backends` | none | `{backends, count}` | Discover available audio backends |
+| `daw.engine.set_backend` | `{name: string}` | `{ok, backend}` | Set the audio backend by name |
+| `daw.engine.get_current_backend` | none | `{name, running}` | Get the current audio backend name and state |
+| `daw.engine.is_jack` | none | `{is_jack}` | Check if running under JACK |
+| `daw.engine.freewheeling` | none | `{freewheeling}` | Check if engine is in freewheel mode |
+| `daw.engine.running` | none | `{running}` | Check if engine is running |
+| `daw.engine.launch_device_control_app` | none | `{ok}` | Launch audio device control application |
+| `daw.engine.request_backend_reset` | none | `{ok}` | Request backend reset |
+| `daw.engine.request_device_list_update` | none | `{ok}` | Request device list refresh |
+| `daw.backend.enumerate_drivers` | none | `{drivers, count}` | List available audio drivers |
+| `daw.backend.set_driver` | `{name: string}` | `{ok, driver}` | Set the audio driver |
+| `daw.backend.enumerate_input_devices` | none | `{devices: [{name, available}], count}` | List available input devices |
+| `daw.backend.enumerate_output_devices` | none | `{devices: [{name, available}], count}` | List available output devices |
+| `daw.backend.set_input_device` | `{name: string}` | `{ok, device}` | Set the input device |
+| `daw.backend.set_output_device` | `{name: string}` | `{ok, device}` | Set the output device |
+| `daw.backend.default_sample_rate` | none | `{sample_rate}` | Get default sample rate for current backend |
+| `daw.backend.default_buffer_size` | `{device?: string}` | `{buffer_size}` | Get default buffer size for device |
+| `daw.backend.set_use_buffered_io` | `{enabled: boolean}` | `{ok, buffered_io}` | Enable/disable buffered I/O |
+| `daw.backend.get_use_buffered_io` | none | `{buffered_io}` | Check if buffered I/O is enabled |
+| `daw.backend.drop_device` | none | `{ok}` | Drop the audio device |
+| `daw.backend.reset_device` | none | `{ok}` | Reset the audio device |
+| `daw.engine.prepare_latency_measurement` | none | `{ok}` | Prepare for latency measurement |
+| `daw.engine.start_latency_detection` | `{for_midi?: boolean}` | `{ok, for_midi}` | Start latency detection |
+| `daw.engine.stop_latency_detection` | none | `{ok}` | Stop latency detection |
+| `daw.engine.get_latency_signal_delay` | none | `{latency_samples}` | Get measured latency signal delay |
+
+## Port Management Advanced (Tier 2)
+
+Port listing, registration, connection, monitoring, physical I/O, pretty names, and MIDI flags. Source: `dawflow_commands_tier2.cc` section 2.2 (20 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.port.list_all` | none | `{ports: [{name, type}], count}` | List all registered audio and MIDI ports |
+| `daw.port.register_input` | `{type: string, name: string}` | `{ok, name}` | Register a new input port |
+| `daw.port.register_output` | `{type: string, name: string}` | `{ok, name}` | Register a new output port |
+| `daw.port.unregister` | `{name: string}` | `{ok}` | Unregister a port |
+| `daw.port.connect` | `{source: string, dest: string}` | `{ok, source, dest}` | Connect two ports |
+| `daw.port.disconnect` | `{source: string, dest: string}` | `{ok, source, dest}` | Disconnect two ports |
+| `daw.port.disconnect_all` | `{name: string}` | `{ok, port}` | Disconnect all connections from a port |
+| `daw.port.get_connections` | `{name: string}` | `{port, connections, count}` | Get all connections for a port |
+| `daw.port.connected_to` | `{name: string, other: string}` | `{connected, port, other}` | Check if two ports are connected |
+| `daw.port.physically_connected` | `{name: string}` | `{physically_connected, port}` | Check if a port is physically connected |
+| `daw.port.set_pretty_name` | `{name: string, pretty_name: string}` | `{ok, port, pretty_name}` | Set human-readable name for a port |
+| `daw.port.get_pretty_name` | `{name: string}` | `{port, pretty_name}` | Get human-readable name for a port |
+| `daw.port.get_physical_outputs` | `{type?: string}` | `{ports, count, type}` | List physical output ports |
+| `daw.port.get_physical_inputs` | `{type?: string}` | `{ports, count, type}` | List physical input ports |
+| `daw.port.n_physical_outputs` | none | `{audio, midi}` | Count physical output ports |
+| `daw.port.n_physical_inputs` | none | `{audio, midi}` | Count physical input ports |
+| `daw.port.request_input_monitoring` | `{name: string, enabled: boolean}` | `{ok, port, monitoring}` | Request input monitoring for a port |
+| `daw.port.get_midi_ports` | `{for_input?: boolean}` | `{ports, count, for_input}` | List MIDI ports (input or output) |
+| `daw.port.add_midi_flags` | `{name: string, flags: number}` | `{ok, port, flags}` | Add MIDI flags to a port |
+| `daw.port.remove_midi_flags` | `{name: string, flags: number}` | `{ok, port, flags}` | Remove MIDI flags from a port |
+
+## Transport Masters (Tier 2)
+
+List, add, remove, configure, and query transport masters (MTC, LTC, MIDI Clock, Engine). Source: `dawflow_commands_tier2.cc` section 2.3 (15 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.transport_master.list_all` | none | `{masters: [{name, type, locked, collect, removeable}], count}` | List all transport masters |
+| `daw.transport_master.get_current` | none | `{name, type, locked, collect}` | Get the current transport master |
+| `daw.transport_master.set_current_by_type` | `{type: string}` | `{ok, type}` | Set current master by type (Engine/MTC/MIDIClock/LTC) |
+| `daw.transport_master.set_current_by_name` | `{name: string}` | `{ok, name}` | Set current master by name |
+| `daw.transport_master.add` | `{type: string, name: string}` | `{ok, type, name}` | Add a new transport master |
+| `daw.transport_master.remove` | `{name: string}` | `{ok, name}` | Remove a transport master |
+| `daw.transport_master.get_type` | `{name: string}` | `{name, type}` | Get the type of a transport master |
+| `daw.transport_master.locked` | `{name: string}` | `{name, locked}` | Check if a transport master is locked |
+| `daw.transport_master.get_delta` | `{name: string}` | `{name, delta, delta_string}` | Get sync delta for a transport master |
+| `daw.transport_master.get_position` | `{name: string}` | `{name, position}` | Get position string for a transport master |
+| `daw.transport_master.set_collect` | `{name: string, collect: boolean}` | `{ok, name, collect}` | Enable/disable data collection |
+| `daw.transport_master.set_request_mask` | `{name: string, mask: number}` | `{ok, name, mask}` | Set transport request mask |
+| `daw.transport_master.set_sample_clock_synced` | `{name: string, synced: boolean}` | `{ok, name, synced}` | Set sample clock sync state |
+| `daw.transport_master.suspend_timecode` | none | `{ok}` | Suspend timecode transmission |
+| `daw.transport_master.resume_timecode` | none | `{ok}` | Resume timecode transmission |
+
+## Monitor Processor Extended (Tier 2)
+
+Per-channel cut, solo, polarity, dim level, and monitor section state. Source: `dawflow_commands_tier2.cc` section 2.4 (14 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.monitor.set_cut` | `{channel: number, cut: boolean}` | `{ok, channel, cut}` | Per-channel cut on monitor |
+| `daw.monitor.set_solo` | `{channel: number, solo: boolean}` | `{ok, channel, solo}` | Per-channel solo on monitor |
+| `daw.monitor.set_polarity` | `{channel: number, invert: boolean}` | `{ok, channel, invert}` | Per-channel polarity invert on monitor |
+| `daw.monitor.get_cut_all` | none | `{cut_all}` | Get global cut state |
+| `daw.monitor.get_dim_all` | none | `{dim_all}` | Get global dim state |
+| `daw.monitor.get_mono` | none | `{mono}` | Get mono state |
+| `daw.monitor.get_cut` | `{channel: number}` | `{channel, cut}` | Get per-channel cut state |
+| `daw.monitor.get_dim` | `{channel: number}` | `{channel, dim}` | Get per-channel dim state |
+| `daw.monitor.get_solo` | `{channel: number}` | `{channel, solo}` | Get per-channel solo state |
+| `daw.monitor.get_polarity` | `{channel: number}` | `{channel, inverted}` | Get per-channel polarity state |
+| `daw.monitor.get_dim_level` | none | `{dim_level, dim_level_dB}` | Get dim level in coefficient and dB |
+| `daw.monitor.get_solo_boost_level` | none | `{solo_boost_level, solo_boost_level_dB}` | Get solo boost level |
+| `daw.monitor.is_active` | none | `{active}` | Check if monitor processor is active |
+| `daw.session.reset_monitor_section` | none | `{ok}` | Reset monitor processor to defaults |
+
+## Location Flags (Tier 2)
+
+Lock/unlock locations, set flags (CD, cue, skip, section, range, hidden), clear markers, and set time domain. Source: `dawflow_commands_tier2.cc` section 2.5 (16 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.location.lock` | `{id: string}` | `{ok, id, locked}` | Lock a location |
+| `daw.location.unlock` | `{id: string}` | `{ok, id, locked}` | Unlock a location |
+| `daw.location.set_hidden` | `{id: string, hidden: boolean}` | `{ok, id, hidden}` | Show or hide a location |
+| `daw.location.set_cd` | `{id: string, cd: boolean}` | `{ok, id, cd}` | Set CD marker flag |
+| `daw.location.set_cue` | `{id: string, cue: boolean}` | `{ok, id, cue}` | Set cue flag |
+| `daw.location.set_is_range` | `{id: string, is_range: boolean}` | `{ok, id, is_range}` | Set range marker flag |
+| `daw.location.set_skip` | `{id: string, skip: boolean}` | `{ok, id, skip}` | Set skip flag |
+| `daw.location.set_section` | `{id: string, section: boolean}` | `{ok, id, section}` | Set section flag |
+| `daw.location.set_cue_id` | `{id: string, cue_id: number}` | `{ok, id, cue_id}` | Set cue ID on a location |
+| `daw.location.set_scene_change` | `{id: string, clear?: boolean}` | `{ok, id, scene_change}` | Set/clear scene change on a location |
+| `daw.location.set_auto_punch` | `{id: string, auto_punch: boolean}` | `{ok, id, auto_punch}` | Set auto-punch flag |
+| `daw.location.set_auto_loop` | `{id: string, auto_loop: boolean}` | `{ok, id, auto_loop}` | Set auto-loop flag |
+| `daw.locations.clear_cue_markers` | `{start: number, end: number}` | `{ok, start, end}` | Clear cue markers in a time range |
+| `daw.locations.clear_scene_markers` | `{start: number, end: number}` | `{ok, start, end}` | Clear scene markers in a time range |
+| `daw.locations.cut_copy_section` | `{start: number, end: number, to: number, op?: string}` | `{ok, op}` | Cut/copy/insert/delete a location section |
+| `daw.location.set_time_domain` | `{id: string, domain: string}` | `{ok, id, domain}` | Set time domain (audio/beats) |
+
+## Automation Write Passes (Tier 2)
+
+Start/stop touch and write passes, check writability, value conversion, and grouped controls. Source: `dawflow_commands_tier2.cc` section 2.6 (10 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.automation.start_touch` | `{track_id: string, control: string, when?: number}` | `{ok, track_id, control}` | Start touch automation at a position |
+| `daw.automation.stop_touch` | `{track_id: string, control: string, when?: number}` | `{ok, track_id, control}` | Stop touch automation at a position |
+| `daw.automation.start_write_pass` | `{track_id: string, control: string, when?: number}` | `{ok, track_id, control}` | Start an automation write pass |
+| `daw.automation.write_pass_finished` | `{track_id: string, control: string, when?: number}` | `{ok, track_id, control}` | Signal that a write pass finished |
+| `daw.automation.writable` | `{track_id: string, control: string}` | `{writable, track_id, control}` | Check if an automation control is writable |
+| `daw.automation.internal_to_interface` | `{track_id: string, control: string, value: number}` | `{interface_value, internal_value}` | Convert internal value to interface (0-1) |
+| `daw.automation.interface_to_internal` | `{track_id: string, control: string, value: number}` | `{internal_value, interface_value}` | Convert interface (0-1) to internal value |
+| `daw.automation.get_user_string` | `{track_id: string, control: string}` | `{user_string, value, track_id, control}` | Get human-readable string for current value |
+| `daw.automation.get_grouped_controls` | `{track_id: string, control: string}` | `{track_id, control, grouped: [{name, value, id}], count}` | Get controls grouped with this one |
+| `daw.automation.commit_transaction` | `{track_id: string, control: string}` | `{ok, track_id, control}` | Commit an automation transaction |
+
+## VCA Advanced (Tier 2)
+
+VCA assignment, slave queries, solo state, and control inspection. Source: `dawflow_commands_tier2.cc` section 2.7 (6 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.vca.assign` | `{vca_id: string, target_vca_id: string}` | `{ok, vca_id, target_vca_id}` | Assign a VCA as master to another VCA |
+| `daw.vca.slaved_to` | `{vca_id: string, other_id: string}` | `{slaved_to, vca_id, other_id}` | Check if VCA is slaved to another |
+| `daw.vca.slaved` | `{vca_id: string}` | `{slaved, vca_id}` | Check if VCA is slaved to any master |
+| `daw.vca.soloed` | `{vca_id: string}` | `{soloed, vca_id}` | Check if VCA is soloed |
+| `daw.vca.clear_all_solo_state` | `{vca_id: string}` | `{ok, vca_id}` | Clear all solo state on a VCA |
+| `daw.vca.get_controls` | `{vca_id: string}` | `{vca_id, gain, mute, solo}` | Get VCA gain, mute, and solo controls |
+
+## Export System (Tier 3)
+
+Full export configuration: format, normalization, timespans, sample rate conversion, tagging, and execution. Source: `dawflow_commands_tier3.cc` section 3.1 (40 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.export.create_profile` | params | result | Create a new export profile |
+| `daw.export.set_format_type` | `{type: string}` | `{ok}` | Set export format type (WAV, FLAC, Ogg, MP3, etc.) |
+| `daw.export.set_format_name` | `{name: string}` | `{ok}` | Set export format name |
+| `daw.export.set_sample_rate` | `{sample_rate: number}` | `{ok}` | Set export sample rate |
+| `daw.export.set_bit_depth` | `{bit_depth: number}` | `{ok}` | Set export bit depth |
+| `daw.export.set_dither_type` | `{dither: string}` | `{ok}` | Set dither type |
+| `daw.export.set_src_quality` | `{quality: number}` | `{ok}` | Set sample rate conversion quality |
+| `daw.export.set_normalize` | `{enabled: boolean}` | `{ok}` | Enable/disable normalization |
+| `daw.export.set_normalize_dbfs` | `{dbfs: number}` | `{ok}` | Set peak normalization target in dBFS |
+| `daw.export.set_normalize_dbtp` | `{dbtp: number}` | `{ok}` | Set true-peak normalization target |
+| `daw.export.set_normalize_lufs` | `{lufs: number}` | `{ok}` | Set LUFS normalization target |
+| `daw.export.set_normalize_loudness` | `{enabled: boolean}` | `{ok}` | Enable/disable loudness normalization |
+| `daw.export.set_trim_beginning` | `{enabled: boolean}` | `{ok}` | Enable/disable trim silence at beginning |
+| `daw.export.set_trim_end` | `{enabled: boolean}` | `{ok}` | Enable/disable trim silence at end |
+| `daw.export.set_silence_beginning` | `{seconds: number}` | `{ok}` | Set silence padding at beginning |
+| `daw.export.set_silence_end` | `{seconds: number}` | `{ok}` | Set silence padding at end |
+| `daw.export.set_codec_quality` | `{quality: number}` | `{ok}` | Set lossy codec quality |
+| `daw.export.set_tagging` | `{enabled: boolean}` | `{ok}` | Enable/disable metadata tagging |
+| `daw.export.set_with_cue` | `{enabled: boolean}` | `{ok}` | Enable/disable CUE sheet generation |
+| `daw.export.set_with_toc` | `{enabled: boolean}` | `{ok}` | Enable/disable TOC file generation |
+| `daw.export.set_with_mp4chaps` | `{enabled: boolean}` | `{ok}` | Enable/disable MP4 chapter markers |
+| `daw.export.set_tp_limiter` | `{enabled: boolean}` | `{ok}` | Enable/disable true-peak limiter |
+| `daw.export.set_channel_split` | `{enabled: boolean}` | `{ok}` | Enable/disable channel splitting |
+| `daw.export.set_analyse` | `{enabled: boolean}` | `{ok}` | Enable/disable post-export analysis |
+| `daw.export.set_reimport` | `{enabled: boolean}` | `{ok}` | Enable/disable reimport after export |
+| `daw.export.set_post_export_command` | `{command: string}` | `{ok}` | Set post-export shell command |
+| `daw.export.set_filename_folder` | `{folder: string}` | `{ok}` | Set export output folder |
+| `daw.export.set_filename_label` | `{label: string}` | `{ok}` | Set export filename label |
+| `daw.export.set_filename_revision` | `{revision: number}` | `{ok}` | Set export filename revision number |
+| `daw.export.set_timespan` | params | result | Set export timespan (session/selection/ranges) |
+| `daw.export.set_timespan_realtime` | `{realtime: boolean}` | `{ok}` | Enable/disable real-time export |
+| `daw.export.add_channel_config` | params | result | Add channel configuration to export |
+| `daw.export.get_warnings` | none | result | Get export warnings/errors |
+| `daw.export.get_sample_filename` | none | result | Get a sample of the export filename |
+| `daw.export.prepare` | none | result | Prepare the export (validate config) |
+| `daw.export.execute` | none | result | Execute the export |
+| `daw.export.abort` | none | result | Abort an in-progress export |
+| `daw.export.save_preset` | `{name: string}` | result | Save current export config as a preset |
+| `daw.export.remove_preset` | `{name: string}` | result | Remove an export preset |
+| `daw.export.load_preset` | `{name: string}` | result | Load an export preset |
+| `daw.delivery.set_analysis_active` | `{track_id: string, active: boolean}` | `{ok}` | Enable/disable delivery analysis on a route |
+
+## Plugin Manager (Tier 3)
+
+Plugin scanning, blacklisting, cache management, status, statistics, and tagging. Source: `dawflow_commands_tier3.cc` section 3.2 (25 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.plugin_manager.refresh` | none | result | Refresh/rescan all plugins |
+| `daw.plugin_manager.cancel_scan` | none | result | Cancel an in-progress plugin scan |
+| `daw.plugin_manager.get_stats` | none | result | Get plugin scan statistics |
+| `daw.plugin_manager.get_status` | `{plugin_id: string}` | result | Get status of a specific plugin |
+| `daw.plugin_manager.set_status` | `{plugin_id: string, status: string}` | result | Set plugin status (Normal/Favorite/Hidden) |
+| `daw.plugin_manager.get_type_name` | `{type: string}` | result | Get display name for a plugin type |
+| `daw.plugin_manager.get_plugins_by_type` | `{type: string}` | result | List plugins filtered by type |
+| `daw.plugin_manager.cache_valid` | none | result | Check if plugin cache is valid |
+| `daw.plugin_manager.blacklist` | `{plugin_id: string}` | result | Blacklist a plugin |
+| `daw.plugin_manager.whitelist` | `{plugin_id: string}` | result | Remove a plugin from blacklist |
+| `daw.plugin_manager.clear_vst_cache` | none | result | Clear VST plugin cache |
+| `daw.plugin_manager.clear_vst_blacklist` | none | result | Clear VST blacklist |
+| `daw.plugin_manager.clear_vst3_cache` | none | result | Clear VST3 plugin cache |
+| `daw.plugin_manager.clear_vst3_blacklist` | none | result | Clear VST3 blacklist |
+| `daw.plugin_manager.clear_au_cache` | none | result | Clear AudioUnit cache |
+| `daw.plugin_manager.clear_au_blacklist` | none | result | Clear AudioUnit blacklist |
+| `daw.plugin_manager.get_scan_log` | none | result | Get plugin scan log |
+| `daw.plugin_manager.clear_stale_log` | none | result | Clear stale scan log entries |
+| `daw.plugin_manager.rescan_plugin` | `{plugin_id: string}` | result | Rescan a specific plugin |
+| `daw.plugin_manager.rescan_faulty` | none | result | Rescan all faulty plugins |
+| `daw.plugin_manager.reset_stats` | none | result | Reset plugin statistics |
+| `daw.plugin_manager.save_statuses` | none | result | Save plugin statuses to disk |
+| `daw.plugin_manager.save_tags` | none | result | Save plugin tags to disk |
+| `daw.plugin_manager.dump_untagged` | none | result | List plugins without tags |
+| `daw.plugin_manager.get_default_vst_path` | none | result | Get default VST search path |
+
+## Track Advanced Controls (Tier 3)
+
+MIDI track configuration, alignment, buffer monitoring, and input monitoring. Source: `dawflow_commands_tier3.cc` section 3.3 (20 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.midi_track.midi_panic` | `{track_id: string}` | `{ok}` | Send MIDI panic (all-notes-off) on a single track |
+| `daw.midi_track.set_input_active` | `{track_id: string, active: boolean}` | `{ok}` | Enable/disable MIDI input on a track |
+| `daw.midi_track.set_capture_channel_mode` | `{track_id: string, mode: string}` | `{ok}` | Set MIDI capture channel filtering |
+| `daw.midi_track.set_playback_channel_mode` | `{track_id: string, mode: string}` | `{ok}` | Set MIDI playback channel filtering |
+| `daw.midi_track.set_step_editing` | `{track_id: string, enabled: boolean}` | `{ok}` | Enable/disable step editing mode |
+| `daw.midi_track.set_chase_notes` | `{track_id: string, enabled: boolean}` | `{ok}` | Enable/disable note chase on locate |
+| `daw.midi_track.write_immediate_event` | `{track_id: string, data: number[]}` | `{ok}` | Send raw MIDI event immediately |
+| `daw.track.set_align_style` | `{track_id: string, style: string}` | `{ok}` | Set track alignment style |
+| `daw.track.set_align_choice` | `{track_id: string, choice: string}` | `{ok}` | Set track alignment choice |
+| `daw.track.capture_buffer_load` | `{track_id: string}` | result | Get capture buffer fill percentage |
+| `daw.track.playback_buffer_load` | `{track_id: string}` | result | Get playback buffer fill percentage |
+| `daw.track.request_input_monitoring` | `{track_id: string, enabled: boolean}` | `{ok}` | Request input monitoring on a track |
+| `daw.track.ensure_input_monitoring` | `{track_id: string, enabled: boolean}` | `{ok}` | Ensure input monitoring is set |
+| `daw.route.set_denormal_protection` | `{track_id: string, enabled: boolean}` | `{ok}` | Enable/disable denormal protection |
+| `daw.route.set_meter_point` | `{track_id: string, point: string}` | `{ok}` | Set meter tap point (pre/post/output/custom) |
+| `daw.route.set_meter_type` | `{track_id: string, type: string}` | `{ok}` | Set meter type |
+| `daw.route.get_latency` | `{track_id: string}` | result | Get route signal latency |
+| `daw.route.get_monitoring_state` | `{track_id: string}` | result | Get route monitoring state |
+| `daw.route.output_effectively_connected` | `{track_id: string}` | result | Check if output is effectively connected |
+| `daw.route.signal_sources` | `{track_id: string}` | result | Get all signal sources feeding a route |
+
+## Send/Return Config (Tier 3)
+
+Send panner linking, auto-disconnect, sidechain, foldback, surround sends, and internal send configuration. Source: `dawflow_commands_tier3.cc` section 3.4 (12 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.route.add_aux_send` | `{track_id: string, bus_id: string}` | `{ok}` | Add an aux send from track to bus |
+| `daw.route.add_foldback_send` | `{track_id: string, bus_id: string}` | `{ok}` | Add a foldback send from track to bus |
+| `daw.route.add_sidechain` | `{track_id: string, plugin_id: string}` | `{ok}` | Add sidechain input to a plugin |
+| `daw.route.remove_sidechain` | `{track_id: string, plugin_id: string}` | `{ok}` | Remove sidechain from a plugin |
+| `daw.route.enable_monitor_send` | `{track_id: string}` | `{ok}` | Enable monitor send on a route |
+| `daw.route.enable_surround_send` | `{track_id: string}` | `{ok}` | Enable surround send on a route |
+| `daw.route.feeds` | `{track_id: string, other_id: string}` | result | Check if a route feeds another |
+| `daw.route.get_internal_send` | `{track_id: string, target_id: string}` | result | Get internal send between two routes |
+| `daw.send.set_panner_linked` | `{track_id: string, send_id: string, linked: boolean}` | `{ok}` | Link/unlink send panner to track panner |
+| `daw.send.set_remove_on_disconnect` | `{track_id: string, send_id: string, enabled: boolean}` | `{ok}` | Auto-remove send when target disconnects |
+| `daw.internal_send.set_allow_feedback` | `{track_id: string, send_id: string, allow: boolean}` | `{ok}` | Allow/disallow feedback on internal send |
+| `daw.session.load_io_plugin` | `{name: string}` | result | Load an I/O plugin into the session |
+
+## Trigger/Clip Advanced (Tier 3)
+
+Trigger slot configuration, follow actions, MIDI learn, TriggerBox control, audio/MIDI trigger properties. Source: `dawflow_commands_tier3.cc` section 3.5 (35 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.trigger.set_follow_action0` | `{track_id: string, slot: number, type: string}` | `{ok}` | Set primary follow action |
+| `daw.trigger.set_follow_action1` | `{track_id: string, slot: number, type: string}` | `{ok}` | Set secondary follow action |
+| `daw.trigger.set_follow_probability` | `{track_id: string, slot: number, probability: number}` | `{ok}` | Set follow action probability (0-100) |
+| `daw.trigger.set_follow_length` | `{track_id: string, slot: number, beats: number}` | `{ok}` | Set follow action length in beats |
+| `daw.trigger.set_use_follow_length` | `{track_id: string, slot: number, enabled: boolean}` | `{ok}` | Enable/disable follow length |
+| `daw.trigger.set_legato` | `{track_id: string, slot: number, legato: boolean}` | `{ok}` | Enable/disable legato mode |
+| `daw.trigger.set_velocity_effect` | `{track_id: string, slot: number, effect: number}` | `{ok}` | Set velocity effect amount |
+| `daw.trigger.set_stretchable` | `{track_id: string, slot: number, stretchable: boolean}` | `{ok}` | Enable/disable time-stretching |
+| `daw.trigger.set_cue_isolated` | `{track_id: string, slot: number, isolated: boolean}` | `{ok}` | Isolate trigger from cue |
+| `daw.trigger.set_allow_patch_changes` | `{track_id: string, slot: number, allow: boolean}` | `{ok}` | Allow/disallow MIDI patch changes |
+| `daw.trigger.clear_region` | `{track_id: string, slot: number}` | `{ok}` | Clear region from a trigger slot |
+| `daw.trigger.request_stop` | `{track_id: string, slot: number}` | `{ok}` | Request trigger stop |
+| `daw.trigger.stop_quantized` | `{track_id: string, slot: number}` | `{ok}` | Stop trigger at next quantize point |
+| `daw.trigger.get_position` | `{track_id: string, slot: number}` | result | Get trigger playback position |
+| `daw.trigger.get_position_fraction` | `{track_id: string, slot: number}` | result | Get trigger playback progress (0-1) |
+| `daw.triggerbox.clear_all` | `{track_id: string}` | `{ok}` | Clear all trigger slots |
+| `daw.triggerbox.disarm_all` | `{track_id: string}` | `{ok}` | Disarm all trigger slots |
+| `daw.triggerbox.stop_all_immediately` | `{track_id: string}` | `{ok}` | Stop all triggers immediately |
+| `daw.triggerbox.set_record_enabled` | `{track_id: string, enabled: boolean}` | `{ok}` | Enable/disable trigger recording |
+| `daw.triggerbox.get_record_enabled` | `{track_id: string}` | result | Check if trigger recording is enabled |
+| `daw.triggerbox.begin_midi_learn` | `{track_id: string, slot: number}` | `{ok}` | Start MIDI learn for a trigger slot |
+| `daw.triggerbox.midi_unlearn` | `{track_id: string, slot: number}` | `{ok}` | Remove MIDI learn mapping |
+| `daw.triggerbox.stop_midi_learn` | `{track_id: string}` | `{ok}` | Stop MIDI learn mode |
+| `daw.triggerbox.get_midi_map_mode` | `{track_id: string}` | result | Get MIDI mapping mode |
+| `daw.triggerbox.set_midi_map_mode` | `{track_id: string, mode: string}` | `{ok}` | Set MIDI mapping mode |
+| `daw.triggerbox.get_first_midi_note` | `{track_id: string}` | result | Get first MIDI note for trigger mapping |
+| `daw.triggerbox.set_first_midi_note` | `{track_id: string, note: number}` | `{ok}` | Set first MIDI note for trigger mapping |
+| `daw.audio_trigger.set_segment_tempo` | `{track_id: string, slot: number, bpm: number}` | `{ok}` | Set audio trigger segment tempo |
+| `daw.audio_trigger.set_segment_beatcnt` | `{track_id: string, slot: number, beats: number}` | `{ok}` | Set audio trigger segment beat count |
+| `daw.audio_trigger.get_segment_beatcnt` | `{track_id: string, slot: number}` | result | Get audio trigger segment beat count |
+| `daw.midi_trigger.set_channel_map` | `{track_id: string, slot: number, map: string}` | `{ok}` | Set MIDI trigger channel map |
+| `daw.midi_trigger.set_patch_change` | `{track_id: string, slot: number, channel: number, program: number, bank?: number}` | `{ok}` | Set MIDI trigger patch change |
+| `daw.midi_trigger.unset_patch_change` | `{track_id: string, slot: number, channel: number}` | `{ok}` | Remove MIDI trigger patch change |
+| `daw.midi_trigger.unset_all_patch_changes` | `{track_id: string, slot: number}` | `{ok}` | Remove all MIDI trigger patch changes |
+| `daw.midi_trigger.get_used_channels` | `{track_id: string, slot: number}` | result | Get MIDI channels used by trigger |
+
+## Surround/Atmos (Tier 4)
+
+Surround send gain, pannable positions, delay, and Apple AU renderer integration. Source: `dawflow_commands_tier4.cc` section 4.1 (13 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.surround_send.get_gain_control` | `{track_id: string}` | `{gain, track_id}` | Get surround send gain |
+| `daw.surround_send.get_pannable` | `{track_id: string, index?: number}` | `{pos_x, pos_y, pos_z, size}` | Get surround pannable position |
+| `daw.surround_send.n_pannables` | `{track_id: string}` | `{n_pannables}` | Get number of surround pannables |
+| `daw.surround_send.set_delay_in` | `{track_id: string, samples: number}` | `{ok}` | Set surround send input delay |
+| `daw.surround_send.set_delay_out` | `{track_id: string, samples: number}` | `{ok}` | Set surround send output delay |
+| `daw.surround_pannable.get_automation_state` | `{track_id: string, index?: number}` | result | Get surround pan automation state |
+| `daw.surround_pannable.set_automation_state` | `{track_id: string, index?: number, state: string}` | `{ok}` | Set surround pan automation state |
+| `daw.surround_pannable.touching` | `{track_id: string, index?: number}` | result | Check if surround pannable is being touched |
+| `daw.surround_pannable.setup_visual_links` | `{track_id: string}` | `{ok}` | Set up visual links for surround panning |
+| `daw.surround_pannable.sync_visual_link` | `{track_id: string}` | `{ok}` | Sync visual link state |
+| `daw.surround_return.have_au_renderer` | none | result | Check if Apple AU renderer is available |
+| `daw.surround_return.load_au_preset` | `{preset: string}` | result | Load an AU renderer preset |
+| `daw.surround_return.set_au_param` | `{param: string, value: number}` | result | Set AU renderer parameter |
+
+## Source/Cue Markers (Tier 4)
+
+Source-level cue markers, take IDs, transient loading, tempo estimation, and analysis state. Source: `dawflow_commands_tier4.cc` section 4.2 (14 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.source.get_cue_markers` | `{source_id: string}` | result | Get cue markers on a source |
+| `daw.source.add_cue_marker` | `{source_id: string, name: string, position: number}` | `{ok}` | Add a cue marker to a source |
+| `daw.source.remove_cue_marker` | `{source_id: string, position: number}` | `{ok}` | Remove a cue marker from a source |
+| `daw.source.move_cue_marker` | `{source_id: string, old_position: number, new_position: number}` | `{ok}` | Move a cue marker |
+| `daw.source.rename_cue_marker` | `{source_id: string, position: number, name: string}` | `{ok}` | Rename a cue marker |
+| `daw.source.clear_cue_markers` | `{source_id: string}` | `{ok}` | Clear all cue markers from a source |
+| `daw.source.get_take_id` | `{source_id: string}` | result | Get take ID for a source |
+| `daw.source.set_take_id` | `{source_id: string, take_id: string}` | `{ok}` | Set take ID for a source |
+| `daw.source.has_been_analysed` | `{source_id: string}` | result | Check if source has been analysed |
+| `daw.source.load_transients` | `{source_id: string}` | result | Load transient data for a source |
+| `daw.source.mark_for_remove` | `{source_id: string}` | `{ok}` | Mark a source for removal |
+| `daw.source.get_segment_descriptor` | `{source_id: string}` | result | Get segment descriptor for a source |
+| `daw.audio_source.build_peaks` | `{source_id: string}` | `{ok}` | Build peak data for an audio source |
+| `daw.audio_source.estimate_tempo` | `{source_id: string}` | result | Estimate tempo of an audio source |
+
+## Bundle/IO Routing (Tier 4)
+
+Create, connect, and manage bundles (named port groups) for complex I/O routing. Source: `dawflow_commands_tier4.cc` section 4.3 (15 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.bundle.create` | `{name: string, type?: string, direction?: string}` | result | Create a new bundle |
+| `daw.bundle.list_all` | none | result | List all bundles |
+| `daw.bundle.add_channel` | `{bundle: string, name: string}` | `{ok}` | Add a channel to a bundle |
+| `daw.bundle.remove_channel` | `{bundle: string, index: number}` | `{ok}` | Remove a channel from a bundle |
+| `daw.bundle.add_port` | `{bundle: string, channel: number, port: string}` | `{ok}` | Add a port to a bundle channel |
+| `daw.bundle.remove_port` | `{bundle: string, channel: number, port: string}` | `{ok}` | Remove a port from a bundle channel |
+| `daw.bundle.connect` | `{bundle: string, other: string}` | `{ok}` | Connect two bundles |
+| `daw.bundle.disconnect` | `{bundle: string, other: string}` | `{ok}` | Disconnect two bundles |
+| `daw.bundle.connected_to` | `{bundle: string, other: string}` | result | Check if two bundles are connected |
+| `daw.io.add_port` | `{track_id: string, direction: string, type?: string}` | `{ok}` | Add a port to a route's I/O |
+| `daw.io.remove_port` | `{track_id: string, port: string}` | `{ok}` | Remove a port from a route's I/O |
+| `daw.io.connect_to_bundle` | `{track_id: string, bundle: string, direction: string}` | `{ok}` | Connect a route's I/O to a bundle |
+| `daw.io.disconnect_from_bundle` | `{track_id: string, bundle: string, direction: string}` | `{ok}` | Disconnect a route's I/O from a bundle |
+| `daw.io.get_bundles_connected` | `{track_id: string, direction: string}` | result | List bundles connected to a route |
+| `daw.io.get_latency` | `{track_id: string, direction: string}` | result | Get I/O latency |
+
+## Selection System (Tier 4)
+
+Track and time range selection operations. Source: `dawflow_commands_tier4.cc` section 4.4 (12 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.selection.select_track` | `{track_id: string, op?: string}` | `{ok}` | Select a track (op: set/add/toggle) |
+| `daw.selection.get_selected_tracks` | none | result | Get selected tracks |
+| `daw.selection.clear_tracks` | none | `{ok}` | Clear track selection |
+| `daw.selection.select_next_track` | none | `{ok}` | Select next track |
+| `daw.selection.select_prev_track` | none | `{ok}` | Select previous track |
+| `daw.selection.get_first_selected` | none | result | Get first selected track |
+| `daw.selection.is_selected` | `{track_id: string}` | result | Check if a track is selected |
+| `daw.selection.get_time_range` | none | result | Get selected time range |
+
+## Lua Scripts Extended (Tier 4)
+
+Execute Lua scripts, create plugins/sends, control parameters, and manage registered functions. Source: `dawflow_commands_tier4.cc` section 4.5 (12 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.lua.execute` | `{script: string}` | result | Execute a Lua script |
+| `daw.lua.list_functions` | none | result | List registered Lua functions |
+| `daw.lua.register_function` | `{name: string, script: string}` | `{ok}` | Register a named Lua function |
+| `daw.lua.unregister_function` | `{name: string}` | `{ok}` | Unregister a Lua function |
+| `daw.lua.list_plugins` | none | result | List Lua plugins |
+| `daw.lua.new_plugin` | `{track_id: string, script: string}` | result | Create a new Lua plugin on a track |
+| `daw.lua.new_send` | `{track_id: string, target_id: string}` | result | Create a new Lua send |
+| `daw.lua.get_processor_param` | `{track_id: string, processor_id: string, param: number}` | result | Get Lua processor parameter value |
+| `daw.lua.set_processor_param` | `{track_id: string, processor_id: string, param: number, value: number}` | `{ok}` | Set Lua processor parameter value |
+| `daw.lua.reset_processor` | `{track_id: string, processor_id: string}` | `{ok}` | Reset a Lua processor |
+| `daw.lua.plugin_automation` | `{track_id: string, processor_id: string}` | result | Get Lua plugin automation data |
+| `daw.editor.trigger_script` | `{script: string}` | result | Trigger an editor script |
+
+## Playlist Analysis (Tier 4)
+
+Playlist boundary detection, audibility checks, region use count, fade, and partition operations. Source: `dawflow_commands_tier4.cc` section 4.6 (8 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.playlist.find_next_boundary` | `{track_id: string, position: number}` | result | Find next region boundary after position |
+| `daw.playlist.find_prev_region_start` | `{track_id: string, position: number}` | result | Find previous region start before position |
+| `daw.playlist.region_is_audible` | `{track_id: string, region_id: string}` | result | Check if a region is audible (not hidden by layers) |
+| `daw.playlist.region_use_count` | `{track_id: string, region_id: string}` | result | Get number of times a region is used |
+| `daw.playlist.top_layer` | `{track_id: string}` | result | Get top layer count |
+| `daw.playlist.all_regions_empty` | `{track_id: string}` | result | Check if all regions in playlist are empty |
+| `daw.playlist.fade_range` | `{track_id: string, start: number, end: number}` | `{ok}` | Apply fade to a range |
+| `daw.playlist.partition` | `{track_id: string, position: number}` | `{ok}` | Partition playlist at a position (split all regions) |
+
+## Phase/Polarity Extended (Tier 4)
+
+Per-channel phase inversion, resize, and bulk operations. Source: `dawflow_commands_tier4.cc` section 4.7 (6 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.phase.set_invert` | `{track_id: string, channel: number, invert: boolean}` | `{ok}` | Set phase inversion on a specific channel |
+| `daw.phase.get_inverted` | `{track_id: string, channel: number}` | result | Get phase inversion state for a channel |
+| `daw.phase.set_all` | `{track_id: string, invert: boolean}` | `{ok}` | Set phase inversion on all channels |
+| `daw.phase.any_inverted` | `{track_id: string}` | result | Check if any channel is phase-inverted |
+| `daw.phase.none_inverted` | `{track_id: string}` | result | Check if no channels are phase-inverted |
+| `daw.phase.resize` | `{track_id: string, size: number}` | `{ok}` | Resize phase control channel count |
+
+## Butler/Disk I/O (Tier 4)
+
+Butler thread control and disk buffer sizes. Source: `dawflow_commands_tier4.cc` section 4.8 (6 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.butler.summon` | none | `{ok}` | Wake up the butler thread |
+| `daw.butler.wait_until_finished` | none | `{ok}` | Wait for butler to finish pending work |
+| `daw.butler.schedule_transport_work` | none | `{ok}` | Schedule transport-related disk work |
+| `daw.butler.get_playback_buffer_size` | none | result | Get playback disk buffer size |
+| `daw.butler.get_capture_buffer_size` | none | result | Get capture disk buffer size |
+| `daw.butler.get_midi_buffer_size` | none | result | Get MIDI disk buffer size |
+
+## Editor Operations (Tier 4)
+
+Playhead navigation, marker jumps, region operations from selection, and recording convenience commands. Source: `dawflow_commands_tier4.cc` section 4.9 (14 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.editor.add_location_at_playhead` | none | `{ok}` | Add a marker at the current playhead position |
+| `daw.editor.remove_location_at_playhead` | none | `{ok}` | Remove marker at current playhead |
+| `daw.editor.add_section_at_playhead` | none | `{ok}` | Add a section marker at playhead |
+| `daw.editor.goto_nth_marker` | `{n: number}` | result | Jump playhead to the Nth marker |
+| `daw.editor.jump_forward_to_mark` | none | result | Jump playhead forward to next marker |
+| `daw.editor.jump_backward_to_mark` | none | result | Jump playhead backward to previous marker |
+| `daw.editor.play_selection` | none | `{ok}` | Play the current selection |
+| `daw.editor.play_with_preroll` | none | `{ok}` | Play with preroll |
+| `daw.editor.rec_with_preroll` | none | `{ok}` | Record with preroll |
+| `daw.editor.rec_with_count_in` | none | `{ok}` | Record with count-in |
+| `daw.editor.set_loop_range` | none | `{ok}` | Set loop range from selection |
+| `daw.editor.set_punch_range` | none | `{ok}` | Set punch range from selection |
+| `daw.editor.new_region_from_selection` | none | result | Create a new region from the current selection |
+| `daw.editor.separate_region_from_selection` | none | result | Separate region at selection boundaries |
+| `daw.editor.normalize_region` | `{track_id?: string, region_id?: string}` | `{ok}` | Normalize selected/specified region |
+| `daw.editor.reverse_region` | `{track_id?: string, region_id?: string}` | result | Reverse selected/specified region |
+| `daw.editor.pitch_shift_region` | `{track_id?: string, region_id?: string, semitones?: number}` | result | Pitch shift selected/specified region |
+
+---
+
+## Editor View Operations (Final)
+
+Editor view/UI commands for track fitting, fullscreen editing, visual state bookmarks, solo-selection playback, edit mode cycling, marker lines, automation lane visibility, layer display, and transient navigation. Source: `dawflow_commands_final_coverage.cc` (11 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.editor.fit_tracks_in_view` | `{count?: number}` | `{ok, stub, count}` | Fit N tracks into the visible editor area |
+| `daw.editor.maximize_editing_space` | none | `{ok, stub}` | Toggle fullscreen editing space (hide all panels) |
+| `daw.editor.restore_editing_space` | none | `{ok, stub}` | Restore normal editing space from fullscreen |
+| `daw.editor.save_visual_state` | `{slot: number}` | `{ok, stub, slot}` | Save current view (zoom, scroll, track heights) to a bookmark slot |
+| `daw.editor.goto_visual_state` | `{slot: number}` | `{ok, stub, slot}` | Restore a previously saved view bookmark |
+| `daw.editor.play_solo_selection` | none | `{ok, stub}` | Play with only selected tracks soloed |
+| `daw.editor.cycle_edit_mode` | none | `{ok, previous, current}` | Cycle edit mode: Slide -> Lock -> Ripple -> Slide |
+| `daw.editor.toggle_marker_lines` | none | `{ok, stub}` | Toggle vertical lines at marker positions |
+| `daw.editor.toggle_all_existing_automation` | none | `{ok, stub}` | Toggle visibility of all existing automation lanes |
+| `daw.editor.toggle_layer_display` | none | `{ok, stub}` | Toggle between stacked and overlaid region layer display |
+| `daw.editor.tab_to_transient` | `{direction?: "forward"\|"backward"}` | `{ok, stub, direction}` | Jump to the next or previous transient in the selected region |
+
+---
+
+## Editor Data Operations (Final)
+
+Editor data operations for external editing, range markers, BBT markers, location toggling, tempo/meter editing, region recovery, and MIDI list editor. Source: `dawflow_commands_final_coverage.cc` (8 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.editor.external_edit_region` | `{region_id: string}` | `{ok, stub, region_id}` | Launch external audio editor for the specified region |
+| `daw.editor.add_location_from_selection` | `{start: int64, end: int64, name?: string}` | `{ok, name, start, end}` | Create a range marker from the given sample bounds |
+| `daw.editor.add_bbt_marker_at_playhead` | none | `{ok, position, name}` | Add a BBT (time signature) marker at the current playhead position |
+| `daw.editor.toggle_location_at_playhead` | none | `{ok, position, action, name}` | Add or remove a marker at the current playhead (toggles) |
+| `daw.editor.edit_tempo_at_position` | `{position: int64, new_bpm: number}` | `{ok, position, new_bpm}` | Modify the tempo at a given sample position |
+| `daw.editor.edit_meter_at_position` | `{position: int64, numerator: int, denominator: int}` | `{ok, position, numerator, denominator}` | Modify the time signature at a given sample position |
+| `daw.editor.recover_regions` | none | `{ok, stub}` | Recover recently deleted regions from undo history |
+| `daw.editor.show_midi_list_editor` | `{region_id: string}` | `{ok, stub, region_id}` | Open the MIDI list editor for a specified MIDI region |
+
+---
+
+## Bulk Playlist Operations (Final)
+
+Create new playlists in bulk for all tracks, armed tracks, or selected tracks. Source: `dawflow_commands_final_coverage.cc` (3 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.editor.new_playlists_for_all_tracks` | none | `{ok, count}` | Create new playlists on every track in the session |
+| `daw.editor.new_playlists_for_armed_tracks` | none | `{ok, count}` | Create new playlists only on record-armed tracks |
+| `daw.editor.new_playlists_for_selected_tracks` | none | `{ok, stub}` | Create new playlists for the currently selected tracks |
+
+---
+
+## Step Sequencer Final
+
+Step sequencer mode, offset, and duration controls. Source: `dawflow_commands_final_coverage.cc` (3 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.step_sequence.set_mode` | `{track_id: string, mode?: int}` | `{ok, stub, track_id, mode}` | Set the musical mode for a step sequence on a track |
+| `daw.step.set_offset` | `{track_id: string, step: int, offset: number}` | `{ok, stub, track_id, step, offset}` | Set the timing offset (in beats) for a specific step |
+| `daw.step.adjust_duration` | `{track_id: string, step: int, delta: number}` | `{ok, stub, track_id, step, delta}` | Adjust the duration of a specific step by a delta ratio |
+
+---
+
+## Panner Extended (Final)
+
+Extended panner operations for elevation range and I/O configuration. Source: `dawflow_commands_final_coverage.cc` (2 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.panner.get_elevation_range` | `{track_id: string}` | `{ok, track_id, min, max}` | Get the minimum and maximum elevation values for a track's panner |
+| `daw.panner_shell.configure_io` | `{track_id: string, in_channels: int, out_channels: int}` | `{ok, track_id, in_channels, out_channels}` | Configure the panner shell's input/output channel counts |
+
+---
+
+## MIDI Patches Extended (Final)
+
+Update custom MIDI device definitions (MIDNAM). Source: `dawflow_commands_final_coverage.cc` (1 command).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.midi_patches.update_custom_midnam` | `{name: string, data: string}` | `{ok, name}` | Update a custom MIDI device definition (MIDNAM XML data) |
+
+---
+
+## Analysis Extended (Final)
+
+Extended analysis commands for range analysis, integrated LUFS, EBU R128 measurement, MIDI strum, and MIDI transform. Source: `dawflow_commands_final_coverage.cc` (5 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.analyze.range` | `{track_id: string, start: int64, end: int64}` | `{ok, track_id, start, end, samples_read, rms, rms_dB, peak, peak_dB}` | Analyze RMS and peak levels for an arbitrary time range on an audio track |
+| `daw.analyze.lufs_integrated` | `{track_id: string, region_id?: string}` | `{ok, track_id, region_id, integrated_lufs, samples_analyzed}` | Calculate integrated LUFS loudness for a region or entire playlist (approximation) |
+| `daw.analyze.ebur128` | `{track_id: string, region_id?: string}` | `{ok, track_id, region_id, integrated_lufs, loudness_range, true_peak_dBTP, samples_analyzed}` | EBU R128 measurement: integrated LUFS, loudness range (LRA), and true peak estimate |
+| `daw.filter.strum` | `{region_id: string, delay_per_note_ms: number}` | `{ok, stub, region_id, delay_per_note_ms}` | Apply strum timing to a MIDI chord (incremental delay per note) |
+| `daw.filter.midi_transform` | `{region_id: string, transform_spec: object}` | `{ok, stub, region_id, transform_spec}` | Apply a user-defined MIDI transform (velocity/pitch/channel/time operations) |
+
+---
+
+## Control Protocol Extended (Final)
+
+USB controller probing and Mackie Control surface configuration. Source: `dawflow_commands_final_coverage.cc` (4 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.control_protocol.probe_usb` | `{vendor_id: string, product_id: string}` | `{ok, stub, vendor_id, product_id, found}` | Probe for a USB controller device by vendor:product ID |
+| `daw.mackie.set_view_mode` | `{mode: string}` | `{ok, stub, mode}` | Set Mackie Control surface view mode (mixer/dynamics/eq/sends/instrument/user) |
+| `daw.mackie.set_flip_mode` | `{mode: string}` | `{ok, stub, mode}` | Set Mackie fader flip mode (normal/mirror/flip/zero) |
+| `daw.mackie.set_subview` | `{mode: string, strip?: number}` | `{ok, stub, mode, strip}` | Set Mackie soft-key subview assignment (none/eq/dynamics/sends/track_info) |
+
+---
+
+## Audiographer Extended (Final)
+
+Offline processing commands for silence insertion and sample rate conversion. Source: `dawflow_commands_final_coverage.cc` (2 commands).
+
+| Command | Params | Returns | Description |
+|---------|--------|---------|-------------|
+| `daw.audiographer.add_silence` | `{region_id: string, start_ms?: number, end_ms?: number}` | `{ok, stub, region_id, start_ms, end_ms}` | Add silence at the start and/or end of a region (offline processing) |
+| `daw.audiographer.sample_rate_convert` | `{source_id: string, target_rate: int, quality?: string}` | `{ok, stub, source_id, target_rate, quality}` | Perform offline sample rate conversion on a source (quality: best/medium/fast) |
 
 ---
 

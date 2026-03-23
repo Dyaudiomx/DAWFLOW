@@ -1,0 +1,135 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.menu {
+  position: fixed;
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  min-width: 220px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 4px 0;
+  z-index: 1001;
+}
+
+/* Scrollbar styling */
+.menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  font-size: 12px;
+  color: #e0e0e0;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+}
+
+.item:hover {
+  background: #3a3a3a;
+}
+
+.itemDisabled {
+  color: #666;
+  cursor: default;
+}
+
+.itemDisabled:hover {
+  background: transparent;
+}
+
+.icon {
+  width: 20px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 12px;
+  margin-right: 6px;
+  opacity: 0.85;
+}
+
+.label {
+  flex: 1;
+}
+
+.shortcut {
+  margin-left: 24px;
+  font-size: 11px;
+  color: #888;
+  font-family: var(--font-mono, monospace);
+  flex-shrink: 0;
+}
+
+.submenuArrow {
+  margin-left: 12px;
+  font-size: 10px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.item:hover .submenuArrow {
+  color: #ccc;
+}
+
+.separator {
+  height: 1px;
+  background: #3a3a3a;
+  margin: 4px 8px;
+}
+
+/* Submenu positioning */
+.submenuWrapper {
+  position: relative;
+}
+
+.submenu {
+  position: absolute;
+  left: 100%;
+  top: -4px;
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  min-width: 200px;
+  max-height: 60vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 4px 0;
+  z-index: 1002;
+}
+
+.submenuLeft {
+  left: auto;
+  right: 100%;
+}
+
+/* Fixed-position submenu — escapes parent overflow clipping */
+.submenuFixed {
+  position: fixed;
+  background: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 4px;
+  min-width: 200px;
+  max-height: 60vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 4px 0;
+  z-index: 1002;
+}

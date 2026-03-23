@@ -1,0 +1,237 @@
+/* ============================================================================
+   TakeLanes — Comping / Take Lanes
+   Stacked playlists per track for comping workflow (Cubase 15 Pro style)
+   ============================================================================ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------------------------------------------------------------------
+   Individual lane
+   --------------------------------------------------------------------------- */
+
+.lane {
+  display: flex;
+  height: 30px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: background 80ms ease;
+}
+
+.laneActive {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.laneInactive {
+  background: rgba(0, 0, 0, 0.1);
+  opacity: 0.6;
+}
+
+.laneInactive:hover {
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ---------------------------------------------------------------------------
+   Lane header (left 300px — matches track header width)
+   --------------------------------------------------------------------------- */
+
+.laneHeader {
+  width: 300px;
+  min-width: 300px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  background: #252528;
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
+  user-select: none;
+  cursor: pointer;
+}
+
+.laneHeaderActive {
+  background: #2a2a30;
+}
+
+.laneHeader:hover {
+  background: #2e2e33;
+}
+
+/* Current indicator — small blue dot */
+.currentDot {
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  flex-shrink: 0;
+}
+
+/* Playlist name label */
+.laneNameLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  font-size: 10px;
+  color: #888;
+  line-height: 1;
+}
+
+.laneActive .laneNameLabel {
+  color: #ccc;
+  font-weight: 500;
+}
+
+/* Region count badge */
+.regionBadge {
+  font-size: 9px;
+  color: #666;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.laneActive .regionBadge {
+  color: #999;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Inline rename input
+   --------------------------------------------------------------------------- */
+
+.nameInput {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: #1e1e22;
+  border: 1px solid #4fc3f7;
+  color: #eee;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Lane timeline (right side — region area)
+   --------------------------------------------------------------------------- */
+
+.laneTimeline {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   Region blocks
+   --------------------------------------------------------------------------- */
+
+.takeRegion {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  opacity: 0.85;
+  transition: opacity 80ms ease;
+  pointer-events: auto;
+}
+
+.takeRegion:hover {
+  opacity: 1;
+}
+
+.laneActive .takeRegion {
+  opacity: 1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.regionLabel {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0 4px;
+  pointer-events: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------------------------------------------------------------------------
+   No-regions placeholder for inactive lanes
+   --------------------------------------------------------------------------- */
+
+.noRegions {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  font-size: 9px;
+  color: #555;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Context menu
+   --------------------------------------------------------------------------- */
+
+.contextMenu {
+  position: fixed;
+  background: #2a2a2e;
+  border: 1px solid #505050;
+  border-radius: 4px;
+  padding: 4px 0;
+  z-index: 9999;
+  min-width: 160px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  padding: 5px 14px;
+  font-size: 11px;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+}
+
+.contextMenuItem:hover {
+  background: #3a3a44;
+  color: #fff;
+}
+
+.contextMenuDivider {
+  height: 1px;
+  background: #404040;
+  margin: 4px 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Empty state — no playlists
+   --------------------------------------------------------------------------- */
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  font-size: 10px;
+  color: #555;
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+}

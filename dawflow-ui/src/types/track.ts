@@ -1,6 +1,6 @@
 export type TrackType =
   | 'audio' | 'instrument' | 'midi' | 'sampler'
-  | 'group' | 'fx' | 'vca' | 'folder'
+  | 'group' | 'bus' | 'fx' | 'vca' | 'folder'
   | 'chord' | 'marker' | 'ruler' | 'signature'
   | 'tempo' | 'transpose' | 'arranger' | 'video';
 
@@ -10,7 +10,9 @@ export interface Track {
   type: TrackType;
   color: string;
   height: number;
-  muted: boolean;
+  muted: boolean;           // true if muted for ANY reason (user-mute, solo-mute, etc)
+  mutedBySelf: boolean;     // true only if the user explicitly muted this track
+  mutedByOthers: boolean;   // true when another track's solo implicitly mutes this one
   solo: boolean;
   recordEnabled: boolean;
   monitorEnabled: boolean;

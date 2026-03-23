@@ -1,0 +1,251 @@
+/* ==========================================================================
+   ChannelStrip — Cubase 15 Pro MixConsole channel strip
+   A full vertical mixer strip: color bar, name, inserts, EQ thumbnail,
+   sends, pan knob, fader with meter, M/S/R buttons, output routing.
+   ========================================================================== */
+
+.channelStrip {
+  display: flex;
+  flex-direction: column;
+  width: var(--mixer-strip-narrow);
+  min-width: var(--mixer-strip-narrow);
+  height: 100%;
+  background: var(--bg-mixer);
+  border-right: 1px solid var(--divider);
+  user-select: none;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* ---- Color bar at top ---- */
+
+.colorBar {
+  width: 100%;
+  height: 4px;
+  flex-shrink: 0;
+}
+
+/* ---- Track name ---- */
+
+.name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 3px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-bright);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+/* ---- Input routing label ---- */
+
+.routingLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 2px;
+  font-family: var(--font-family);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.routingLabel:hover {
+  color: var(--text-secondary);
+}
+
+/* ---- Insert slots section ---- */
+
+.insertsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 2px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-family: var(--font-family);
+  font-size: 8px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  padding: 1px 0;
+}
+
+/* ---- EQ curve thumbnail ---- */
+
+.eqThumbnail {
+  height: 28px;
+  margin: 0 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.eqLine {
+  width: 80%;
+  height: 1px;
+  background: var(--accent-blue-dim);
+  opacity: 0.5;
+}
+
+/* ---- Sends section ---- */
+
+.sendsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 2px;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+/* ---- Pan knob area ---- */
+
+.panArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--divider);
+  flex-shrink: 0;
+}
+
+/* ---- Fader + meter area ---- */
+
+.faderMeter {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 80px;
+  padding: 4px 2px;
+  gap: 2px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.meterColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 8px;
+  flex-shrink: 0;
+}
+
+.faderColumn {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ---- M / S / R button row ---- */
+
+.buttonRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px 2px;
+  flex-shrink: 0;
+}
+
+/* ---- dB readout ---- */
+
+.dbReadout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+/* ---- Automation mode label ---- */
+
+.automationLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  font-family: var(--font-family);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+/* ---- Output routing ---- */
+
+.outputRouting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 2px;
+  font-family: var(--font-family);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.outputRouting:hover {
+  color: var(--text-secondary);
+}
+
+/* ---- Bottom name plate (colored) ---- */
+
+.namePlate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 2px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: #fff;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

@@ -95,6 +95,7 @@ export interface PluginInfo {
   type: string;
   category: string;
   creator: string;
+  unique_id?: string;
 }
 
 export interface PluginParameter {
@@ -164,6 +165,12 @@ export async function ipcCall<T>(
   method: string,
   params?: Record<string, unknown>,
 ): Promise<T> {
+  // Native WebView bridge: direct in-process call (~0ms latency)
+  if (typeof (window as any).__dawflow_call === 'function') {
+    return (window as any).__dawflow_call(method, params ?? {}) as Promise<T>;
+  }
+
+  // Fallback: HTTP POST via ui-shell proxy
   const url = `${getBaseUrl()}/api/command`;
 
   const body: Record<string, unknown> = { method };
@@ -353,14 +360,32 @@ async function getRegions(trackId: string): Promise<Region[]> {
   // Engine returns position_samples/length_samples/start_samples — map to our interface
   const raw = await ipcCall<Array<Record<string, unknown>>>('daw.get_regions', { track_id: trackId });
   if (!Array.isArray(raw)) return [];
-  return raw.map((r) => ({
+  const regions = raw.map((r) => ({
     id: String(r.id || ''),
     name: String(r.name || ''),
     position: Number(r.position_samples ?? r.position ?? 0),
     length: Number(r.length_samples ?? r.length ?? 0),
     start: Number(r.start_samples ?? r.start ?? 0),
+    sourceLength: Number(r.source_length_samples ?? r.length_samples ?? r.length ?? 0),
     muted: Boolean(r.muted),
+    locked: Boolean(r.locked),
+    fadeInLength: 0,
+    fadeOutLength: 0,
   }));
+
+  // Fetch fade lengths for each region in parallel
+  await Promise.allSettled(regions.map(async (region) => {
+    try {
+      const [fadeIn, fadeOut] = await Promise.all([
+        ipcCall<Record<string, unknown>>('daw.get_region_fade_in_length', { region_id: region.id }).catch(() => null),
+        ipcCall<Record<string, unknown>>('daw.get_region_fade_out_length', { region_id: region.id }).catch(() => null),
+      ]);
+      if (fadeIn) region.fadeInLength = Number(fadeIn.fade_in_length ?? 0);
+      if (fadeOut) region.fadeOutLength = Number(fadeOut.fade_out_length ?? 0);
+    } catch { /* ignore */ }
+  }));
+
+  return regions;
 }
 
 // ---------------------------------------------------------------------------
@@ -375,8 +400,10 @@ async function getAudioPeaks(regionId: string, width: number): Promise<AudioPeak
 // Convenience wrappers — MIDI
 // ---------------------------------------------------------------------------
 
-async function getMidiNotes(regionId: string): Promise<MidiNote[]> {
-  return ipcCall<MidiNote[]>('daw.get_midi_notes', { region_id: regionId });
+async function getMidiNotes(regionId: string, trackId?: string): Promise<MidiNote[]> {
+  const params: Record<string, unknown> = { region_id: regionId };
+  if (trackId) params.track_id = trackId;
+  return ipcCall<MidiNote[]>('daw.get_midi_notes', params);
 }
 
 // ---------------------------------------------------------------------------
@@ -392,10 +419,10 @@ async function loadPlugin(trackId: string, pluginName: string): Promise<void> {
   await ipcCall<unknown>('daw.load_plugin', { track_id: trackId, plugin_name: pluginName });
 }
 
-async function getPluginParameters(trackId: string, pluginIndex: number): Promise<PluginParameter[]> {
+async function getPluginParameters(trackId: string, processorId: string | number): Promise<PluginParameter[]> {
   return ipcCall<PluginParameter[]>('daw.get_plugin_parameters', {
     track_id: trackId,
-    plugin_index: pluginIndex,
+    processor_id: String(processorId),
   });
 }
 
@@ -618,6 +645,30 @@ async function midiTranspose(trackId: string, regionId: string, semitones: numbe
   return ipcCall<Record<string, unknown>>('daw.midi.transpose', { track_id: trackId, region_id: regionId, semitones });
 }
 
+async function midiHumanize(trackId: string, regionId: string, timingAmount?: number, velocityAmount?: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.humanize_midi', { track_id: trackId, region_id: regionId, timing_amount: timingAmount ?? 10, velocity_amount: velocityAmount ?? 10 });
+}
+
+async function midiLegato(trackId: string, regionId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.midi_legato', { track_id: trackId, region_id: regionId });
+}
+
+async function midiStrum(trackId: string, regionId: string, delayMs?: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.filter.strum', { track_id: trackId, region_id: regionId, delay_ms: delayMs ?? 15 });
+}
+
+async function midiInvert(trackId: string, regionId: string, pivotNote?: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.invert_midi_notes', { track_id: trackId, region_id: regionId, pivot_note: pivotNote ?? 60 });
+}
+
+async function midiScaleVelocity(trackId: string, regionId: string, scalePercent: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.scale_midi_velocity', { track_id: trackId, region_id: regionId, scale_percent: scalePercent });
+}
+
+async function midiSetNoteVelocity(trackId: string, regionId: string, noteId: number, velocity: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.midi.set_note_velocity', { track_id: trackId, region_id: regionId, note_id: noteId, velocity });
+}
+
 // ---------------------------------------------------------------------------
 // Convenience wrappers — Plugin Management (extended)
 // ---------------------------------------------------------------------------
@@ -658,6 +709,14 @@ async function getTrackPlugins(trackId: string): Promise<{ plugins: Array<{ proc
   return ipcCall<{ plugins: Array<{ processor_id: string; name: string; enabled: boolean; index: number }> }>('daw.get_track_plugins', { track_id: trackId });
 }
 
+async function reorderPlugins(trackId: string, processorIds: string[]): Promise<void> {
+  await ipcCall<unknown>('daw.reorder_plugins', { track_id: trackId, processor_ids: processorIds });
+}
+
+async function loadPluginById(trackId: string, uniqueId: string): Promise<{ ok: boolean; processor_id: string; name: string }> {
+  return ipcCall<{ ok: boolean; processor_id: string; name: string }>('daw.load_plugin_by_id', { track_id: trackId, unique_id: uniqueId });
+}
+
 // ---------------------------------------------------------------------------
 // Convenience wrappers — Automation
 // ---------------------------------------------------------------------------
@@ -680,6 +739,18 @@ async function addAutomationPoint(trackId: string, timeSamples: number, value: n
 
 async function clearAutomation(trackId: string, control?: string): Promise<void> {
   await ipcCall<unknown>('daw.clear_automation_ext', { track_id: trackId, control: control ?? 'gain' });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Phase / Polarity
+// ---------------------------------------------------------------------------
+
+async function setTrackPhaseInvert(trackId: string, invert: boolean, channel?: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_phase_invert', { track_id: trackId, invert, ...(channel !== undefined ? { channel } : {}) });
+}
+
+async function getTrackPhaseState(trackId: string): Promise<{ any_inverted: boolean; channels: Array<{ channel: number; inverted: boolean }> }> {
+  return ipcCall<{ any_inverted: boolean; channels: Array<{ channel: number; inverted: boolean }> }>('daw.phase.get', { track_id: trackId });
 }
 
 // ---------------------------------------------------------------------------
@@ -794,6 +865,38 @@ async function getClickSettings(): Promise<Record<string, unknown>> {
   return ipcCall<Record<string, unknown>>('daw.get_click_settings');
 }
 
+async function toggleCountIn(): Promise<{ ok: boolean; enabled: boolean }> {
+  return ipcCall<{ ok: boolean; enabled: boolean }>('daw.toggle_count_in');
+}
+
+async function getMetronomeState(): Promise<{ enabled: boolean; gain: number; count_in: boolean }> {
+  return ipcCall<{ enabled: boolean; gain: number; count_in: boolean }>('daw.get_metronome_state');
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Pre-roll / Post-roll
+// ---------------------------------------------------------------------------
+
+async function setPreRoll(seconds: number): Promise<{ ok: boolean; preroll_seconds: number }> {
+  return ipcCall<{ ok: boolean; preroll_seconds: number }>('daw.set_pre_roll', { seconds });
+}
+
+async function setPostRoll(seconds: number): Promise<{ ok: boolean; postroll_seconds: number }> {
+  return ipcCall<{ ok: boolean; postroll_seconds: number }>('daw.set_post_roll', { seconds });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Record Mode
+// ---------------------------------------------------------------------------
+
+async function setRecordMode(mode: string): Promise<{ ok: boolean; mode: string }> {
+  return ipcCall<{ ok: boolean; mode: string }>('daw.set_record_mode', { mode });
+}
+
+async function getRecordMode(): Promise<{ mode: string }> {
+  return ipcCall<{ mode: string }>('daw.get_record_mode');
+}
+
 // ---------------------------------------------------------------------------
 // Convenience wrappers — Tempo (extended)
 // ---------------------------------------------------------------------------
@@ -804,6 +907,629 @@ async function getTempoMap(): Promise<Record<string, unknown>> {
 
 async function addTempoChange(positionSamples: number, bpm: number): Promise<Record<string, unknown>> {
   return ipcCall<Record<string, unknown>>('daw.add_tempo_change', { position_samples: positionSamples, bpm });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Export
+// ---------------------------------------------------------------------------
+
+async function setExportFormatType(type: string): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_format_type', { type });
+}
+
+async function setExportSampleRate(rate: number): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_sample_rate', { sample_rate: rate });
+}
+
+async function setExportBitDepth(depth: number): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_bit_depth', { bit_depth: depth });
+}
+
+async function setExportNormalize(enabled: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_normalize', { enabled });
+}
+
+async function setExportNormalizeLufs(value: number): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_normalize_lufs', { lufs: value });
+}
+
+async function setExportNormalizeDbfs(value: number): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_normalize_dbfs', { dbfs: value });
+}
+
+async function setExportTpLimiter(enabled: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_tp_limiter', { enabled });
+}
+
+async function setExportTrimBeginning(trim: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_trim_beginning', { enabled: trim });
+}
+
+async function setExportTrimEnd(trim: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_trim_end', { enabled: trim });
+}
+
+async function setExportFilenameLabel(label: string): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_filename_label', { label });
+}
+
+async function setExportFilenameFolder(folder: string): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_filename_folder', { folder });
+}
+
+async function setExportTimespan(start: number, end: number, name?: string): Promise<void> {
+  await ipcCall<unknown>('daw.export.set_timespan', { start, end, ...(name !== undefined && { name }) });
+}
+
+async function prepareExport(): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.export.prepare');
+}
+
+async function executeExport(): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.export.execute');
+}
+
+async function abortExport(): Promise<void> {
+  await ipcCall<unknown>('daw.export.abort');
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Monitor
+// ---------------------------------------------------------------------------
+
+async function setMonitorCutAll(cut: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.monitor.set_cut_all', { cut });
+}
+
+async function setMonitorDimAll(dim: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.monitor.set_dim_all', { dim });
+}
+
+async function setMonitorMono(enabled: boolean): Promise<void> {
+  // Engine expects { enabled: boolean } — not { mono }
+  await ipcCall<unknown>('daw.monitor.set_mono', { enabled });
+}
+
+async function getMonitorCutAll(): Promise<{ cut: boolean }> {
+  return ipcCall<{ cut: boolean }>('daw.monitor.get_cut_all');
+}
+
+async function getMonitorDimAll(): Promise<{ dim: boolean }> {
+  return ipcCall<{ dim: boolean }>('daw.monitor.get_dim_all');
+}
+
+async function getMonitorMono(): Promise<{ mono: boolean }> {
+  return ipcCall<{ mono: boolean }>('daw.monitor.get_mono');
+}
+
+async function getMonitorDimLevel(): Promise<{ dim_level: number }> {
+  return ipcCall<{ dim_level: number }>('daw.monitor.get_dim_level');
+}
+
+async function setMonitorCut(channel: number, cut: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.monitor.set_cut', { channel, cut });
+}
+
+async function setMonitorDim(channel: number, dim: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.monitor.set_dim', { channel, dim });
+}
+
+async function setMonitorSolo(channel: number, solo: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.monitor.set_solo', { channel, solo });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Sends
+// ---------------------------------------------------------------------------
+
+async function getTrackSends(trackId: string): Promise<{ sends: Array<Record<string, unknown>>; count: number }> {
+  return ipcCall<{ sends: Array<Record<string, unknown>>; count: number }>('daw.get_sends', { track_id: trackId });
+}
+
+async function setSendLevel(trackId: string, sendIndex: number, gainDb: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_send_level', { track_id: trackId, send_index: sendIndex, gain_db: gainDb });
+}
+
+async function setSendPan(trackId: string, sendIndex: number, pan: number): Promise<void> {
+  await ipcCall<unknown>('daw.send.set_pan', { track_id: trackId, send_index: sendIndex, pan });
+}
+
+async function setSendEnabled(trackId: string, sendIndex: number, enabled: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_send_enable', { track_id: trackId, send_index: sendIndex, enabled });
+}
+
+async function setSendPreFader(trackId: string, sendIndex: number, preFader: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.send.set_pre_fader', { track_id: trackId, send_index: sendIndex, pre_fader: preFader });
+}
+
+async function addSend(trackId: string, targetBusId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.add_send', { track_id: trackId, target_bus_id: targetBusId });
+}
+
+async function removeSendFrom(trackId: string, busId: string): Promise<void> {
+  await ipcCall<unknown>('daw.aux.remove_send_from', { bus_id: busId, track_id: trackId });
+}
+
+async function getBuses(): Promise<{ buses: Array<Record<string, unknown>>; count: number }> {
+  return ipcCall<{ buses: Array<Record<string, unknown>>; count: number }>('daw.aux.list_buses');
+}
+
+async function getTrackLatency(trackId: string): Promise<{ latency_samples: number; latency_ms: number }> {
+  return ipcCall<{ latency_samples: number; latency_ms: number }>('daw.get_track_latency', { track_id: trackId });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Route Groups (extended)
+// ---------------------------------------------------------------------------
+
+async function getRouteGroupDetails(groupId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.get_route_group_state_xml', { group_id: groupId });
+}
+
+async function deleteRouteGroup(groupId: string): Promise<void> {
+  await ipcCall<unknown>('daw.delete_route_group', { group_id: groupId });
+}
+
+async function addRouteToGroup(groupId: string, trackId: string): Promise<void> {
+  await ipcCall<unknown>('daw.add_track_to_group', { group_id: groupId, track_id: trackId });
+}
+
+async function removeRouteFromGroup(groupId: string, trackId: string): Promise<void> {
+  await ipcCall<unknown>('daw.remove_track_from_group', { group_id: groupId, track_id: trackId });
+}
+
+async function setRouteGroupActive(groupId: string, active: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_group_active', { group_id: groupId, active });
+}
+
+async function setRouteGroupGain(groupId: string, linked: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_group_gain', { group_id: groupId, linked });
+}
+
+async function setRouteGroupMute(groupId: string, linked: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_group_mute', { group_id: groupId, linked });
+}
+
+async function setRouteGroupSolo(groupId: string, linked: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.set_group_solo', { group_id: groupId, linked });
+}
+
+async function setRouteGroupColor(groupId: string, color: string): Promise<void> {
+  await ipcCall<unknown>('daw.set_group_color', { group_id: groupId, color });
+}
+
+async function makeSubgroup(groupId: string, preFader: boolean): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.route_group.make_subgroup', { group_id: groupId, pre_fader: preFader });
+}
+
+async function destroySubgroup(groupId: string): Promise<void> {
+  await ipcCall<unknown>('daw.route_group.destroy_subgroup', { group_id: groupId });
+}
+
+async function assignGroupToVCA(groupId: string, vcaId: string): Promise<void> {
+  await ipcCall<unknown>('daw.assign_track_to_vca', { group_id: groupId, vca_id: vcaId });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Panner
+// ---------------------------------------------------------------------------
+
+async function getPanPosition(trackId: string): Promise<{ position: number }> {
+  const data = await ipcCall<{ pan?: number }>('daw.get_track_pan', { track_id: trackId });
+  return { position: data.pan ?? 0.5 };
+}
+
+async function setPanPosition(trackId: string, position: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_pan', { track_id: trackId, pan: position });
+}
+
+async function getPanWidth(trackId: string): Promise<{ width: number }> {
+  return ipcCall<{ width: number }>('daw.pan.get_width', { track_id: trackId });
+}
+
+async function setPanWidth(trackId: string, width: number): Promise<void> {
+  await ipcCall<unknown>('daw.pan.set_width', { track_id: trackId, width });
+}
+
+async function setPanBypassed(trackId: string, bypassed: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.panner.set_bypassed', { track_id: trackId, bypassed });
+}
+
+async function resetPan(trackId: string): Promise<void> {
+  await ipcCall<unknown>('daw.pan.reset', { track_id: trackId });
+}
+
+async function getAvailablePanners(): Promise<{ panners: Array<{ uri: string; name: string }>; count: number }> {
+  return ipcCall<{ panners: Array<{ uri: string; name: string }>; count: number }>('daw.panner.get_available_panners');
+}
+
+async function selectPanner(trackId: string, uri: string): Promise<void> {
+  await ipcCall<unknown>('daw.set_panning', { track_id: trackId, uri });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Editor
+// ---------------------------------------------------------------------------
+
+async function reverseRegion(regionId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.reverse_region', { region_id: regionId });
+}
+
+async function normalizeRegionById(regionId: string, targetDb?: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.normalize_region', { region_id: regionId, target_db: targetDb ?? 0 });
+}
+
+async function timeStretchRegion(regionId: string, ratio: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.time_stretch_region', { region_id: regionId, ratio });
+}
+
+async function pitchShiftRegion(regionId: string, semitones: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.pitch_shift_region', { region_id: regionId, semitones });
+}
+
+async function setRegionFadeInActive(regionId: string, active: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.editor.set_region_fade_in_active', { region_id: regionId, active });
+}
+
+async function setRegionFadeOutActive(regionId: string, active: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.editor.set_region_fade_out_active', { region_id: regionId, active });
+}
+
+async function getRegionLoudness(regionId: string): Promise<{ loudness_lufs: number; loudness_range: number }> {
+  return ipcCall<{ loudness_lufs: number; loudness_range: number }>('daw.audio_region.get_loudness', { region_id: regionId });
+}
+
+async function getRegionPeak(regionId: string): Promise<{ peak_db: number; true_peak_db: number }> {
+  return ipcCall<{ peak_db: number; true_peak_db: number }>('daw.get_region_true_peak', { region_id: regionId });
+}
+
+async function setEditMode(mode: string): Promise<void> {
+  await ipcCall<unknown>('daw.set_edit_mode', { mode });
+}
+
+async function getEditMode(): Promise<{ mode: string }> {
+  return ipcCall<{ mode: string }>('daw.get_edit_mode');
+}
+
+async function setGridType(type: string): Promise<void> {
+  await ipcCall<unknown>('daw.set_grid_type', { type });
+}
+
+async function getGridType(): Promise<{ type: string }> {
+  return ipcCall<{ type: string }>('daw.get_grid_type');
+}
+
+async function setSnapMode(mode: string): Promise<void> {
+  await ipcCall<unknown>('daw.set_snap_mode', { mode });
+}
+
+async function getSnapMode(): Promise<{ mode: string }> {
+  return ipcCall<{ mode: string }>('daw.get_snap_mode');
+}
+
+async function zoomToSelection(): Promise<void> {
+  await ipcCall<unknown>('daw.zoom_to_session');
+}
+
+async function zoomToSession(): Promise<void> {
+  await ipcCall<unknown>('daw.zoom_to_session');
+}
+
+async function getVisibleRange(): Promise<{ start_samples: number; end_samples: number }> {
+  return ipcCall<{ start_samples: number; end_samples: number }>('daw.editor.get_visible_range');
+}
+
+async function selectRange(start: number, end: number): Promise<void> {
+  await ipcCall<unknown>('daw.editor.select_range', { start, end });
+}
+
+async function insertTime(position: number, duration: number): Promise<void> {
+  await ipcCall<unknown>('daw.insert_time', { position, duration });
+}
+
+async function removeTime(start: number, end: number): Promise<void> {
+  await ipcCall<unknown>('daw.remove_time', { start, end });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Session Metadata
+// ---------------------------------------------------------------------------
+
+async function getSessionTitle(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_title');
+}
+
+async function setSessionTitle(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_title', { value });
+}
+
+async function getSessionArtist(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_artist');
+}
+
+async function setSessionArtist(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_artist', { value });
+}
+
+async function getSessionAlbum(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_album');
+}
+
+async function setSessionAlbum(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_album', { value });
+}
+
+async function getSessionGenre(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_genre');
+}
+
+async function setSessionGenre(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_genre', { value });
+}
+
+async function getSessionYear(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_year');
+}
+
+async function setSessionYear(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_year', { value });
+}
+
+async function getSessionComposer(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_composer');
+}
+
+async function setSessionComposer(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_composer', { value });
+}
+
+async function getSessionCopyright(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_copyright');
+}
+
+async function setSessionCopyright(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_copyright', { value });
+}
+
+async function getSessionISRC(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_isrc');
+}
+
+async function setSessionISRC(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_isrc', { value });
+}
+
+async function getSessionDescription(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_description');
+}
+
+async function setSessionDescription(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_description', { value });
+}
+
+async function getSessionComment(): Promise<{ value: string }> {
+  return ipcCall<{ value: string }>('daw.session.get_comment');
+}
+
+async function setSessionComment(value: string): Promise<void> {
+  await ipcCall<unknown>('daw.session.set_comment', { value });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Tempo (extended: query & conversion)
+// ---------------------------------------------------------------------------
+
+async function getTempoAt(positionSamples: number): Promise<{ bpm: number }> {
+  return ipcCall<{ bpm: number }>('daw.get_tempo_at', { position_samples: positionSamples });
+}
+
+async function getMeterAt(positionSamples: number): Promise<{ numerator: number; denominator: number }> {
+  return ipcCall<{ numerator: number; denominator: number }>('daw.tempo_map.get_meter_at', { position_samples: positionSamples });
+}
+
+async function getAllTempoPoints(): Promise<{ points: Array<{ position_samples: number; bpm: number }>; count: number }> {
+  return ipcCall<{ points: Array<{ position_samples: number; bpm: number }>; count: number }>('daw.tempo_map.get_all_tempo_points');
+}
+
+async function getAllMeterPoints(): Promise<{ points: Array<{ position_samples: number; numerator: number; denominator: number }>; count: number }> {
+  return ipcCall<{ points: Array<{ position_samples: number; numerator: number; denominator: number }>; count: number }>('daw.tempo_map.get_all_meter_points');
+}
+
+async function setTempoBpm(positionSamples: number, bpm: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_tempo', { position_samples: positionSamples, bpm });
+}
+
+async function removeTempo(positionSamples: number): Promise<void> {
+  await ipcCall<unknown>('daw.remove_tempo_change', { position_samples: positionSamples });
+}
+
+async function samplesToBeats(samples: number): Promise<{ beats: number }> {
+  return ipcCall<{ beats: number }>('daw.samples_to_beats', { samples });
+}
+
+async function beatsToSamples(beats: number): Promise<{ samples: number }> {
+  return ipcCall<{ samples: number }>('daw.beats_to_samples', { beats });
+}
+
+async function samplesToBBT(samples: number): Promise<{ bars: number; beats: number; ticks: number }> {
+  return ipcCall<{ bars: number; beats: number; ticks: number }>('daw.tempo_map.samples_to_bbt', { samples });
+}
+
+async function bbtToSamples(bars: number, beats: number, ticks?: number): Promise<{ samples: number }> {
+  return ipcCall<{ samples: number }>('daw.tempo_map.bbt_to_samples', { bars, beats, ticks: ticks ?? 0 });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Automation (extended)
+// ---------------------------------------------------------------------------
+
+async function thinAutomation(trackId: string, paramType: string, threshold: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.automation.thin', { track_id: trackId, param_type: paramType, threshold });
+}
+
+async function clearAutomationRange(trackId: string, paramType: string, start: number, end: number): Promise<void> {
+  await ipcCall<unknown>('daw.automation.clear_range', { track_id: trackId, param_type: paramType, start, end });
+}
+
+async function setAutomationInterpolation(trackId: string, paramType: string, style: string): Promise<void> {
+  await ipcCall<unknown>('daw.automation.set_interpolation', { track_id: trackId, param_type: paramType, style });
+}
+
+async function getAutomationInterpolation(trackId: string, paramType: string): Promise<{ style: string }> {
+  return ipcCall<{ style: string }>('daw.automation.get_interpolation', { track_id: trackId, param_type: paramType });
+}
+
+async function removeOverlappingNotes(regionId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.midi_sequence.remove_overlapping_notes', { region_id: regionId });
+}
+
+async function trimOverlappingNotes(regionId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.midi_sequence.trim_overlapping_notes', { region_id: regionId });
+}
+
+async function removeDuplicateNotes(regionId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.midi_sequence.remove_duplicate_notes', { region_id: regionId });
+}
+
+async function getMidiNoteRange(regionId: string): Promise<{ lowest: number; highest: number }> {
+  return ipcCall<{ lowest: number; highest: number }>('daw.midi.get_note_range', { region_id: regionId });
+}
+
+async function getMidiChannelsPresent(regionId: string): Promise<{ channels: number[] }> {
+  return ipcCall<{ channels: number[] }>('daw.midi_sequence.get_channels_present', { region_id: regionId });
+}
+
+async function shiftMidiNotes(regionId: string, amountBeats: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.midi.transpose', { region_id: regionId, amount_beats: amountBeats });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Mixer Scenes
+// ---------------------------------------------------------------------------
+
+async function snapshotMixerScene(index: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.mixer_scene.snapshot', { index });
+}
+
+async function applyMixerScene(index: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.mixer_scene.apply', { index });
+}
+
+async function clearMixerScene(index: number): Promise<void> {
+  await ipcCall<unknown>('daw.mixer_scene.clear', { index });
+}
+
+async function isMixerSceneEmpty(index: number): Promise<{ empty: boolean }> {
+  return ipcCall<{ empty: boolean }>('daw.mixer_scene.is_empty', { index });
+}
+
+async function getMixerSceneName(index: number): Promise<{ name: string }> {
+  return ipcCall<{ name: string }>('daw.mixer_scene.get_name', { index });
+}
+
+async function setMixerSceneName(index: number, name: string): Promise<void> {
+  await ipcCall<unknown>('daw.mixer_scene.set_name', { index, name });
+}
+
+async function listMixerScenes(): Promise<{ scenes: Array<{ index: number; name: string; empty: boolean }>; count: number }> {
+  return ipcCall<{ scenes: Array<{ index: number; name: string; empty: boolean }>; count: number }>('daw.mixer_scene.list');
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Loudness & Analysis
+// ---------------------------------------------------------------------------
+
+async function getLoudnessIntegrated(): Promise<{ lufs: number; range: number }> {
+  return ipcCall<{ lufs: number; range: number }>('daw.analyze.lufs_integrated');
+}
+
+async function resetLoudnessAnalysis(): Promise<void> {
+  await ipcCall<unknown>('daw.analyze.reset_loudness');
+}
+
+async function getEngineInfo(): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.get_engine_info');
+}
+
+async function offlineNormalize(regionId: string, targetDb?: number): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.offline.normalize', { region_id: regionId, target_db: targetDb ?? 0 });
+}
+
+async function offlineReverse(regionId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.offline.reverse', { region_id: regionId });
+}
+
+async function offlineGetPeak(regionId: string): Promise<{ peak_db: number; true_peak_db: number }> {
+  return ipcCall<{ peak_db: number; true_peak_db: number }>('daw.offline.get_peak', { region_id: regionId });
+}
+
+async function offlineGetLoudness(regionId: string): Promise<{ lufs: number; range: number }> {
+  return ipcCall<{ lufs: number; range: number }>('daw.offline.get_loudness', { region_id: regionId });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Control Protocols
+// ---------------------------------------------------------------------------
+
+async function discoverControlProtocols(): Promise<{ protocols: Array<{ name: string; active: boolean }>; count: number }> {
+  return ipcCall<{ protocols: Array<{ name: string; active: boolean }>; count: number }>('daw.control_protocol.discover');
+}
+
+async function listControlProtocols(): Promise<{ protocols: Array<{ name: string; active: boolean }>; count: number }> {
+  return ipcCall<{ protocols: Array<{ name: string; active: boolean }>; count: number }>('daw.control_protocol.list_known');
+}
+
+async function activateControlProtocol(name: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.control_protocol.activate', { name });
+}
+
+async function deactivateControlProtocol(name: string): Promise<void> {
+  await ipcCall<unknown>('daw.control_protocol.deactivate', { name });
+}
+
+async function isControlProtocolActive(name: string): Promise<{ active: boolean }> {
+  return ipcCall<{ active: boolean }>('daw.control_protocol.is_active', { name });
+}
+
+// ---------------------------------------------------------------------------
+// Video sync
+// ---------------------------------------------------------------------------
+
+async function getVideoPullup(): Promise<{ pullup: number }> {
+  return ipcCall<{ pullup: number }>('daw.video.get_pullup');
+}
+async function setVideoPullup(pullup: number): Promise<void> {
+  await ipcCall<unknown>('daw.video.set_pullup', { pullup });
+}
+async function getVideoSyncEnabled(): Promise<{ enabled: boolean }> {
+  return ipcCall<{ enabled: boolean }>('daw.video.get_sync_enabled');
+}
+async function setVideoSyncEnabled(enabled: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.video.set_sync_enabled', { enabled });
+}
+async function getVideoOffset(): Promise<{ offset_samples: number; offset_negative: boolean }> {
+  return ipcCall<{ offset_samples: number; offset_negative: boolean }>('daw.video.get_offset');
+}
+async function setVideoOffset(offsetSamples: number, negative?: boolean): Promise<void> {
+  await ipcCall<unknown>('daw.video.set_offset', { offset_samples: offsetSamples, negative: negative ?? false });
+}
+
+// ---------------------------------------------------------------------------
+// Convenience wrappers — Render in Place
+// ---------------------------------------------------------------------------
+
+async function renderInPlace(params: {
+  track_ids: string[];
+  region_ids?: string[];
+  processing?: string;
+  mode?: string;
+  tail_ms?: number;
+  bit_depth?: number;
+  source_action?: string;
+  mix_down?: boolean;
+  name?: string;
+}): Promise<{ ok: boolean; rendered_tracks: Array<{ source_track_id: string; new_track_id: string; new_track_name: string; region_ids: string[] }> }> {
+  return ipcCall<{ ok: boolean; rendered_tracks: Array<{ source_track_id: string; new_track_id: string; new_track_name: string; region_ids: string[] }> }>('daw.render_in_place', params);
 }
 
 // ---------------------------------------------------------------------------
@@ -910,6 +1636,12 @@ export const ipc = {
   midiMoveNote,
   midiQuantize,
   midiTranspose,
+  midiHumanize,
+  midiLegato,
+  midiStrum,
+  midiInvert,
+  midiScaleVelocity,
+  midiSetNoteVelocity,
 
   // Plugins
   getAvailablePlugins,
@@ -924,6 +1656,8 @@ export const ipc = {
   setPluginEnabled,
   removePlugin,
   getTrackPlugins,
+  reorderPlugins,
+  loadPluginById,
 
   // Automation
   setAutomationMode,
@@ -931,6 +1665,10 @@ export const ipc = {
   getAutomationData,
   addAutomationPoint,
   clearAutomation,
+
+  // Phase / Polarity
+  setTrackPhaseInvert,
+  getTrackPhaseState,
 
   // Metering
   getCpuLoad,
@@ -961,10 +1699,188 @@ export const ipc = {
   // Metronome
   setClickEnabled,
   getClickSettings,
+  toggleCountIn,
+  getMetronomeState,
+
+  // Pre-roll / Post-roll
+  setPreRoll,
+  setPostRoll,
+
+  // Record Mode
+  setRecordMode,
+  getRecordMode,
 
   // Tempo
   getTempoMap,
   addTempoChange,
+
+  // Export
+  setExportFormatType,
+  setExportSampleRate,
+  setExportBitDepth,
+  setExportNormalize,
+  setExportNormalizeLufs,
+  setExportNormalizeDbfs,
+  setExportTpLimiter,
+  setExportTrimBeginning,
+  setExportTrimEnd,
+  setExportFilenameLabel,
+  setExportFilenameFolder,
+  setExportTimespan,
+  prepareExport,
+  executeExport,
+  abortExport,
+
+  // Monitor
+  setMonitorCutAll,
+  setMonitorDimAll,
+  setMonitorMono,
+  getMonitorCutAll,
+  getMonitorDimAll,
+  getMonitorMono,
+  getMonitorDimLevel,
+  setMonitorCut,
+  setMonitorDim,
+  setMonitorSolo,
+
+  // Sends
+  getTrackSends,
+  setSendLevel,
+  setSendPan,
+  setSendEnabled,
+  setSendPreFader,
+  addSend,
+  removeSendFrom,
+  getBuses,
+  getTrackLatency,
+
+  // Route Groups (extended)
+  getRouteGroupDetails,
+  deleteRouteGroup,
+  addRouteToGroup,
+  removeRouteFromGroup,
+  setRouteGroupActive,
+  setRouteGroupGain,
+  setRouteGroupMute,
+  setRouteGroupSolo,
+  setRouteGroupColor,
+  makeSubgroup,
+  destroySubgroup,
+  assignGroupToVCA,
+
+  // Panner
+  getPanPosition,
+  setPanPosition,
+  getPanWidth,
+  setPanWidth,
+  setPanBypassed,
+  resetPan,
+  getAvailablePanners,
+  selectPanner,
+
+  // Editor
+  reverseRegion,
+  normalizeRegionById,
+  timeStretchRegion,
+  pitchShiftRegion,
+  setRegionFadeInActive,
+  setRegionFadeOutActive,
+  getRegionLoudness,
+  getRegionPeak,
+  setEditMode,
+  getEditMode,
+  setGridType,
+  getGridType,
+  setSnapMode,
+  getSnapMode,
+  zoomToSelection,
+  zoomToSession,
+  getVisibleRange,
+  selectRange,
+  insertTime,
+  removeTime,
+
+  // Session Metadata
+  getSessionTitle,
+  setSessionTitle,
+  getSessionArtist,
+  setSessionArtist,
+  getSessionAlbum,
+  setSessionAlbum,
+  getSessionGenre,
+  setSessionGenre,
+  getSessionYear,
+  setSessionYear,
+  getSessionComposer,
+  setSessionComposer,
+  getSessionCopyright,
+  setSessionCopyright,
+  getSessionISRC,
+  setSessionISRC,
+  getSessionDescription,
+  setSessionDescription,
+  getSessionComment,
+  setSessionComment,
+
+  // Tempo (query & conversion)
+  getTempoAt,
+  getMeterAt,
+  getAllTempoPoints,
+  getAllMeterPoints,
+  setTempoBpm,
+  removeTempo,
+  samplesToBeats,
+  beatsToSamples,
+  samplesToBBT,
+  bbtToSamples,
+
+  // Automation (extended)
+  thinAutomation,
+  clearAutomationRange,
+  setAutomationInterpolation,
+  getAutomationInterpolation,
+  removeOverlappingNotes,
+  trimOverlappingNotes,
+  removeDuplicateNotes,
+  getMidiNoteRange,
+  getMidiChannelsPresent,
+  shiftMidiNotes,
+
+  // Mixer Scenes
+  snapshotMixerScene,
+  applyMixerScene,
+  clearMixerScene,
+  isMixerSceneEmpty,
+  getMixerSceneName,
+  setMixerSceneName,
+  listMixerScenes,
+
+  // Loudness & Analysis
+  getLoudnessIntegrated,
+  resetLoudnessAnalysis,
+  getEngineInfo,
+  offlineNormalize,
+  offlineReverse,
+  offlineGetPeak,
+  offlineGetLoudness,
+
+  // Control Protocols
+  discoverControlProtocols,
+  listControlProtocols,
+  activateControlProtocol,
+  deactivateControlProtocol,
+  isControlProtocolActive,
+
+  // Video sync
+  getVideoPullup,
+  setVideoPullup,
+  getVideoSyncEnabled,
+  setVideoSyncEnabled,
+  getVideoOffset,
+  setVideoOffset,
+
+  // Render in Place
+  renderInPlace,
 
   // Generic
   call,

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { useSessionStore } from '../stores/session';
-import type { TrackType } from '../types/track';
+import { useSessionStore, buildTrackTree } from '../stores/session';
+import type { Track, TrackType } from '../types/track';
 import styles from './VisibilityTab.module.css';
 
 /* ---- Track type icon map ---- */
@@ -53,6 +53,9 @@ const FILTER_TYPES: { type: TrackType; label: string }[] = [
 
 export const VisibilityTab: React.FC = () => {
   const tracks = useSessionStore((s) => s.tracks);
+  const routeGroups = useSessionStore((s) => s.routeGroups);
+  const collapsedFolders = useSessionStore((s) => s.collapsedFolders);
+  const toggleFolderCollapsed = useSessionStore((s) => s.toggleFolderCollapsed);
   const updateTracks = useSessionStore((s) => s.updateTracks);
 
   const [activeFilters, setActiveFilters] = useState<Set<TrackType>>(new Set());
@@ -69,15 +72,33 @@ export const VisibilityTab: React.FC = () => {
     });
   }, []);
 
+  const treeTracks = useMemo(
+    () => buildTrackTree(tracks, routeGroups),
+    [tracks, routeGroups],
+  );
+
   const filteredTracks = useMemo(() => {
-    if (activeFilters.size === 0) return tracks;
-    return tracks.filter((t) => activeFilters.has(t.type));
-  }, [tracks, activeFilters]);
+    if (activeFilters.size === 0) return treeTracks;
+    // When filtering, show folder tracks if any of their children match
+    return treeTracks.filter((t) => {
+      if (t.children && t.children.length > 0) {
+        return t.children.some(c => activeFilters.has(c.type)) || activeFilters.has(t.type);
+      }
+      return activeFilters.has(t.type);
+    });
+  }, [treeTracks, activeFilters]);
 
   const toggleVisibility = useCallback(
-    (id: string) => {
+    (id: string, children?: Track[]) => {
+      const idsToToggle = new Set<string>([id]);
+      // When toggling a folder, toggle all children too
+      if (children) {
+        children.forEach(c => idsToToggle.add(c.id));
+      }
+      const target = tracks.find(t => t.id === id);
+      const newVisible = target ? !target.visible : true;
       const updated = tracks.map((t) =>
-        t.id === id ? { ...t, visible: !t.visible } : t,
+        idsToToggle.has(t.id) ? { ...t, visible: newVisible } : t,
       );
       updateTracks(updated);
     },
@@ -93,6 +114,53 @@ export const VisibilityTab: React.FC = () => {
     const updated = tracks.map((t) => ({ ...t, visible: false }));
     updateTracks(updated);
   }, [tracks, updateTracks]);
+
+  const renderTrackItem = (track: Track, depth: number = 0) => {
+    const isFolder = track.children && track.children.length > 0;
+    const isCollapsed = collapsedFolders.includes(track.id);
+
+    // When filters active, filter children too
+    const visibleChildren = isFolder
+      ? (activeFilters.size === 0
+          ? track.children!
+          : track.children!.filter(c => activeFilters.has(c.type)))
+      : [];
+
+    return (
+      <React.Fragment key={track.id}>
+        <div className={styles.trackRow} style={{ paddingLeft: depth * 16 }}>
+          {isFolder && (
+            <span
+              onClick={() => toggleFolderCollapsed(track.id)}
+              style={{ cursor: 'pointer', marginRight: 4, fontSize: 10, userSelect: 'none' }}
+            >
+              {isCollapsed ? '\u25B6' : '\u25BC'}
+            </span>
+          )}
+          <input
+            type="checkbox"
+            className={styles.checkbox}
+            checked={track.visible}
+            onChange={() => toggleVisibility(track.id, isFolder ? track.children : undefined)}
+          />
+          <span
+            className={styles.typeIcon}
+            style={{ backgroundColor: TYPE_COLORS[track.type] || 'var(--border-medium)' }}
+          >
+            {isFolder ? '\uD83D\uDCC1' : (TYPE_ICONS[track.type] || '?')}
+          </span>
+          <span
+            className={`${styles.trackName} ${
+              !track.visible ? styles.trackNameHidden : ''
+            }`}
+          >
+            {track.name}
+          </span>
+        </div>
+        {isFolder && !isCollapsed && visibleChildren.map(child => renderTrackItem(child, depth + 1))}
+      </React.Fragment>
+    );
+  };
 
   return (
     <div className={styles.visibilityTab}>
@@ -119,31 +187,9 @@ export const VisibilityTab: React.FC = () => {
         </button>
       </div>
 
-      {/* ---- Track list ---- */}
+      {/* ---- Track list (hierarchical) ---- */}
       <div className={styles.trackList}>
-        {filteredTracks.map((track) => (
-          <div key={track.id} className={styles.trackRow}>
-            <input
-              type="checkbox"
-              className={styles.checkbox}
-              checked={track.visible}
-              onChange={() => toggleVisibility(track.id)}
-            />
-            <span
-              className={styles.typeIcon}
-              style={{ backgroundColor: TYPE_COLORS[track.type] || 'var(--border-medium)' }}
-            >
-              {TYPE_ICONS[track.type] || '?'}
-            </span>
-            <span
-              className={`${styles.trackName} ${
-                !track.visible ? styles.trackNameHidden : ''
-              }`}
-            >
-              {track.name}
-            </span>
-          </div>
-        ))}
+        {filteredTracks.map((track) => renderTrackItem(track))}
       </div>
     </div>
   );

@@ -1,0 +1,88 @@
+/* ==========================================================================
+   DawSection — Cubase 15 Pro collapsible inspector section
+   Dark header bar with chevron, smooth expand/collapse animation.
+   ========================================================================== */
+
+.dawSection {
+  border-bottom: 1px solid var(--divider);
+}
+
+/* ---- Section header bar ---- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: var(--section-header-height);
+  padding: 0 6px;
+  border: none;
+  background: var(--bg-section-header);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: background var(--transition-fast);
+}
+
+.header:hover {
+  background: var(--bg-hover);
+}
+
+/* ---- Chevron indicator ---- */
+
+.chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  font-size: 8px;
+  line-height: 1;
+  color: var(--text-secondary);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.open .chevron {
+  transform: rotate(90deg);
+}
+
+/* ---- Optional icon ---- */
+
+.icon {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  width: 14px;
+  text-align: center;
+}
+
+/* ---- Title text ---- */
+
+.title {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Collapsible content ---- */
+
+.content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-normal);
+}
+
+.open .content {
+  max-height: 2000px;
+}
+
+.inner {
+  padding: 6px;
+}

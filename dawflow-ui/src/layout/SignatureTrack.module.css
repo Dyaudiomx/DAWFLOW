@@ -1,0 +1,164 @@
+.container {
+  height: 24px;
+  display: flex;
+  background: #222225;
+  border-bottom: 1px solid #3a3a3a;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.header {
+  width: 250px;
+  min-width: 250px;
+  background: #252528;
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  color: rgba(140, 180, 200, 0.6);
+}
+
+.content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.meterLabel {
+  position: absolute;
+  top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ddd;
+  background: #3a5a3a;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.meterLabel:hover {
+  background: #4a6a4a;
+}
+
+.contextMenu {
+  position: fixed;
+  background: #2a2a2e;
+  border: 1px solid #505050;
+  border-radius: 4px;
+  padding: 4px 0;
+  z-index: 100;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: #ccc;
+  cursor: pointer;
+  user-select: none;
+}
+
+.contextMenuItem:hover {
+  background: #3a3a44;
+  color: #fff;
+}
+
+.contextMenuDanger {
+  color: #e06060;
+}
+
+.contextMenuDanger:hover {
+  background: #4a2020;
+  color: #ff8080;
+}
+
+.contextMenuDivider {
+  height: 1px;
+  background: #404040;
+  margin: 4px 0;
+}
+
+.addDialog {
+  position: fixed;
+  background: #2a2a2e;
+  border: 1px solid #505050;
+  border-radius: 6px;
+  padding: 12px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.addDialogTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.addDialogRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.addDialogLabel {
+  font-size: 10px;
+  color: #999;
+  min-width: 30px;
+}
+
+.addDialogInput {
+  width: 40px;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #1e1e22;
+  border: 1px solid #444;
+  color: #eee;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+}
+
+.addDialogInput:focus {
+  border-color: #5b9bd5;
+}
+
+.addDialogButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.addDialogBtn {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid #444;
+  background: #333;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.addDialogBtn:hover {
+  background: #444;
+  color: #fff;
+}
+
+.addDialogBtnPrimary {
+  background: #3a5a3a;
+  border-color: #4a6a4a;
+}
+
+.addDialogBtnPrimary:hover {
+  background: #4a6a4a;
+}

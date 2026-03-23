@@ -1,0 +1,549 @@
+/* ==========================================================================
+   AutomationLaneHeader — Cubase 15 Pro automation lane header
+   Compact header strip for automation lanes beneath each track header.
+   ========================================================================== */
+
+.laneHeader {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 30px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--divider);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  user-select: none;
+  position: relative;
+  overflow: visible;
+}
+
+/* Subtle track-color tint behind the lane — applied via inline style */
+.laneHeader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--lane-tint, transparent);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure children sit above the tint overlay */
+.laneHeader > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Sections ---- */
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.middle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* ---- Automation curve icon ---- */
+
+.curveIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ---- R / W toggle buttons ---- */
+
+.rwButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  min-width: 18px;
+  padding: 0 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 9px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  outline: none;
+  line-height: 1;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.rwButton:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.rwButton:active {
+  background: var(--bg-button-active);
+}
+
+/* Read active state — green */
+.readActive {
+  background: #4caf50;
+  color: #fff;
+  border-color: #4caf50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.35);
+}
+
+.readActive:hover {
+  background: #5abf5e;
+  color: #fff;
+}
+
+/* Write active state — red */
+.writeActive {
+  background: #c43030;
+  color: #fff;
+  border-color: #c43030;
+  box-shadow: 0 0 4px rgba(196, 48, 48, 0.4);
+}
+
+.writeActive:hover {
+  background: #d43a3a;
+  color: #fff;
+}
+
+/* ---- Parameter dropdown ---- */
+
+.paramSelect {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+  max-width: 120px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.paramTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  width: 100%;
+  height: 20px;
+  padding: 0 5px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.paramTrigger:hover {
+  border-color: var(--border-medium);
+}
+
+.paramTrigger:focus {
+  border-color: var(--accent-blue);
+}
+
+.paramLabel {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paramArrow {
+  font-size: 7px;
+  line-height: 1;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.paramSelectOpen .paramArrow {
+  transform: rotate(180deg);
+}
+
+/* ---- Floating popup menu (Cubase-style) ---- */
+
+.paramMenu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  width: 280px;
+  background: #2b2d30;
+  border: 1px solid #444;
+  border-radius: 4px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+/* ---- Search bar at top ---- */
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 6px 4px;
+  flex-shrink: 0;
+}
+
+.searchActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #555;
+  border-radius: 3px;
+  background: #363839;
+  color: #bbb;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.searchActionBtn:hover {
+  background: #484a4d;
+  color: #fff;
+}
+
+.searchInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  height: 22px;
+  padding: 0 6px;
+  background: #1e1f22;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #999;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  font-family: var(--font-family);
+  font-size: 11px;
+  outline: none;
+  padding: 0;
+  min-width: 0;
+}
+
+.searchInput::placeholder {
+  color: #666;
+}
+
+/* ---- Menu separator ---- */
+
+.menuSeparator {
+  height: 1px;
+  background: #444;
+  margin: 2px 0;
+  flex-shrink: 0;
+}
+
+/* ---- Scrollable content area ---- */
+
+.menuScrollArea {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #2b2d30;
+}
+
+.menuScrollArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.menuScrollArea::-webkit-scrollbar-track {
+  background: #2b2d30;
+}
+
+.menuScrollArea::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+.menuScrollArea::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* ---- Loading / Empty states ---- */
+
+.loadingRow,
+.emptyRow {
+  padding: 8px 12px;
+  color: #777;
+  font-size: 11px;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ---- Plugin group (collapsible) ---- */
+
+.pluginGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.pluginGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  font-family: var(--font-family);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s;
+}
+
+.pluginGroupHeader:hover {
+  background: #3a3a3e;
+}
+
+.pluginGroupName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triangleIcon {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+  color: #888;
+}
+
+/* ---- Param option (flat list item) ---- */
+
+.paramOption {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 3px 10px;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  font-family: var(--font-family);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.1s, color 0.1s;
+}
+
+.paramOption:hover {
+  background: #3a3a3e;
+  color: #fff;
+}
+
+.paramOptionSelected {
+  background: #3d5a80;
+  color: #fff;
+}
+
+.paramOptionSelected:hover {
+  background: #4a6a93;
+}
+
+.paramOptionIndent {
+  padding-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Expandable structural groups (bottom section) ---- */
+
+.expandableGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: #aaa;
+  font-family: var(--font-family);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s, color 0.1s;
+}
+
+.expandableGroupHeader:hover {
+  background: #3a3a3e;
+  color: #ccc;
+}
+
+.expandableGroupContent {
+  padding: 2px 8px 2px 26px;
+}
+
+.expandableEmpty {
+  color: #555;
+  font-size: 10px;
+  font-style: italic;
+}
+
+/* ---- Value spinner ---- */
+
+.valueSpinner {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.valueSpinner:focus-within {
+  border-color: var(--accent-blue);
+}
+
+.valueInput {
+  width: 48px;
+  height: 100%;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  text-align: right;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.valueInput::-webkit-inner-spin-button,
+.valueInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.spinButtons {
+  display: flex;
+  flex-direction: column;
+  width: 12px;
+  height: 100%;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.spinBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  border: none;
+  background: var(--bg-button);
+  color: var(--text-secondary);
+  font-size: 6px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  transition: background var(--transition-fast);
+}
+
+.spinBtn:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+}
+
+.spinBtn:active {
+  background: var(--bg-button-active);
+}
+
+.spinBtnUp {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ---- Icon buttons (close, lock) ---- */
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.iconButton:hover {
+  background: var(--bg-button-hover);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.iconButton:active {
+  background: var(--bg-button-active);
+}
+
+.lockActive {
+  color: var(--color-bypass);
+}
+
+.lockActive:hover {
+  color: var(--color-bypass);
+}

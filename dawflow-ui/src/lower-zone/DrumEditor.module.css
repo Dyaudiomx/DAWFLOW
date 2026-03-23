@@ -1,0 +1,414 @@
+/* ==========================================================================
+   DrumEditor — Cubase 15 Pro Drum Editor (Lower Zone)
+   Grid-based drum pattern editor with velocity lane.
+   ========================================================================== */
+
+/* ---- Root Container ---- */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  overflow: hidden;
+  font-family: var(--font-family);
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  height: 28px;
+  min-height: 28px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-right: 8px;
+}
+
+.toolBtn {
+  height: 22px;
+  min-width: 26px;
+  padding: 0 6px;
+  background: #3a3a3a;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #999;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 100ms ease, color 100ms ease;
+  user-select: none;
+}
+
+.toolBtn:hover {
+  background: #454545;
+  color: #ccc;
+}
+
+.toolBtnActive {
+  background: #4A90D9;
+  color: #fff;
+  border-color: #3a78b8;
+}
+
+.toolBtnActive:hover {
+  background: #5BA0E9;
+}
+
+.separator {
+  width: 1px;
+  height: 16px;
+  background: #3a3a3a;
+  margin: 0 6px;
+}
+
+.selectDropdown {
+  height: 22px;
+  padding: 0 6px;
+  background: #333;
+  border: 1px solid #2a2a2a;
+  border-radius: 2px;
+  color: #aaa;
+  font-size: 10px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L4 4L7 1' stroke='%23888' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+}
+
+.selectDropdown:hover {
+  background-color: #3a3a3a;
+}
+
+.zoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+}
+
+.zoomBtn {
+  composes: toolBtn;
+  width: 22px;
+  min-width: 22px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toolLabel {
+  font-size: 10px;
+  color: #666;
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ---- Ruler ---- */
+.ruler {
+  height: 22px;
+  min-height: 22px;
+  background: #252525;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.rulerCorner {
+  width: 121px;
+  min-width: 121px;
+  background: #252525;
+  border-right: 1px solid #3a3a3a;
+}
+
+.rulerTrack {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.rulerBar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 10px;
+  color: #888;
+  border-left: 1px solid #4a4a4a;
+  padding-left: 4px;
+  pointer-events: none;
+}
+
+.rulerBeat {
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  border-left: 1px solid #333;
+}
+
+/* ---- Editor Area (headers + grid side by side) ---- */
+.editorArea {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---- Drum Row Headers (left column) ---- */
+.drumHeaders {
+  width: 120px;
+  min-width: 120px;
+  background: #252525;
+  border-right: 1px solid #3a3a3a;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.drumHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 10px;
+  border-bottom: 1px solid #222;
+  user-select: none;
+}
+
+.drumHeaderEven {
+  background: #252525;
+}
+
+.drumHeaderOdd {
+  background: #222;
+}
+
+.drumShort {
+  color: #999;
+  font-weight: 600;
+  font-size: 9px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.drumName {
+  color: #777;
+  font-size: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Hit Grid (main area) ---- */
+.hitGrid {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.hitGridInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Drum rows */
+.drumRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid #222;
+}
+
+.drumRowEven {
+  background: #1e1e1e;
+}
+
+.drumRowOdd {
+  background: #1b1b1b;
+}
+
+/* Vertical grid lines */
+.gridLineBar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #333;
+  pointer-events: none;
+}
+
+.gridLineBeat {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #252525;
+  pointer-events: none;
+}
+
+.gridLineSub {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #1f1f1f;
+  pointer-events: none;
+}
+
+/* Hover cell indicator */
+.hoverCell {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---- Drum Hits ---- */
+.drumHit {
+  position: absolute;
+  border-radius: 2px;
+  border: 1.5px solid transparent;
+  z-index: 3;
+  pointer-events: none;
+  transform: rotate(45deg);
+  transition: box-shadow 60ms ease;
+}
+
+.drumHitSelected {
+  border-color: #4fc3f7;
+  box-shadow: 0 0 6px rgba(79, 195, 247, 0.5);
+  z-index: 4;
+}
+
+/* ---- Velocity Lane ---- */
+.velocityDivider {
+  height: 2px;
+  background: #4a4a4a;
+  cursor: ns-resize;
+  flex-shrink: 0;
+  transition: background 100ms;
+}
+
+.velocityDivider:hover {
+  background: #4A90D9;
+}
+
+.velocityLane {
+  display: flex;
+  background: #1a1a1a;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.velocityLabel {
+  width: 120px;
+  min-width: 120px;
+  background: #252525;
+  border-right: 1px solid #3a3a3a;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
+  font-size: 9px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.velocityArea {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.velocityAreaInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.velBar {
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  border-radius: 1px 1px 0 0;
+  cursor: ns-resize;
+  transition: filter 60ms;
+  z-index: 1;
+  min-height: 2px;
+}
+
+.velBar:hover {
+  filter: brightness(1.25);
+  z-index: 2;
+}
+
+.velBarSelected {
+  box-shadow: 0 0 4px rgba(79, 195, 247, 0.5);
+}
+
+.velocityGrid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.velocityGridLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #222;
+}
+
+/* ---- Empty state ---- */
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  color: #555;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* ---- Cursor styles per tool ---- */
+.cursorSelect {
+  cursor: default;
+}
+
+.cursorDraw {
+  cursor: crosshair;
+}
+
+.cursorErase {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' rx='1' fill='%23c43030' opacity='0.8'/%3E%3Cline x1='5' y1='5' x2='11' y2='11' stroke='white' stroke-width='1.5'/%3E%3Cline x1='11' y1='5' x2='5' y2='11' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E") 8 8, crosshair;
+}

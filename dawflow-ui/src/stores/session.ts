@@ -3,7 +3,12 @@ import type { Track, TrackType } from '../types/track';
 import { ipc, type EngineTrack } from '../services/ipc';
 import { useRegionStore } from './regions';
 import { useConnectionStore } from './connection';
-import { engineSetStripGain, engineSetStripMute, engineSetStripPan } from '../services/websocket';
+// Throttle for volume/pan IPC calls (fader fires on every pixel)
+let _volPanTimer: ReturnType<typeof setTimeout> | null = null;
+function throttledIpc(fn: () => Promise<unknown>) {
+  if (_volPanTimer) clearTimeout(_volPanTimer);
+  _volPanTimer = setTimeout(() => { fn().catch(() => {}); }, 50);
+}
 
 // ---------------------------------------------------------------------------
 // Engine → UI track conversion
@@ -25,29 +30,43 @@ function engineColorToCSS(hex: string | undefined): string | null {
 
 function engineTrackToTrack(et: EngineTrack, _index: number, existing?: Track): Track {
   const type = (et.type || 'audio') as TrackType;
-  // Priority: engine color (if set by user) > existing local > default palette
+  // Color: prefer existing local color if set (user may have changed it and engine hasn't confirmed yet)
   const engineColor = engineColorToCSS(et.color);
-  const color = engineColor || existing?.color || DEFAULT_COLORS[type] || '#5B7FA5';
+  const color = existing?.color || engineColor || DEFAULT_COLORS[type] || '#5B7FA5';
   return {
     id: et.id,
     name: et.name,
     type,
     color,
     height: existing?.height || 65,
-    muted: et.muted,
+    // Use engine values for mute/solo (these are confirmed server state)
+    muted: et.muted,                                       // full mute (any reason)
+    mutedBySelf: (et as any).muted_by_self ?? et.muted,    // explicit user mute only
+    mutedByOthers: (et as any).muted_by_others ?? false,   // solo-implied mute
     solo: et.soloed,
-    recordEnabled: et.record_enabled || false,
+    // Preserve local record/monitor state — engine may lag behind optimistic updates
+    recordEnabled: existing?.recordEnabled ?? (et.record_enabled || false),
     monitorEnabled: existing?.monitorEnabled || false,
-    readAutomation: false,
-    writeAutomation: false,
+    readAutomation: existing?.readAutomation || false,
+    writeAutomation: existing?.writeAutomation || false,
     frozen: false,
     locked: false,
-    visible: true,
-    volume: et.gain_db !== undefined ? Math.pow(10, et.gain_db / 20) * 0.75 : 0.75,
-    pan: existing?.pan || 0,
-    inputRouting: '',
-    outputRouting: '',
+    visible: existing?.visible ?? true,
+    volume: et.gain_db !== undefined ? Math.pow(10, et.gain_db / 20) * 0.75 : (existing?.volume ?? 0.75),
+    pan: existing?.pan ?? 0,
+    inputRouting: existing?.inputRouting || '',
+    outputRouting: existing?.outputRouting || '',
   };
+}
+
+// ---------------------------------------------------------------------------
+// Route groups (used for folder hierarchy)
+// ---------------------------------------------------------------------------
+
+export interface RouteGroup {
+  id: string;
+  name: string;
+  memberIds?: string[];
 }
 
 interface SessionStore {
@@ -55,6 +74,8 @@ interface SessionStore {
   sampleRate: number;
   bitDepth: number;
   tracks: Track[];
+  routeGroups: RouteGroup[];
+  collapsedFolders: string[];
   loading: boolean;
 
   // Actions
@@ -69,22 +90,40 @@ interface SessionStore {
   setTrackName: (id: string, name: string) => void;
   setTrackHeight: (id: string, height: number) => void;
   setTrackColor: (id: string, color: string) => void;
+  /** @deprecated Use useMeterStore instead — meter levels are in a separate store for performance */
   setTrackMeterLevel: (id: string, level: number) => void;
   updateTracks: (tracks: Track[]) => void;
   getTrackById: (id: string) => Track | undefined;
+  toggleFolderCollapsed: (trackId: string) => void;
 }
 
 export type { SessionStore };
+
+// Debounce guard: skip fetchFromEngine if called within 1 second of last fetch
+let _lastFetchTime = 0;
+
+/** Reset the debounce guard so the next fetchFromEngine() runs immediately. */
+export function resetFetchDebounce() {
+  _lastFetchTime = 0;
+}
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
   sessionName: 'DAWFLOW Project',
   sampleRate: 48000,
   bitDepth: 24,
   tracks: [],
+  routeGroups: [],
+  collapsedFolders: [],
   loading: true,
 
   fetchFromEngine: async () => {
-    if (!useConnectionStore.getState().wsConnected) return;
+    const conn = useConnectionStore.getState();
+    // Allow fetch if WebSocket OR IPC is connected, or native bridge exists (WKWebView)
+    if (!conn.wsConnected && !conn.ipcConnected && typeof (window as any).__dawflow_call !== 'function') return;
+
+    const now = Date.now();
+    if (now - _lastFetchTime < 1000) return;
+    _lastFetchTime = now;
 
     const attempt = async () => {
       const [engineTracks, sessionInfo] = await Promise.all([
@@ -100,17 +139,48 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         loading: false,
       });
 
+      // Fetch route groups (used for folder hierarchy)
+      ipc.getRouteGroups().then((data: { groups: Array<Record<string, unknown>> }) => {
+        const groups = data.groups || [];
+        set({ routeGroups: groups.map((g: Record<string, unknown>) => ({
+          id: g.id as string,
+          name: g.name as string,
+          memberIds: ((g.members as Array<Record<string, unknown>>) || []).map((m) => m.id as string),
+        }))});
+      }).catch(() => {});
+
+      // Fetch pan positions for all tracks in one batch, then update once
+      Promise.all(
+        engineTracks.map(et =>
+          ipc.call('daw.get_track_pan', { track_id: et.id })
+            .then((raw: unknown) => {
+              const data = raw as Record<string, unknown>;
+              const azimuth = Number(data.pan ?? data.azimuth ?? 0.5);
+              return { id: et.id, pan: (azimuth * 2) - 1 };
+            })
+            .catch(() => null)
+        )
+      ).then(results => {
+        const panMap = new Map(results.filter(Boolean).map(r => [r!.id, r!.pan]));
+        if (panMap.size > 0) {
+          set((s) => ({
+            tracks: s.tracks.map(t => panMap.has(t.id) ? { ...t, pan: panMap.get(t.id)! } : t)
+          }));
+        }
+      });
+
       // Fetch regions for audio/midi tracks only (buses don't have playlists)
       for (const et of engineTracks) {
         if (et.type === 'bus' || et.type === 'vca') continue;
         ipc.getRegions(et.id).then((regions) => {
+          console.log(`[DAWFLOW] Regions for ${et.name} (${et.id}):`, regions.length, 'regions');
           useRegionStore.getState().setRegions(et.id, regions.map((r) => ({
             ...r,
             trackId: et.id,
             type: et.type || 'audio',
           })));
-        }).catch(() => {
-          // Track may not have regions -- that's fine
+        }).catch((err) => {
+          console.warn(`[DAWFLOW] Failed to fetch regions for ${et.name}:`, err);
         });
       }
     };
@@ -130,16 +200,15 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   },
 
   setSessionName: (name) => set({ sessionName: name }),
-  setTrackMute: (id, muted) => set((s) => {
-    const idx = s.tracks.findIndex(t => t.id === id);
-    if (idx >= 0) engineSetStripMute(idx, muted);
-    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, muted } : t) };
-  }),
+  setTrackMute: (id, muted) => {
+    ipc.setTrackMute(id, muted).catch((e) => console.warn('[IPC] setTrackMute:', e));
+    set((s) => ({ tracks: s.tracks.map((t) => t.id === id ? { ...t, muted, mutedBySelf: muted } : t) }));
+  },
   setTrackSolo: (id, solo) => {
     ipc.setTrackSolo(id, solo).catch((e) => console.warn('[IPC]', e));
-    set((s) => ({
-      tracks: s.tracks.map((t) => t.id === id ? { ...t, solo } : t),
-    }));
+    set((s) => ({ tracks: s.tracks.map((t) => t.id === id ? { ...t, solo } : t) }));
+    // Re-fetch after Ardour processes the solo — it mutes non-soloed tracks internally
+    setTimeout(() => get().fetchFromEngine(), 100);
   },
   setTrackRecord: (id, enabled) => {
     ipc.setTrackRecord(id, enabled).catch((e) => console.warn('[IPC]', e));
@@ -153,16 +222,18 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       tracks: s.tracks.map((t) => t.id === id ? { ...t, monitorEnabled: enabled } : t),
     }));
   },
-  setTrackVolume: (id, volume) => set((s) => {
-    const idx = s.tracks.findIndex(t => t.id === id);
-    if (idx >= 0) engineSetStripGain(idx, volume);
-    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, volume } : t) };
-  }),
-  setTrackPan: (id, pan) => set((s) => {
-    const idx = s.tracks.findIndex(t => t.id === id);
-    if (idx >= 0) engineSetStripPan(idx, (pan + 1) / 2); // Convert -1..1 to 0..1
-    return { tracks: s.tracks.map((t) => t.id === id ? { ...t, pan } : t) };
-  }),
+  setTrackVolume: (id, volume) => {
+    // Convert linear 0-1 to dB for the IPC call (throttled to avoid flooding)
+    const gainDb = volume <= 0 ? -100 : 20 * Math.log10(volume / 0.75);
+    throttledIpc(() => ipc.setTrackGain(id, gainDb));
+    set((s) => ({ tracks: s.tracks.map((t) => t.id === id ? { ...t, volume } : t) }));
+  },
+  setTrackPan: (id, pan) => {
+    // Convert -1..+1 to 0..1 for engine (0=L, 0.5=C, 1=R)
+    const panValue = (pan + 1) / 2;
+    throttledIpc(() => ipc.call('daw.set_track_pan', { track_id: id, pan: panValue }));
+    set((s) => ({ tracks: s.tracks.map((t) => t.id === id ? { ...t, pan } : t) }));
+  },
   setTrackName: (id, name) => {
     ipc.renameTrack(id, name).catch((e) => console.warn('[IPC]', e));
     set((s) => ({
@@ -178,9 +249,49 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       tracks: s.tracks.map((t) => t.id === id ? { ...t, color } : t),
     }));
   },
-  setTrackMeterLevel: (id, level) => set((s) => ({
-    tracks: s.tracks.map((t) => t.id === id ? { ...t, meterLevel: level } : t)
-  })),
+  setTrackMeterLevel: (_id, _level) => {
+    // NO-OP: Meter levels are now in useMeterStore for performance.
+    // This method is kept for backward compatibility but does nothing.
+  },
   updateTracks: (tracks) => set({ tracks }),
   getTrackById: (id) => get().tracks.find((t) => t.id === id),
+  toggleFolderCollapsed: (trackId) => set((s) => ({
+    collapsedFolders: s.collapsedFolders.includes(trackId)
+      ? s.collapsedFolders.filter(id => id !== trackId)
+      : [...s.collapsedFolders, trackId],
+  })),
 }));
+
+// ---------------------------------------------------------------------------
+// Derived: build a tree of tracks using route groups as folder membership
+// ---------------------------------------------------------------------------
+
+export function buildTrackTree(tracks: Track[], routeGroups: RouteGroup[]): Track[] {
+  const groupsByName = new Map<string, RouteGroup>();
+  routeGroups.forEach(g => groupsByName.set(g.name, g));
+
+  const nestedTrackIds = new Set<string>();
+  const result: Track[] = [];
+
+  // First pass: identify folder tracks that have a matching route group
+  for (const track of tracks) {
+    if (
+      (track.type === 'group' || track.type === 'folder' || track.type === 'bus') &&
+      groupsByName.has(track.name)
+    ) {
+      const group = groupsByName.get(track.name)!;
+      const children = tracks.filter(t => group.memberIds?.includes(t.id));
+      children.forEach(c => nestedTrackIds.add(c.id));
+      result.push({ ...track, children });
+    }
+  }
+
+  // Second pass: add non-nested tracks that aren't already in result
+  for (const track of tracks) {
+    if (!nestedTrackIds.has(track.id) && !result.find(r => r.id === track.id)) {
+      result.push(track);
+    }
+  }
+
+  return result;
+}

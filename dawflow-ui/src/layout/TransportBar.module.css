@@ -324,6 +324,35 @@
   flex-shrink: 0;
 }
 
+/* ---- Video Timecode (SMPTE frame counter) ---- */
+.videoTimecode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #26C6DA;
+  background: #1a1a1e;
+  padding: 2px 8px;
+  border: 1px solid #333;
+  border-radius: 2px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.videoTimecodeLabel {
+  font-size: 8px;
+  color: #26C6DA;
+  opacity: 0.6;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.videoTimecodeValue {
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
 /* ---- Tempo Field ---- */
 .tempoField {
   display: flex;
@@ -461,4 +490,26 @@
   font-size: 8px;
   color: #555;
   letter-spacing: 0.3px;
+}
+
+.actDot {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: default;
+  color: #555;
+  transition: color 0.15s;
+}
+
+.actDotActive {
+  color: #4fc;
+}
+
+.actDotPulse {
+  animation: actPulse 1s ease-in-out infinite;
+}
+
+@keyframes actPulse {
+  0%, 100% { color: #555; }
+  50% { color: #4fc; }
 }
