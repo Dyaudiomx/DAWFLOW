@@ -76,6 +76,7 @@ interface SessionStore {
   tracks: Track[];
   routeGroups: RouteGroup[];
   collapsedFolders: string[];
+  folderBusIds: string[];
   loading: boolean;
 
   // Actions
@@ -114,6 +115,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   tracks: [],
   routeGroups: [],
   collapsedFolders: [],
+  folderBusIds: [],
   loading: true,
 
   fetchFromEngine: async () => {
@@ -126,14 +128,53 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     _lastFetchTime = now;
 
     const attempt = async () => {
-      const [engineTracks, sessionInfo] = await Promise.all([
+      const [engineTracks, sessionInfo, vcaData] = await Promise.all([
         ipc.getTracks(),
         ipc.getSessionInfo(),
+        ipc.call<{ vcas: Array<{ id: string; name: string; number: number }>; count: number }>('daw.get_vcas').catch(() => ({ vcas: [], count: 0 })),
       ]);
       const existingTracks = get().tracks;
       const existingMap = new Map(existingTracks.map(t => [t.id, t]));
+      const folderBusIds = get().folderBusIds;
+
+      // Convert engine routes to UI tracks, marking folder buses
+      const routeTracks = engineTracks.map((et, i) => {
+        const track = engineTrackToTrack(et, i, existingMap.get(et.id));
+        if (folderBusIds.includes(et.id)) {
+          return { ...track, type: 'folder' as const };
+        }
+        return track;
+      });
+
+      // Convert VCA masters to UI tracks
+      const vcaTracks: Track[] = (vcaData.vcas || []).map((vca, i) => {
+        const existing = existingMap.get(vca.id);
+        return {
+          id: vca.id,
+          name: vca.name,
+          type: 'vca' as const,
+          color: existing?.color || '#8A6AAE',
+          height: existing?.height || 65,
+          muted: false,
+          mutedBySelf: false,
+          mutedByOthers: false,
+          solo: false,
+          recordEnabled: false,
+          monitorEnabled: false,
+          readAutomation: false,
+          writeAutomation: false,
+          frozen: false,
+          locked: false,
+          visible: existing?.visible ?? true,
+          volume: existing?.volume ?? 0.75,
+          pan: existing?.pan ?? 0,
+          inputRouting: '',
+          outputRouting: '',
+        };
+      });
+
       set({
-        tracks: engineTracks.map((et, i) => engineTrackToTrack(et, i, existingMap.get(et.id))),
+        tracks: [...routeTracks, ...vcaTracks],
         sessionName: sessionInfo.name || 'Untitled',
         sampleRate: sessionInfo.sample_rate || 48000,
         loading: false,
@@ -280,7 +321,8 @@ export function buildTrackTree(tracks: Track[], routeGroups: RouteGroup[]): Trac
       groupsByName.has(track.name)
     ) {
       const group = groupsByName.get(track.name)!;
-      const children = tracks.filter(t => group.memberIds?.includes(t.id));
+      // Children = group members EXCLUDING the folder/bus track itself
+      const children = tracks.filter(t => t.id !== track.id && group.memberIds?.includes(t.id));
       children.forEach(c => nestedTrackIds.add(c.id));
       result.push({ ...track, children });
     }

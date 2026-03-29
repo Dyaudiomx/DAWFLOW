@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSessionStore, buildTrackTree } from '../stores/session';
+import { ipc } from '../services/ipc';
 import type { Track, TrackType } from '../types/track';
 import styles from './VisibilityTab.module.css';
 
@@ -59,6 +60,20 @@ export const VisibilityTab: React.FC = () => {
   const updateTracks = useSessionStore((s) => s.updateTracks);
 
   const [activeFilters, setActiveFilters] = useState<Set<TrackType>>(new Set());
+  const [engineTrackNames, setEngineTrackNames] = useState<Map<string, { active: boolean; hidden: boolean }>>(new Map());
+
+  // Fetch track names/hidden/active state from engine for accurate visibility info
+  useEffect(() => {
+    ipc.getTrackNames()
+      .then((data) => {
+        const map = new Map<string, { active: boolean; hidden: boolean }>();
+        for (const t of data.tracks) {
+          map.set(t.id, { active: t.active, hidden: t.hidden });
+        }
+        setEngineTrackNames(map);
+      })
+      .catch(() => {});
+  }, [tracks.length]);
 
   const toggleFilter = useCallback((type: TrackType) => {
     setActiveFilters((prev) => {
@@ -153,6 +168,8 @@ export const VisibilityTab: React.FC = () => {
             className={`${styles.trackName} ${
               !track.visible ? styles.trackNameHidden : ''
             }`}
+            style={engineTrackNames.get(track.id)?.active === false ? { opacity: 0.4, fontStyle: 'italic' } : undefined}
+            title={engineTrackNames.get(track.id)?.active === false ? `${track.name} (inactive)` : track.name}
           >
             {track.name}
           </span>

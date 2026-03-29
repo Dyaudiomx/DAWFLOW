@@ -31,6 +31,9 @@ export interface TrackHeaderProps {
     writeAutomation: boolean;
     frozen: boolean;
     index: number;
+    isFolder?: boolean;
+    folderCollapsed?: boolean;
+    childCount?: number;
   };
   selected: boolean;
   onSelect: (trackId: string, e?: React.MouseEvent) => void;
@@ -47,6 +50,7 @@ export interface TrackHeaderProps {
   onAutomationModeChange: (trackId: string, mode: 'off' | 'read' | 'write') => void;
   onDragStart?: (trackId: string, e: React.DragEvent) => void;
   onContextMenu?: (trackId: string, e: React.MouseEvent) => void;
+  onFolderToggle?: (trackId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,11 +62,11 @@ const TRACK_TYPE_ICONS: Record<string, string> = {
   midi: '\u266A',        // music note ♪
   instrument: '\u266B',  // beamed notes ♫
   sampler: '\u25A6',     // square with diagonal ▦
-  folder: '\u25E8',      // folder-ish ◨
+  folder: '\uD83D\uDCC1', // folder icon 📁
   group: '\u25CB',       // circle ○
   bus: '\u2261',         // triple bar ≡
   fx: '\u0192',          // f with hook ƒ
-  vca: '\u25B3',         // triangle △
+  vca: '\u25B3',         // triangle △ (VCA fader)
 };
 
 // ---------------------------------------------------------------------------
@@ -94,6 +98,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
   onAutomationModeChange,
   onDragStart,
   onContextMenu,
+  onFolderToggle,
 }) => {
   // ---- Inline name editing state ----
   const [editing, setEditing] = useState(false);
@@ -248,6 +253,19 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
             ROW 1 — M, S, Track name
             ---------------------------------------------------------- */}
         <div className={styles.row1}>
+          {/* Folder collapse toggle */}
+          {track.isFolder && (
+            <button
+              style={{
+                background: 'none', border: 'none', color: '#aaa', cursor: 'pointer',
+                fontSize: 10, padding: '0 3px', marginRight: 2, lineHeight: 1,
+              }}
+              onClick={(e) => { e.stopPropagation(); onFolderToggle?.(track.id); }}
+              title={track.folderCollapsed ? `Expand folder (${track.childCount} tracks)` : `Collapse folder (${track.childCount} tracks)`}
+            >
+              {track.folderCollapsed ? '\u25B6' : '\u25BC'}
+            </button>
+          )}
           <div className={styles.msGroup}>
             <button
               className={`${styles.btnMute}${track.muted ? ` ${styles.active}` : ''}${track.mutedByOthers && !track.muted ? ` ${styles.implicitMute}` : ''}`}

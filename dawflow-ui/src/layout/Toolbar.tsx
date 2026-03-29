@@ -70,6 +70,14 @@ export const Toolbar: React.FC = () => {
   const anySoloed = tracks.some(t => t.solo);
 
   const [cdcEnabled, setCdcEnabled] = React.useState(false);
+  const [trackCountInfo, setTrackCountInfo] = React.useState<{ total: number; audio_tracks: number; buses: number } | null>(null);
+
+  // Fetch track count from engine on mount and when tracks change
+  React.useEffect(() => {
+    ipc.getTrackCount()
+      .then(setTrackCountInfo)
+      .catch(() => {});
+  }, [tracks.length]);
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -335,6 +343,13 @@ export const Toolbar: React.FC = () => {
 
       {/* Spacer */}
       <div className={styles.spacer} />
+
+      {/* Track count */}
+      {trackCountInfo && (
+        <span style={{ fontSize: 10, color: '#777', padding: '0 6px', whiteSpace: 'nowrap' }} title={`${trackCountInfo.audio_tracks} audio, ${trackCountInfo.buses} buses`}>
+          {trackCountInfo.total} tracks
+        </span>
+      )}
 
       {/* Zone toggles */}
       <div className={styles.section}>

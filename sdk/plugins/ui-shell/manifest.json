@@ -6,6 +6,6 @@
     "author": "DAWFLOW",
     "description": "Premium Cubase-style UI for DAWFLOW",
     "entry_point": "bin/{platform}/dawflow-ui-shell",
-    "auto_start": true,
+    "auto_start": false,
     "capabilities": ["ui_takeover"]
 }

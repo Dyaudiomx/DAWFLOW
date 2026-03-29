@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSessionStore, resetFetchDebounce } from '../stores/session';
+import { useSessionStore, resetFetchDebounce, buildTrackTree } from '../stores/session';
 import { useUIStore } from '../stores/ui';
 import { useTransportStore } from '../stores/transport';
 import { useRegionStore } from '../stores/regions';
@@ -28,8 +28,24 @@ const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.wmv
 const TRACK_HEADER_WIDTH = 300;
 
 export const CenterZone: React.FC = () => {
-  const tracks = useSessionStore((s) => s.tracks);
+  const rawTracks = useSessionStore((s) => s.tracks);
+  const routeGroups = useSessionStore((s) => s.routeGroups);
+  const collapsedFolders = useSessionStore((s) => s.collapsedFolders);
+  const toggleFolderCollapsed = useSessionStore((s) => s.toggleFolderCollapsed);
   const sampleRate = useSessionStore((s) => s.sampleRate);
+
+  // Build tree and flatten — collapsed folders hide their children
+  const tracks = React.useMemo(() => {
+    const tree = buildTrackTree(rawTracks, routeGroups);
+    const flat: typeof rawTracks = [];
+    for (const track of tree) {
+      flat.push(track);
+      if (track.children && track.children.length > 0 && !collapsedFolders.includes(track.id)) {
+        flat.push(...track.children);
+      }
+    }
+    return flat;
+  }, [rawTracks, routeGroups, collapsedFolders]);
   const selectedTrackId = useUIStore((s) => s.selectedTrackId);
   const selectedTrackIds = useUIStore((s) => s.selectedTrackIds);
   const setSelectedTrackId = useUIStore((s) => s.setSelectedTrackId);
@@ -753,9 +769,9 @@ export const CenterZone: React.FC = () => {
       { label: 'Add Drum Track', icon: '\u7530', onClick: () => openAddTrack('drum') },
       { label: 'Add MIDI Track', icon: '\u25CF', dividerAfter: true, onClick: () => openAddTrack('midi') },
       { label: 'Add Effect Track', icon: 'FX', onClick: () => openAddTrack('effect') },
-      { label: 'Add Group Track', icon: '\u03C8', onClick: () => openAddTrack('group') },
+      { label: 'Add Group Track', icon: '\u03C8', onClick: () => openAddTrack('folder') },
       { label: 'Add VCA Track', icon: '\u25B6\u25A0', dividerAfter: true, onClick: () => openAddTrack('vca') },
-      { label: 'Add Folder Track', icon: '\uD83D\uDCC1', onClick: () => openAddTrack('group') },
+      { label: 'Add Folder Track', icon: '\uD83D\uDCC1', onClick: () => openAddTrack('folder') },
       { label: 'Add Marker Track', icon: '\u2193', onClick: () => openAddTrack('audio') },
       { label: 'Add Ruler Track', icon: '\uD83C\uDFB9', dividerAfter: true, onClick: () => openAddTrack('audio') },
       { label: 'Using Track Preset...', icon: '\uD83C\uDF10', submenu: true, dividerAfter: true, onClick: () => openAddTrack() },
@@ -844,24 +860,67 @@ export const CenterZone: React.FC = () => {
 
   // --- Build DAW context menu items for track header right-click ---
   const buildTrackHeaderMenu = React.useCallback((trackId: string): MenuItem[] => {
+    const track = tracks.find((tr) => tr.id === trackId);
+    const refetch = () => { resetFetchDebounce(); useSessionStore.getState().fetchFromEngine(); };
     return [
-      { label: 'Rename Track', onClick: () => startRename(trackId) },
-      { label: 'Duplicate Track', onClick: () => { ipc.duplicateTrack(trackId).then(() => useSessionStore.getState().fetchFromEngine()); } },
-      { label: 'Set Track Color...', onClick: () => { /* color picker placeholder */ } },
+      { label: 'Rename Track', shortcut: 'F2', onClick: () => startRename(trackId) },
+      { label: 'Duplicate Track', shortcut: 'Ctrl+D', onClick: () => { ipc.duplicateTrack(trackId).then(refetch); } },
+      { label: 'Set Track Color...', onClick: () => {
+        setDawContextMenu(null);
+        setTimeout(() => setColorPicker({ trackId, x: 150, y: 150 }), 50);
+      } },
       { label: '', separator: true, onClick: () => {} },
-      { label: 'Add Audio Track', onClick: () => openAddTrack('audio') },
-      { label: 'Add MIDI Track', onClick: () => openAddTrack('midi') },
+      { label: 'Add Audio Track', onClick: () => openAddTrack('audio'), submenu: [
+        { label: 'Quick Add (default)', onClick: () => { ipc.addAudioTrack().then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err)); } },
+        { label: 'With Options...', onClick: () => openAddTrack('audio') },
+      ] },
+      { label: 'Add MIDI Track', onClick: () => openAddTrack('midi'), submenu: [
+        { label: 'Quick Add (default)', onClick: () => { ipc.addMidiTrack().then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err)); } },
+        { label: 'With Options...', onClick: () => openAddTrack('midi') },
+      ] },
+      { label: 'Add Instrument Track', onClick: () => openAddTrack('instrument') },
+      { label: 'Add Bus', onClick: () => openAddTrack('bus'), submenu: [
+        { label: 'Quick Add (default)', onClick: () => { ipc.addBus().then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err)); } },
+        { label: 'With Options...', onClick: () => openAddTrack('bus') },
+      ] },
+      { label: 'Add VCA Fader', onClick: () => { ipc.addVCA().then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err)); } },
+      { label: 'Add Folder Track', onClick: () => {
+        ipc.addFolderTrack().then((result) => {
+          // Register this bus as a folder so the UI renders it with folder icon
+          useSessionStore.setState((s) => ({ folderBusIds: [...s.folderBusIds, result.bus_id] }));
+          refetch();
+        }).catch((err: unknown) => console.warn('[DAWFLOW]', err));
+      } },
       { label: 'Add Video Track', onClick: () => {
         useUIStore.getState().setVideoImportDialogOpen(true);
       } },
       { label: '', separator: true, onClick: () => {} },
-      { label: (() => { const t = tracks.find((tr) => tr.id === trackId); return t?.frozen ? 'Unfreeze Track' : 'Freeze Track'; })(), onClick: () => { const t = tracks.find((tr) => tr.id === trackId); const call = t?.frozen ? ipc.unfreezeTrack(trackId) : ipc.freezeTrack(trackId); call.then(() => useSessionStore.getState().fetchFromEngine()).catch((err: unknown) => console.warn('[DAWFLOW] Freeze/unfreeze failed:', err)); } },
-      { label: 'Bounce Track', onClick: () => { ipc.call('daw.bounce_range', { track_id: trackId, start_samples: 0, end_samples: -1 }).then(() => { resetFetchDebounce(); useSessionStore.getState().fetchFromEngine(); }).catch((err: unknown) => console.warn('[DAWFLOW] Bounce track failed:', err)); } },
-      { label: 'Hide Track', onClick: () => { ipc.call('daw.editor.hide_track', { track_id: trackId }).catch((err: unknown) => console.warn('[DAWFLOW] Hide track failed:', err)); } },
+      { label: track?.frozen ? 'Unfreeze Track' : 'Freeze Track', icon: '\u2744', onClick: () => {
+        const call = track?.frozen ? ipc.unfreezeTrack(trackId) : ipc.freezeTrack(trackId);
+        call.then(refetch).catch((err: unknown) => console.warn('[DAWFLOW] Freeze/unfreeze failed:', err));
+      } },
+      { label: 'Bounce Track', onClick: () => {
+        ipc.call('daw.bounce_range', { track_id: trackId, start_samples: 0, end_samples: -1 }).then(refetch).catch((err: unknown) => console.warn('[DAWFLOW] Bounce track failed:', err));
+      } },
+      { label: 'Solo Exclusive', onClick: () => { ipc.soloExclusive(trackId).then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err)); } },
+      { label: 'Gain', submenu: [
+        { label: '+6 dB', onClick: () => { ipc.setTrackGainRelative(trackId, 6).catch(() => {}); } },
+        { label: '+3 dB', onClick: () => { ipc.setTrackGainRelative(trackId, 3).catch(() => {}); } },
+        { label: '-3 dB', onClick: () => { ipc.setTrackGainRelative(trackId, -3).catch(() => {}); } },
+        { label: '-6 dB', onClick: () => { ipc.setTrackGainRelative(trackId, -6).catch(() => {}); } },
+        { label: 'Reset to 0 dB', onClick: () => { ipc.setTrackGain(trackId, 0).catch(() => {}); refetch(); } },
+      ], onClick: () => {} },
+      { label: track?.monitorEnabled ? 'Disable Monitor' : 'Enable Monitor', onClick: () => {
+        setTrackMonitor(trackId, !track?.monitorEnabled);
+      } },
+      { label: 'Deactivate Track', disabled: false, onClick: () => {
+        ipc.setTrackActive(trackId, false).then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err));
+      } },
       { label: '', separator: true, onClick: () => {} },
-      { label: 'Remove Track', onClick: () => { ipc.removeTrack(trackId).then(() => useSessionStore.getState().fetchFromEngine()); } },
+      { label: 'Hide Track', onClick: () => { ipc.setTrackHidden(trackId, true).then(refetch).catch((err: unknown) => console.warn('[DAWFLOW]', err)); } },
+      { label: 'Remove Track', onClick: () => { ipc.removeTrack(trackId).then(refetch); } },
     ];
-  }, [startRename, openAddTrack, tracks]);
+  }, [startRename, openAddTrack, tracks, setTrackMonitor]);
 
   // --- Build DAW context menu items for region right-click ---
   const buildRegionMenu = React.useCallback((trackId: string, region: { id: string; name: string; type: string; muted?: boolean; locked?: boolean }): MenuItem[] => {
@@ -1590,6 +1649,29 @@ export const CenterZone: React.FC = () => {
                 e.stopPropagation();
                 setContextMenu({ x: e.clientX, y: e.clientY, trackId: track.id });
               }}
+              onDragOver={(e) => {
+                // Allow track reorder drops (text/plain contains a track ID)
+                if (e.dataTransfer.types.includes('text/plain')) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                }
+              }}
+              onDrop={(e) => {
+                const draggedTrackId = e.dataTransfer.getData('text/plain');
+                if (!draggedTrackId || draggedTrackId === track.id) return;
+                // Only handle if dragged item is a track ID (not a file)
+                if (!tracks.find((t) => t.id === draggedTrackId)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                // Build new track order: move dragged track to target position
+                const ids = tracks.map((t) => t.id);
+                const fromIdx = ids.indexOf(draggedTrackId);
+                const toIdx = ids.indexOf(track.id);
+                if (fromIdx < 0 || toIdx < 0) return;
+                ids.splice(fromIdx, 1);
+                ids.splice(toIdx, 0, draggedTrackId);
+                ipc.reorderTracks(ids).then(() => { resetFetchDebounce(); useSessionStore.getState().fetchFromEngine(); }).catch((err: unknown) => console.warn('[DAWFLOW] Reorder failed:', err));
+              }}
             >
               {/* Track header — Cubase-style component */}
               <div className={styles.trackHeader}>
@@ -1608,6 +1690,9 @@ export const CenterZone: React.FC = () => {
                     writeAutomation: track.writeAutomation ?? false,
                     frozen: track.frozen ?? false,
                     index: tracks.indexOf(track),
+                    isFolder: (track.children && track.children.length > 0) || false,
+                    folderCollapsed: collapsedFolders.includes(track.id),
+                    childCount: track.children?.length ?? 0,
                   }}
                   selected={selectedTrackIds.includes(track.id)}
                   onSelect={handleTrackSelect}
@@ -1623,6 +1708,7 @@ export const CenterZone: React.FC = () => {
                   onToggleLanes={handleToggleLanes}
                   onAutomationModeChange={handleAutomationModeChange}
                   onContextMenu={handleTrackContextMenu}
+                  onFolderToggle={toggleFolderCollapsed}
                 />
               </div>
 

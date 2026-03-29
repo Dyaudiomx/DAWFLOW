@@ -34,9 +34,12 @@ export DYLD_FALLBACK_LIBRARY_PATH="$LD_LIBRARY_PATH"
 export PKG_CONFIG_PATH="/opt/homebrew/opt/libarchive/lib/pkgconfig:/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:$PKG_CONFIG_PATH"
 
 # Find the latest built executable
-EXECUTABLE=$(ls -t "$ENGINE"/build/gtk2_ardour/ardour-* 2>/dev/null | head -1)
+EXECUTABLE=$(ls -t "$ENGINE"/build/gtk2_ardour/dawflow-* 2>/dev/null | head -1)
 if [ -z "$EXECUTABLE" ]; then
-    echo "Error: No ardour executable found. Run ./build.sh first."
+    EXECUTABLE=$(ls -t "$ENGINE"/build/gtk2_ardour/ardour-* 2>/dev/null | head -1)
+fi
+if [ -z "$EXECUTABLE" ]; then
+    echo "Error: No executable found. Run ./build.sh first."
     exit 1
 fi
 

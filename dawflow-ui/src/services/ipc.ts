@@ -561,6 +561,106 @@ async function duplicateTrack(trackId: string): Promise<Record<string, unknown>>
   return ipcCall<Record<string, unknown>>('daw.duplicate_track', { track_id: trackId });
 }
 
+async function addInstrumentTrack(name?: string, pluginId?: string): Promise<TrackAddResult> {
+  return ipcCall<TrackAddResult>('daw.add_instrument_track', {
+    ...(name !== undefined && { name }),
+    ...(pluginId !== undefined && { plugin_id: pluginId }),
+  });
+}
+
+async function addVCA(name?: string): Promise<{ vcas: Array<{ id: string; name: string; number: number }>; count: number }> {
+  return ipcCall<{ vcas: Array<{ id: string; name: string; number: number }>; count: number }>('daw.create_vca', {
+    name: name ?? 'VCA',
+    count: 1,
+  });
+}
+
+/**
+ * Create a folder track — a bus that acts as a collapsible container.
+ * A matching route group is created so child tracks can be grouped.
+ *
+ * After calling this, the caller must register the bus_id as a folder in the session store:
+ *   useSessionStore.setState(s => ({ folderBusIds: [...s.folderBusIds, result.bus_id] }))
+ */
+async function addFolderTrack(name?: string): Promise<{ bus_id: string; group_id: string; name: string }> {
+  const folderName = name ?? 'Folder';
+
+  // 1. Create a bus (this is the folder track — shows in track list)
+  await ipcCall<unknown>('daw.add_track_with_color', {
+    type: 'bus',
+    name: folderName,
+    channels: 2,
+    color: '6A5040ff',
+  });
+
+  // 2. Wait for async bus creation, then find it
+  await new Promise(r => setTimeout(r, 800));
+  const tracks = await ipcCall<EngineTrack[]>('daw.get_tracks');
+  const bus = [...tracks].reverse().find(t => t.name === folderName && t.type === 'bus');
+  if (!bus) throw new Error('Failed to create folder bus');
+
+  // 3. Create a route group with the same name (for child track management)
+  let groupId = '';
+  try {
+    const group = await ipcCall<{ ok: boolean; group_id: string }>('daw.route_group.create', { name: folderName });
+    groupId = group.group_id || '';
+  } catch (e) {
+    console.warn('[DAWFLOW] Failed to create route group for folder, folder will work without grouping:', e);
+  }
+
+  // 4. If group was created, make the bus a subgroup so children route through it
+  if (groupId) {
+    try {
+      await ipcCall<unknown>('daw.route_group.add_route', { group_id: groupId, track_id: bus.id });
+      await ipcCall<unknown>('daw.route_group.make_subgroup', { group_id: groupId, pre_fader: false });
+    } catch (e) {
+      console.warn('[DAWFLOW] Failed to set up subgroup routing:', e);
+    }
+  }
+
+  return { bus_id: bus.id, group_id: groupId, name: folderName };
+}
+
+async function setTrackGainRelative(trackId: string, deltaDbs: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_gain_relative', { track_id: trackId, delta_db: deltaDbs });
+}
+
+async function setTrackTrim(trackId: string, trimDb: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_trim', { track_id: trackId, trim_db: trimDb });
+}
+
+async function setTrackDelay(trackId: string, delaySamples: number): Promise<void> {
+  await ipcCall<unknown>('daw.set_track_delay', { track_id: trackId, delay_samples: delaySamples });
+}
+
+async function reorderTracks(trackIds: string[]): Promise<void> {
+  await ipcCall<unknown>('daw.reorder_tracks', { track_ids: trackIds });
+}
+
+async function getTrackProperties(trackId: string): Promise<Record<string, unknown>> {
+  return ipcCall<Record<string, unknown>>('daw.get_track_properties', { track_id: trackId });
+}
+
+async function getTrackRecordStatus(trackId: string): Promise<{ record_enabled: boolean; monitoring: string }> {
+  return ipcCall<{ record_enabled: boolean; monitoring: string }>('daw.get_track_record_status', { track_id: trackId });
+}
+
+async function soloExclusive(trackId: string): Promise<void> {
+  await ipcCall<unknown>('daw.solo_exclusive', { track_id: trackId });
+}
+
+async function getTrackNames(): Promise<{ tracks: Array<{ id: string; name: string; is_track: boolean; active: boolean; hidden: boolean }>; count: number }> {
+  return ipcCall<{ tracks: Array<{ id: string; name: string; is_track: boolean; active: boolean; hidden: boolean }>; count: number }>('daw.get_track_names');
+}
+
+async function getTrackCount(): Promise<{ total: number; audio_tracks: number; buses: number }> {
+  return ipcCall<{ total: number; audio_tracks: number; buses: number }>('daw.get_track_count');
+}
+
+async function getTrackType(trackId: string): Promise<{ track_id: string; name: string; type: string }> {
+  return ipcCall<{ track_id: string; name: string; type: string }>('daw.get_track_type', { track_id: trackId });
+}
+
 // ---------------------------------------------------------------------------
 // Convenience wrappers — Region Editing (extended)
 // ---------------------------------------------------------------------------
@@ -1576,6 +1676,19 @@ export const ipc = {
   freezeTrack,
   unfreezeTrack,
   duplicateTrack,
+  addInstrumentTrack,
+  addVCA,
+  addFolderTrack,
+  setTrackGainRelative,
+  setTrackTrim,
+  setTrackDelay,
+  reorderTracks,
+  getTrackProperties,
+  getTrackRecordStatus,
+  soloExclusive,
+  getTrackNames,
+  getTrackCount,
+  getTrackType,
 
   // Transport
   play,

@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useUIStore } from '../stores/ui';
-import { useSessionStore } from '../stores/session';
+import { useSessionStore, resetFetchDebounce } from '../stores/session';
 import { ipc } from '../services/ipc';
 import styles from './AddTrackDialog.module.css';
 
 // ── Track type definitions ──────────────────────────────────
 
-type TrackType = 'audio' | 'instrument' | 'sampler' | 'drum' | 'midi' | 'effect' | 'group' | 'vca';
+type TrackType = 'audio' | 'instrument' | 'sampler' | 'drum' | 'midi' | 'effect' | 'group' | 'vca' | 'folder';
 
 interface TrackTypeDef {
   key: TrackType;
@@ -22,7 +22,8 @@ const TRACK_TYPES: TrackTypeDef[] = [
   { key: 'midi',       label: 'MIDI',       icon: '\u2399' },   // MIDI symbol
   { key: 'effect',     label: 'Effect',     icon: '\u2697' },   // alembic
   { key: 'group',      label: 'Group',      icon: '\u2630' },   // trigram
-  { key: 'vca',        label: 'VCA',        icon: '\u2195' },   // up down arrow
+  { key: 'folder',     label: 'Folder',     icon: '\uD83D\uDCC1' }, // folder 📁
+  { key: 'vca',        label: 'VCA',        icon: '\u25B3' },   // triangle △
 ];
 
 // ── Preset color palette ────────────────────────────────────
@@ -50,6 +51,7 @@ const DEFAULT_NAMES: Record<TrackType, string> = {
   midi:       'MIDI',
   effect:     'FX',
   group:      'Group',
+  folder:     'Folder',
   vca:        'VCA',
 };
 
@@ -88,17 +90,34 @@ export const AddTrackDialog: React.FC = () => {
         const suffix = count > 1 ? ` ${i + 1}` : '';
         const finalName = trackName ? trackName + suffix : undefined;
 
-        let type = 'audio';
-        if (trackType === 'midi' || trackType === 'instrument' || trackType === 'sampler' || trackType === 'drum') type = 'midi';
-        else if (trackType === 'effect' || trackType === 'group' || trackType === 'vca') type = 'bus';
+        if (trackType === 'instrument') {
+          await ipc.addInstrumentTrack(finalName);
+          // Set color after creation
+          const newTracks = await ipc.getTracks();
+          const newest = newTracks[newTracks.length - 1];
+          if (newest) await ipc.setTrackColor(newest.id, trackColor.replace('#', '') + 'ff');
+        } else if (trackType === 'vca') {
+          // Create a real VCA master via the engine's VCA manager
+          await ipc.addVCA(finalName);
+        } else if (trackType === 'folder') {
+          // Create a folder = bus + route group + subgroup routing
+          const result = await ipc.addFolderTrack(finalName);
+          // Register this bus as a folder so it renders with folder icon
+          useSessionStore.setState((s) => ({ folderBusIds: [...s.folderBusIds, result.bus_id] }));
+        } else {
+          let type = 'audio';
+          if (trackType === 'midi' || trackType === 'sampler' || trackType === 'drum') type = 'midi';
+          else if (trackType === 'effect' || trackType === 'group') type = 'bus';
 
-        await ipc.call('daw.add_track_with_color', {
-          type,
-          name: finalName || '',
-          color: trackColor.replace('#', '') + 'ff',
-          channels: configuration === 'mono' ? 1 : 2,
-        });
+          await ipc.call('daw.add_track_with_color', {
+            type,
+            name: finalName || '',
+            color: trackColor.replace('#', '') + 'ff',
+            channels: configuration === 'mono' ? 1 : 2,
+          });
+        }
       }
+      resetFetchDebounce();
       await useSessionStore.getState().fetchFromEngine();
 
       // Reset form
@@ -132,7 +151,7 @@ export const AddTrackDialog: React.FC = () => {
 
   // Determine which routing fields to show
   const showInputRouting = trackType === 'audio';
-  const showOutputRouting = trackType !== 'vca';
+  const showOutputRouting = trackType !== 'vca' && trackType !== 'folder';
   const showConfiguration = trackType === 'audio' || trackType === 'effect' || trackType === 'group';
 
   if (!open) return null;

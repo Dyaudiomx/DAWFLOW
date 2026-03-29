@@ -139,20 +139,63 @@ export const TrackInspector: React.FC<TrackInspectorProps> = ({ track }) => {
       .catch(() => {});
   }, [track?.id]);
 
-  /* ---- Latency state ---- */
+  /* ---- Latency & Delay state ---- */
   const [latency, setLatency] = useState(0);
+  const [trackDelay, setTrackDelay] = useState(0);
+  const [trimDb, setTrimDb] = useState(0);
 
   useEffect(() => {
     if (!track) return;
-    // Engine returns {track_id, signal_latency, playback_latency} (both in samples)
+    // Fetch latency
     ipc.call<{ signal_latency?: number; playback_latency?: number }>('daw.get_track_latency', { track_id: track.id })
       .then((data) => {
         setLatency(data.playback_latency ?? data.signal_latency ?? 0);
       })
       .catch(() => {});
+    // Fetch track properties (includes delay, trim, type info)
+    ipc.getTrackProperties(track.id)
+      .then((props) => {
+        if (typeof props.delay_samples === 'number') setTrackDelay(props.delay_samples as number);
+        if (typeof props.trim_db === 'number') setTrimDb(props.trim_db as number);
+      })
+      .catch(() => {
+        // Fallback to getTrackDetails
+        ipc.getTrackDetails(track.id)
+          .then((data: any) => {
+            if (typeof data.delay_samples === 'number') setTrackDelay(data.delay_samples);
+            if (typeof data.trim_db === 'number') setTrimDb(data.trim_db);
+          })
+          .catch(() => {});
+      });
   }, [track?.id]);
 
   const latencyMs = (latency / (sampleRate || 48000)) * 1000;
+
+  const handleTrimChange = useCallback((value: number) => {
+    const clamped = clamp(value, -20, 20);
+    setTrimDb(clamped);
+    ipc.setTrackTrim(track.id, clamped).catch(() => {});
+  }, [track.id]);
+
+  const handleDelayChange = useCallback((samples: number) => {
+    const clamped = Math.max(0, Math.round(samples));
+    setTrackDelay(clamped);
+    ipc.setTrackDelay(track.id, clamped).catch(() => {});
+  }, [track.id]);
+
+  /* ---- Track type and record status (from engine) ---- */
+  const [engineTrackType, setEngineTrackType] = useState('');
+  const [monitoringMode, setMonitoringMode] = useState('');
+
+  useEffect(() => {
+    if (!track) return;
+    ipc.getTrackType(track.id)
+      .then((data) => setEngineTrackType(data.type || ''))
+      .catch(() => {});
+    ipc.getTrackRecordStatus(track.id)
+      .then((data) => setMonitoringMode(data.monitoring || ''))
+      .catch(() => {});
+  }, [track?.id]);
 
   /* ---- Track comment/notepad state ---- */
   const [comment, setComment] = useState('');
@@ -465,6 +508,11 @@ export const TrackInspector: React.FC<TrackInspectorProps> = ({ track }) => {
         <button className={styles.editChannelBtn} title="Edit Channel Settings" onClick={() => useUIStore.getState().setChannelSettingsTrackId(track.id)}>
           e
         </button>
+        {(engineTrackType || monitoringMode) && (
+          <span style={{ position: 'absolute', right: 28, bottom: 2, fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>
+            {engineTrackType}{monitoringMode ? ` \u00B7 ${monitoringMode}` : ''}
+          </span>
+        )}
       </div>
 
       {/* ================================================================
@@ -633,11 +681,42 @@ export const TrackInspector: React.FC<TrackInspectorProps> = ({ track }) => {
       </div>
 
       {/* ================================================================
-          5. DELAY DISPLAY
+          5. TRIM — input gain trim in dB
+          ================================================================ */}
+      <div className={styles.delayRow}>
+        <span className={styles.sliderIcon} title="Trim">{'\u2702'}</span>
+        <input
+          type="number"
+          className={styles.delayValue}
+          style={{ width: 60, background: 'transparent', border: '1px solid #3A3A3A', borderRadius: 2, color: '#CCC', textAlign: 'center', fontSize: 11 }}
+          value={trimDb.toFixed(1)}
+          step={0.5}
+          min={-20}
+          max={20}
+          onChange={(e) => handleTrimChange(Number(e.target.value) || 0)}
+          onMouseDown={(e) => { if (e.metaKey || e.ctrlKey) { e.preventDefault(); handleTrimChange(0); } }}
+          title="Input Trim (dB) — Cmd+click to reset"
+        />
+        <span style={{ fontSize: 10, color: '#888', marginLeft: 4 }}>dB trim</span>
+      </div>
+
+      {/* ================================================================
+          6. DELAY / LATENCY
           ================================================================ */}
       <div className={styles.delayRow}>
         <span className={styles.sliderIcon}>{'\u23F1'}</span>
-        <span className={styles.delayValue}>{latencyMs.toFixed(2)} ms</span>
+        <input
+          type="number"
+          className={styles.delayValue}
+          style={{ width: 60, background: 'transparent', border: '1px solid #3A3A3A', borderRadius: 2, color: '#CCC', textAlign: 'center', fontSize: 11 }}
+          value={trackDelay}
+          step={1}
+          min={0}
+          onChange={(e) => handleDelayChange(Number(e.target.value) || 0)}
+          onMouseDown={(e) => { if (e.metaKey || e.ctrlKey) { e.preventDefault(); handleDelayChange(0); } }}
+          title="Track Delay (samples) — Cmd+click to reset"
+        />
+        <span style={{ fontSize: 10, color: '#888', marginLeft: 4 }}>{latencyMs.toFixed(1)} ms latency</span>
       </div>
 
       {/* ================================================================
